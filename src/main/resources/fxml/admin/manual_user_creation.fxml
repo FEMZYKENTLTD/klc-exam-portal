@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.ManualUserCreationController"
+      style="-fx-background-color:#f5f7fb;">
+
+    <!-- Header -->
+    <VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+        <Label text="Manual User Creation"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+        <Label text="Super Admin: Create any user account with assigned role"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+    </VBox>
+
+    <ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;
+                       -fx-background:transparent;">
+    <VBox spacing="14" style="-fx-padding:16;">
+
+        <!-- Create Form Card -->
+        <VBox styleClass="card" spacing="12">
+            <Label text="Create New User Account"
+                   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+            <HBox spacing="14">
+                <!-- Left column -->
+                <VBox spacing="10" HBox.hgrow="ALWAYS">
+                    <VBox spacing="4">
+                        <Label text="Account Role"
+                               style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+                        <ComboBox fx:id="roleBox"
+                                  promptText="Select role"
+                                  maxWidth="1.7976931348623157E308"
+                                  style="-fx-border-color:#c8d3e8;
+                                         -fx-border-radius:8;"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="Full Name"
+                               style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+                        <TextField fx:id="fullNameField"
+                                   promptText="Enter full name"
+                                   style="-fx-border-color:#c8d3e8;
+                                          -fx-border-radius:8;
+                                          -fx-background-radius:8;
+                                          -fx-padding:9; -fx-font-size:14px;
+                                          -fx-prompt-text-fill:#64748b;"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="Email Address"
+                               style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+                        <TextField fx:id="emailField"
+                                   promptText="user@email.com"
+                                   style="-fx-border-color:#c8d3e8;
+                                          -fx-border-radius:8;
+                                          -fx-background-radius:8;
+                                          -fx-padding:9; -fx-font-size:14px;
+                                          -fx-prompt-text-fill:#64748b;"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="Phone Number"
+                               style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+                        <TextField fx:id="phoneField"
+                                   promptText="e.g. 08012345678"
+                                   style="-fx-border-color:#c8d3e8;
+                                          -fx-border-radius:8;
+                                          -fx-background-radius:8;
+                                          -fx-padding:9; -fx-font-size:14px;
+                                          -fx-prompt-text-fill:#64748b;"/>
+                    </VBox>
+                </VBox>
+
+                <!-- Right column: Student-specific fields -->
+                <VBox spacing="10" HBox.hgrow="ALWAYS">
+                    <Label text="Student Details (Students Only)"
+                           style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#64748b;"/>
+                    <VBox spacing="4">
+                        <Label text="Surname"
+                               style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+                        <TextField fx:id="surnameField"
+                                   promptText="Last name / Surname"
+                                   style="-fx-border-color:#c8d3e8;
+                                          -fx-border-radius:8;
+                                          -fx-background-radius:8;
+                                          -fx-padding:9; -fx-font-size:14px;
+                                          -fx-prompt-text-fill:#64748b;"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="Admission Number"
+                               style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+                        <TextField fx:id="admissionField"
+                                   promptText="Auto-generated if blank"
+                                   style="-fx-border-color:#c8d3e8;
+                                          -fx-border-radius:8;
+                                          -fx-background-radius:8;
+                                          -fx-padding:9; -fx-font-size:14px;
+                                          -fx-prompt-text-fill:#64748b;"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="Class"
+                               style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+                        <ComboBox fx:id="classBox"
+                                  promptText="Select class"
+                                  maxWidth="1.7976931348623157E308"
+                                  style="-fx-border-color:#c8d3e8;
+                                         -fx-border-radius:8;"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="Arm"
+                               style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+                        <ComboBox fx:id="armBox"
+                                  promptText="Select arm"
+                                  maxWidth="1.7976931348623157E308"
+                                  style="-fx-border-color:#c8d3e8;
+                                         -fx-border-radius:8;"/>
+                    </VBox>
+                </VBox>
+            </HBox>
+
+            <!-- Action Buttons -->
+            <HBox spacing="10">
+                <Button text="Create User Account"
+                        onAction="#createUser"
+                        styleClass="btn-primary"
+                        style="-fx-font-size:14px; -fx-padding:10 20;"/>
+                <Button text="Reset Password"
+                        onAction="#resetSelectedPassword"
+                        style="-fx-background-color:#f59e0b;
+                               -fx-text-fill:#0f1f3c;
+                               -fx-font-weight:bold;
+                               -fx-background-radius:8;
+                               -fx-padding:10 16; -fx-cursor:hand;"/>
+                <Button text="Toggle Active/Inactive"
+                        onAction="#toggleSelectedActive"
+                        style="-fx-background-color:#ef4444;
+                               -fx-text-fill:white;
+                               -fx-font-weight:bold;
+                               -fx-background-radius:8;
+                               -fx-padding:10 16; -fx-cursor:hand;"/>
+                <Button text="Refresh List"
+                        onAction="#refreshUsers"
+                        style="-fx-background-color:#eaf0fb;
+                               -fx-border-color:#c8d3e8;
+                               -fx-border-radius:8; -fx-background-radius:8;
+                               -fx-padding:10 14; -fx-cursor:hand;"/>
+            </HBox>
+
+            <!-- Status / Result -->
+            <Label fx:id="statusLabel"
+                   wrapText="true"
+                   style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+
+            <VBox spacing="3"
+                  style="-fx-background-color:#f0f9ff; -fx-padding:10;
+                         -fx-background-radius:8; -fx-border-color:#bae6fd;
+                         -fx-border-radius:8; -fx-border-width:1;">
+                <Label text="Temporary Password Format:"
+                       style="-fx-font-weight:bold; -fx-font-size:12px;
+                              -fx-text-fill:#0f1f3c;"/>
+                <Label text="Students:  SURNAME + CLASS  (e.g. KERIPESS2)"
+                       style="-fx-font-family:Consolas,monospace;
+                              -fx-font-size:12px; -fx-text-fill:#1e293b;"/>
+                <Label text="Staff:     FIRSTNAME + ROLE  (e.g. OLUFEMITEACHER)"
+                       style="-fx-font-family:Consolas,monospace;
+                              -fx-font-size:12px; -fx-text-fill:#1e293b;"/>
+                <Label text="Share temp password privately. User should change it on first login."
+                       wrapText="true"
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px;"/>
+            </VBox>
+        </VBox>
+
+        <!-- All Users Table -->
+        <VBox styleClass="card" spacing="10" VBox.vgrow="ALWAYS">
+            <Label text="All Users (click to select for Reset/Toggle)"
+                   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+            <TableView fx:id="usersTable" prefHeight="360"
+                       style="-fx-background-radius:10;
+                              -fx-border-color:#e2e8f0;
+                              -fx-border-radius:10;">
+                <columns>
+                    <TableColumn fx:id="colUName"   text="Full Name"
+                                 prefWidth="220"/>
+                    <TableColumn fx:id="colUEmail"  text="Email"
+                                 prefWidth="240"/>
+                    <TableColumn fx:id="colURole"   text="Role"
+                                 prefWidth="140"/>
+                    <TableColumn fx:id="colUStatus" text="Status"
+                                 prefWidth="100"/>
+                </columns>
+                <placeholder>
+                    <Label text="No users found."
+                           style="-fx-text-fill:#94a3b8;"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+    </VBox>
+    </ScrollPane>
+</VBox>

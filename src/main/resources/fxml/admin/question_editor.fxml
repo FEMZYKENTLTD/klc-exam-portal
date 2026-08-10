@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.QuestionEditorController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Page Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Question Editor"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Create and edit individual questions with options and explanations"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;
+                       -fx-background:transparent;">
+		<VBox spacing="14" style="-fx-padding:16;">
+
+			<!-- Question Details Card -->
+			<VBox styleClass="card" spacing="12">
+				<Label text="Question Details"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+				<!-- Row 1: Subject, Class, Difficulty, Correct Answer -->
+				<HBox spacing="14">
+					<VBox spacing="4" HBox.hgrow="ALWAYS">
+						<Label text="Subject"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<ComboBox fx:id="subjectBox"
+								  promptText="Select subject"
+								  maxWidth="1.7976931348623157E308"
+								  style="-fx-border-color:#c8d3e8;
+                                     -fx-border-radius:8;"/>
+					</VBox>
+					<VBox spacing="4">
+						<Label text="Class"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<ComboBox fx:id="classBox"
+								  promptText="Select class"
+								  prefWidth="120"
+								  style="-fx-border-color:#c8d3e8;
+                                     -fx-border-radius:8;"/>
+					</VBox>
+					<VBox spacing="4">
+						<Label text="Difficulty"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<ComboBox fx:id="diffBox"
+								  prefWidth="110"
+								  style="-fx-border-color:#c8d3e8;
+                                     -fx-border-radius:8;"/>
+					</VBox>
+					<VBox spacing="4">
+						<Label text="Correct Answer"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<ComboBox fx:id="correctBox"
+								  prefWidth="100"
+								  style="-fx-border-color:#c8d3e8;
+                                     -fx-border-radius:8;"/>
+					</VBox>
+				</HBox>
+
+				<!-- Topic -->
+				<VBox spacing="4">
+					<Label text="Topic (optional)"
+						   style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#0f1f3c;"/>
+					<TextField fx:id="topicField"
+							   promptText="e.g. Quadratic Equations, Photosynthesis, World War II"
+							   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                  -fx-background-radius:8; -fx-padding:9;
+                                  -fx-font-size:14px;
+                                  -fx-prompt-text-fill:#64748b;"/>
+				</VBox>
+
+				<!-- Question Text -->
+				<VBox spacing="4">
+					<Label text="Question Text"
+						   style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#0f1f3c;"/>
+					<TextArea fx:id="questionText"
+							  promptText="Type the full question here. Supports Unicode math symbols."
+							  prefRowCount="4"
+							  wrapText="true"
+							  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                 -fx-background-radius:8; -fx-font-size:14px;
+                                 -fx-prompt-text-fill:#64748b;"/>
+				</VBox>
+
+				<!-- Image -->
+				<VBox spacing="4">
+					<Label text="Question Image or Diagram (optional)"
+						   style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#0f1f3c;"/>
+					<HBox spacing="8">
+						<TextField fx:id="imagePathField"
+								   promptText="Click Attach Image to select a file..."
+								   HBox.hgrow="ALWAYS"
+								   editable="false"
+								   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                      -fx-background-radius:8; -fx-padding:9;
+                                      -fx-font-size:13px;
+                                      -fx-prompt-text-fill:#64748b;"/>
+						<Button text="Attach Image"
+								onAction="#chooseImage"
+								style="-fx-background-color:#3b82f6;
+                                   -fx-text-fill:white;
+                                   -fx-font-weight:bold;
+                                   -fx-background-radius:8;
+                                   -fx-padding:9 14; -fx-cursor:hand;"/>
+					</HBox>
+				</VBox>
+			</VBox>
+
+			<!-- Answer Options Card -->
+			<!-- NOTE: Options use TextArea (prefRowCount=2) to match controller -->
+			<VBox styleClass="card" spacing="12">
+				<Label text="Answer Options (A to E)"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+				<Label text="Enter the text for each option. Leave E blank for 4-option questions."
+					   style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+
+				<!-- Option A -->
+				<HBox spacing="10" alignment="TOP_LEFT">
+					<Label text="A"
+						   style="-fx-font-weight:bold; -fx-font-size:20px;
+                              -fx-text-fill:#0f1f3c; -fx-min-width:24;
+                              -fx-padding:6 0 0 0;"/>
+					<TextArea fx:id="optA"
+							  promptText="Type option A here..."
+							  prefRowCount="2"
+							  wrapText="true"
+							  HBox.hgrow="ALWAYS"
+							  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                 -fx-background-radius:8; -fx-font-size:14px;
+                                 -fx-prompt-text-fill:#64748b;"/>
+				</HBox>
+
+				<!-- Option B -->
+				<HBox spacing="10" alignment="TOP_LEFT">
+					<Label text="B"
+						   style="-fx-font-weight:bold; -fx-font-size:20px;
+                              -fx-text-fill:#0f1f3c; -fx-min-width:24;
+                              -fx-padding:6 0 0 0;"/>
+					<TextArea fx:id="optB"
+							  promptText="Type option B here..."
+							  prefRowCount="2"
+							  wrapText="true"
+							  HBox.hgrow="ALWAYS"
+							  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                 -fx-background-radius:8; -fx-font-size:14px;
+                                 -fx-prompt-text-fill:#64748b;"/>
+				</HBox>
+
+				<!-- Option C -->
+				<HBox spacing="10" alignment="TOP_LEFT">
+					<Label text="C"
+						   style="-fx-font-weight:bold; -fx-font-size:20px;
+                              -fx-text-fill:#0f1f3c; -fx-min-width:24;
+                              -fx-padding:6 0 0 0;"/>
+					<TextArea fx:id="optC"
+							  promptText="Type option C here..."
+							  prefRowCount="2"
+							  wrapText="true"
+							  HBox.hgrow="ALWAYS"
+							  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                 -fx-background-radius:8; -fx-font-size:14px;
+                                 -fx-prompt-text-fill:#64748b;"/>
+				</HBox>
+
+				<!-- Option D -->
+				<HBox spacing="10" alignment="TOP_LEFT">
+					<Label text="D"
+						   style="-fx-font-weight:bold; -fx-font-size:20px;
+                              -fx-text-fill:#0f1f3c; -fx-min-width:24;
+                              -fx-padding:6 0 0 0;"/>
+					<TextArea fx:id="optD"
+							  promptText="Type option D here..."
+							  prefRowCount="2"
+							  wrapText="true"
+							  HBox.hgrow="ALWAYS"
+							  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                 -fx-background-radius:8; -fx-font-size:14px;
+                                 -fx-prompt-text-fill:#64748b;"/>
+				</HBox>
+
+				<!-- Option E (optional) -->
+				<HBox spacing="10" alignment="TOP_LEFT">
+					<Label text="E"
+						   style="-fx-font-weight:bold; -fx-font-size:20px;
+                              -fx-text-fill:#94a3b8; -fx-min-width:24;
+                              -fx-padding:6 0 0 0;"/>
+					<TextArea fx:id="optE"
+							  promptText="Option E (optional - leave blank for 4-option questions)"
+							  prefRowCount="2"
+							  wrapText="true"
+							  HBox.hgrow="ALWAYS"
+							  style="-fx-border-color:#e2e8f0; -fx-border-radius:8;
+                                 -fx-background-radius:8; -fx-font-size:14px;
+                                 -fx-prompt-text-fill:#94a3b8;"/>
+				</HBox>
+			</VBox>
+
+			<!-- Explanation Card -->
+			<VBox styleClass="card" spacing="10">
+				<Label text="Explanation or Solution (optional)"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+				<Label text="Shown to students in post-exam review if enabled by admin."
+					   style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<TextArea fx:id="explanationText"
+						  prefRowCount="3"
+						  wrapText="true"
+						  promptText="Type the solution or explanation here..."
+						  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                             -fx-background-radius:8; -fx-font-size:13px;
+                             -fx-prompt-text-fill:#64748b;"/>
+
+				<HBox spacing="12" alignment="CENTER_LEFT">
+					<Button text="Save Question"
+							onAction="#saveQuestion"
+							styleClass="btn-primary"
+							style="-fx-font-size:14px; -fx-padding:11 28;"/>
+					<Label fx:id="status"
+						   wrapText="true"
+						   style="-fx-font-size:12px;"/>
+				</HBox>
+
+				<Label text="Questions are saved as PENDING. An Exam Officer or Super Admin must approve before they appear in exams. Teachers can only add to their assigned subjects."
+					   wrapText="true"
+					   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+			</VBox>
+
+		</VBox>
+	</ScrollPane>
+</VBox>

@@ -1,0 +1,340 @@
+/* KNOWLEDGE LAND COLLEGE - Navy / Gold Premium Theme v6.3 */
+
+/* ====== ROOT / BASE ====== */
+.root {
+    -fx-font-family: "Segoe UI", "Inter", Arial, sans-serif;
+    -fx-base: #0f1f3c;
+    -fx-background-color: #f5f7fb;
+    -fx-font-size: 14px;
+}
+
+/* ====== HEADER ====== */
+.header {
+    -fx-background-color: linear-gradient(to right, #0f1f3c, #1b2f5a);
+    -fx-padding: 18 24 18 24;
+    -fx-spacing: 4;
+}
+
+.header-title {
+    -fx-text-fill: white;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.gold {
+    -fx-text-fill: #d4af37;
+    -fx-font-size: 13px;
+}
+
+/* ====== CARD ====== */
+.card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(15,31,60,0.12), 18, 0, 0, 4);
+    -fx-padding: 24;
+}
+
+/* ====== BUTTONS ====== */
+.btn-primary {
+    -fx-background-color: #0f1f3c;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-background-radius: 8;
+    -fx-padding: 11 20 11 20;
+    -fx-cursor: hand;
+}
+
+    .btn-primary:hover {
+        -fx-background-color: #1b2f5a;
+        -fx-effect: dropshadow(gaussian, rgba(15,31,60,0.25), 8, 0, 0, 2);
+    }
+
+    .btn-primary:pressed {
+        -fx-background-color: #0a1528;
+    }
+
+.btn-gold {
+    -fx-background-color: #d4af37;
+    -fx-text-fill: #0f1f3c;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 10 18;
+    -fx-cursor: hand;
+}
+
+    .btn-gold:hover {
+        -fx-background-color: #c9a42e;
+    }
+
+/* ====== INPUT FIELDS — Labels above + visible placeholders ====== */
+.text-field,
+.password-field,
+.text-area {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #c8d3e8;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-padding: 9 12 9 12;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1e293b;
+    /* FIX: Make placeholder (prompt text) clearly visible */
+    -fx-prompt-text-fill: #94a3b8;
+}
+
+    .text-field:focused,
+    .password-field:focused,
+    .text-area:focused {
+        -fx-border-color: #0f1f3c;
+        -fx-border-width: 2;
+        -fx-effect: dropshadow(gaussian, rgba(15,31,60,0.15), 6, 0, 0, 1);
+        -fx-prompt-text-fill: #64748b;
+    }
+
+    .text-field:hover,
+    .password-field:hover {
+        -fx-border-color: #1b2f5a;
+    }
+
+/* ====== COMBO BOX ====== */
+.combo-box {
+    -fx-background-radius: 8;
+    -fx-border-color: #c8d3e8;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-padding: 4 8;
+    -fx-font-size: 14px;
+}
+
+    .combo-box:focused {
+        -fx-border-color: #0f1f3c;
+        -fx-border-width: 2;
+    }
+
+    .combo-box .list-cell {
+        -fx-text-fill: #94a3b8;
+    }
+
+        .combo-box .list-cell:filled {
+            -fx-text-fill: #1e293b;
+        }
+
+/* ====== LABELS ABOVE FIELDS ====== */
+/* Bold navy labels that sit above each input box */
+.field-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: #0f1f3c;
+    -fx-padding: 0 0 2 0;
+}
+
+/* ====== TABLE VIEW ====== */
+.table-view {
+    -fx-background-radius: 10;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 10;
+}
+
+    .table-view .column-header-background {
+        -fx-background-color: #0f1f3c;
+        -fx-background-radius: 10 10 0 0;
+    }
+
+    .table-view .column-header .label {
+        -fx-text-fill: white;
+        -fx-font-weight: bold;
+        -fx-font-size: 13px;
+    }
+
+.table-row-cell:odd {
+    -fx-background-color: #f8fafc;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #dbeafe;
+}
+
+/* ====== SIDEBAR ====== */
+.sidebar {
+    -fx-background-color: #0f1f3c;
+    -fx-padding: 16;
+    -fx-spacing: 6;
+}
+
+.sidebar-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cdd6e8;
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 11 14;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-max-width: infinity;
+}
+
+    .sidebar-btn:hover {
+        -fx-background-color: #1b2f5a;
+        -fx-text-fill: white;
+    }
+
+    .sidebar-btn:selected,
+    .sidebar-btn-active {
+        -fx-background-color: #d4af37;
+        -fx-text-fill: #0f1f3c;
+        -fx-font-weight: bold;
+    }
+
+/* ====== EXAM TIMER ====== */
+.exam-timer {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #c0392b;
+}
+
+/* ====== QUESTION NAV BUTTONS ====== */
+.question-nav-btn {
+    -fx-min-width: 42;
+    -fx-min-height: 42;
+    -fx-background-radius: 8;
+    -fx-background-color: #eaf0fb;
+    -fx-border-color: #c9d6ef;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+}
+
+    .question-nav-btn:hover {
+        -fx-background-color: #dbeafe;
+    }
+
+    .question-nav-btn.answered {
+        -fx-background-color: #0f1f3c;
+        -fx-text-fill: white;
+        -fx-border-color: #0f1f3c;
+    }
+
+    .question-nav-btn.flagged {
+        -fx-background-color: #d4af37;
+        -fx-text-fill: #0f1f3c;
+        -fx-border-color: #c9a42e;
+    }
+
+/* ====== TYPOGRAPHY HELPERS ====== */
+.small-muted {
+    -fx-text-fill: #667085;
+    -fx-font-size: 12px;
+}
+
+.section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0f1f3c;
+}
+
+.error-label {
+    -fx-text-fill: #c0392b;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.success-label {
+    -fx-text-fill: #0f7a3a;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* ====== HYPERLINKS ====== */
+.hyperlink {
+    -fx-text-fill: #1b2f5a;
+    -fx-border-color: transparent;
+    -fx-underline: true;
+    -fx-cursor: hand;
+}
+
+    .hyperlink:hover {
+        -fx-text-fill: #d4af37;
+    }
+
+/* ====== SPINNER ====== */
+.spinner {
+    -fx-background-radius: 8;
+    -fx-border-color: #c8d3e8;
+    -fx-border-radius: 8;
+}
+
+/* ====== CHECKBOX ====== */
+.check-box .box {
+    -fx-background-color: white;
+    -fx-border-color: #c8d3e8;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #0f1f3c;
+    -fx-border-color: #0f1f3c;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: white;
+}
+
+/* ====== SCROLL BAR ====== */
+.scroll-bar:vertical .track,
+.scroll-bar:horizontal .track {
+    -fx-background-color: #f1f5f9;
+    -fx-background-radius: 10;
+}
+
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: #c8d3e8;
+    -fx-background-radius: 10;
+}
+
+    .scroll-bar:vertical .thumb:hover,
+    .scroll-bar:horizontal .thumb:hover {
+        -fx-background-color: #94a3b8;
+    }
+
+/* ====== SEPARATOR ====== */
+.separator .line {
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* ====== ALERT / DIALOG ====== */
+.dialog-pane {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+}
+
+    .dialog-pane .header-panel {
+        -fx-background-color: #0f1f3c;
+        -fx-background-radius: 14 14 0 0;
+    }
+
+        .dialog-pane .header-panel .label {
+            -fx-text-fill: white;
+            -fx-font-weight: bold;
+        }
+
+/* ====== TAB PANE ====== */
+.tab-pane .tab {
+    -fx-background-color: #eaf0fb;
+    -fx-padding: 8 16;
+}
+
+    .tab-pane .tab:selected {
+        -fx-background-color: #0f1f3c;
+    }
+
+        .tab-pane .tab:selected .tab-label {
+            -fx-text-fill: white;
+            -fx-font-weight: bold;
+        }
+
+.tab-pane .tab-header-background {
+    -fx-background-color: #f5f7fb;
+}

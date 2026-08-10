@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.TeacherManagerController"
+      style="-fx-background-color:#f5f7fb;">
+
+    <!-- Header -->
+    <VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+        <Label text="Teacher Manager"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+        <Label text="View teachers, assign subjects and manage staff accounts"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+    </VBox>
+
+    <VBox spacing="12" style="-fx-padding:16;">
+
+        <!-- Toolbar -->
+        <HBox spacing="10" alignment="CENTER_LEFT"
+              style="-fx-background-color:white; -fx-padding:12;
+                     -fx-background-radius:10;
+                     -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.08),8,0,0,2);">
+            <Button text="Refresh"
+                    onAction="#load"
+                    style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8;
+                           -fx-border-radius:8; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+            <Button text="Reset Password"
+                    onAction="#resetPassword"
+                    style="-fx-background-color:#ef4444; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+            <Button text="Deactivate Account"
+                    onAction="#deactivate"
+                    style="-fx-background-color:#f59e0b; -fx-text-fill:#0f1f3c;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="status"
+                   style="-fx-font-size:12px; -fx-text-fill:#64748b;"/>
+        </HBox>
+
+        <!-- Teachers Table -->
+        <TableView fx:id="table" prefHeight="360"
+                   style="-fx-background-radius:10; -fx-border-color:#e2e8f0;
+                          -fx-border-radius:10;">
+            <columns>
+                <TableColumn fx:id="colName"     text="Full Name"     prefWidth="220"/>
+                <TableColumn fx:id="colEmail"    text="Email"         prefWidth="220"/>
+                <TableColumn fx:id="colRole"     text="Role"          prefWidth="130"/>
+                <TableColumn fx:id="colSubjects" text="Subjects"      prefWidth="200"/>
+                <TableColumn fx:id="colStatus"   text="Status"        prefWidth="90"/>
+            </columns>
+            <placeholder>
+                <Label text="No teachers registered yet. Teachers register using the FEMZYK code."
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:14px;"/>
+            </placeholder>
+        </TableView>
+
+        <!-- Assign Subjects Card -->
+        <VBox styleClass="card" spacing="12">
+            <Label text="Assign Subject to Selected Teacher"
+                   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="Subject"
+                           style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+                    <ComboBox fx:id="subjectAssignBox"
+                              promptText="Select subject to assign"
+                              maxWidth="1.7976931348623157E308"
+                              style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+                </VBox>
+                <VBox spacing="4">
+                    <Label text="Class Level"
+                           style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+                    <ComboBox fx:id="classAssignBox"
+                              promptText="Select class"
+                              prefWidth="140"
+                              style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+                </VBox>
+                <Button text="Assign Subject"
+                        onAction="#assignSubject"
+                        styleClass="btn-primary"
+                        style="-fx-padding:10 18; -fx-margin:18 0 0 0;"/>
+            </HBox>
+
+            <Label text="Super Admin can assign or remove subjects for any teacher. Teachers can only access question bank for their assigned subjects."
+                   wrapText="true"
+                   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+        </VBox>
+    </VBox>
+</VBox>

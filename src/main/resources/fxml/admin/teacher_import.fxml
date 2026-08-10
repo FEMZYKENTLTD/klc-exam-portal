@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox spacing="10" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+  fx:controller="com.femzyk.klc.admin.TeacherBulkImportController" style="-fx-padding:12;">
+  <Label text="👨‍🏫 Teacher Bulk Import – CSV" style="-fx-font-size:18px; -fx-font-weight:bold;"/>
+  <HBox spacing="8">
+    <Button text="📥 Import Teachers CSV" onAction="#importTeachers" styleClass="btn-primary"/>
+    <Label fx:id="status"/>
+  </HBox>
+  <TextArea fx:id="logArea" promptText="Import log…" VBox.vgrow="ALWAYS"/>
+  <Label text="CSV columns: full_name, email, subjects  | subjects = semicolon list e.g. DTP-SS1;DTP-SS2;DTP-SS3 | Default password: Teacher123 | Teachers must use Registration Code FEMZYK for self-signup – Bulk Import bypasses code (Super Admin only)." wrapText="true" styleClass="small-muted"/>
+</VBox>

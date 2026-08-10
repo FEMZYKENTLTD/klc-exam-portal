@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.AboutController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Page Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="About KLC CBT Suite"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="System information and credits"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent; -fx-background:transparent;">
+		<VBox spacing="16" style="-fx-padding:24;" alignment="CENTER">
+
+			<!-- Logo / Branding Card -->
+			<VBox styleClass="card" maxWidth="700" spacing="12" alignment="CENTER">
+
+				<Label text="KNOWLEDGE LAND COLLEGE"
+					   style="-fx-font-size:26px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+				<Label text="Secondary School - Lagos, Kwara State"
+					   style="-fx-font-size:14px; -fx-text-fill:#64748b;"/>
+
+				<Separator maxWidth="500"/>
+
+				<Label text="CBT SUITE v6.3"
+					   style="-fx-font-size:20px; -fx-font-weight:bold;
+                          -fx-text-fill:#d4af37;"/>
+				<Label text="Cloud Online / Auto-Sync - Enterprise Edition"
+					   style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
+
+			</VBox>
+
+			<!-- Developer Card -->
+			<VBox styleClass="card" maxWidth="700" spacing="10">
+				<Label text="Powered By"
+					   style="-fx-font-size:14px; -fx-font-weight:bold;
+                          -fx-text-fill:#64748b;"/>
+				<Label text="FEMZYK"
+					   style="-fx-font-size:22px; -fx-font-weight:bold;
+                          -fx-text-fill:#d4af37;"/>
+				<Label text="Lead Developer: OLUFEMI BENUA KERIPE"
+					   style="-fx-font-size:14px; -fx-text-fill:#0f1f3c;
+                          -fx-font-weight:bold;"/>
+				<Label text="Contact: femzykenterprisesltd@gmail.com"
+					   style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
+				<Label text="Phone: +2349049903679"
+					   style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
+			</VBox>
+
+			<!-- Tech Stack Card -->
+			<VBox styleClass="card" maxWidth="700" spacing="8">
+				<Label text="Technology Stack"
+					   style="-fx-font-size:14px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+				<Label fx:id="versionLabel"
+					   wrapText="true"
+					   style="-fx-font-family:Consolas,monospace;
+                          -fx-font-size:13px;
+                          -fx-text-fill:#1e293b;
+                          -fx-line-spacing:4;"/>
+			</VBox>
+
+			<!-- Legal Card -->
+			<VBox styleClass="card" maxWidth="700" spacing="6">
+				<Label text="Legal and Attribution"
+					   style="-fx-font-size:14px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+				<Label text="Result slips, Report Cards, Transcripts and ID Cards are KLC official documents."
+					   wrapText="true"
+					   style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
+				<Label text="FEMZYK credit appears on Splash Screen and About Page only. No watermark on any official document."
+					   wrapText="true"
+					   style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
+				<Label text="Result PIN Format: SURNAME + CLASS   e.g. KERIPESS2"
+					   style="-fx-font-size:13px; -fx-text-fill:#0f1f3c;
+                          -fx-font-weight:bold;"/>
+			</VBox>
+
+		</VBox>
+	</ScrollPane>
+</VBox>

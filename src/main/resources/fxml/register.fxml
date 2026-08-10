@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.auth.RegisterController"
+      styleClass="root">
+
+	<!-- Header -->
+	<VBox alignment="CENTER" styleClass="header">
+		<Label text="KNOWLEDGE LAND COLLEGE – CREATE ACCOUNT"
+               styleClass="header-title"/>
+		<Label text="Powered by FEMZYK | Lead: OLUFEMI BENUA KERIPE"
+               styleClass="gold"/>
+	</VBox>
+
+	<ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;">
+		<HBox spacing="18" alignment="TOP_CENTER"
+              style="-fx-padding:20;">
+
+			<!-- Main Registration Form -->
+			<VBox styleClass="card" maxWidth="640" spacing="12">
+
+				<Label text="Account Details"
+                       style="-fx-font-size:16px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+
+				<!-- Role -->
+				<VBox spacing="4">
+					<Label text="Account Type"
+                           style="-fx-font-weight:bold;"/>
+					<ComboBox fx:id="roleBox"
+                              promptText="Select your role"
+                              maxWidth="1.7976931348623157E308"/>
+				</VBox>
+
+				<!-- Full Name -->
+				<VBox spacing="4">
+					<Label text="Full Name"
+                           style="-fx-font-weight:bold;"/>
+					<TextField fx:id="nameField"
+                               promptText="Enter your full name"/>
+				</VBox>
+
+				<!-- Email -->
+				<VBox spacing="4">
+					<Label text="Email Address"
+                           style="-fx-font-weight:bold;"/>
+					<TextField fx:id="emailField"
+                               promptText="Enter your email address"/>
+				</VBox>
+
+				<!-- Password -->
+				<VBox spacing="4">
+					<Label text="Password"
+                           style="-fx-font-weight:bold;"/>
+					<PasswordField fx:id="passField"
+                                  promptText="Minimum 6 characters"/>
+					<Label fx:id="passStrengthLabel"
+                           text="Password strength: –"
+                           styleClass="small-muted"/>
+				</VBox>
+
+				<!-- Confirm Password -->
+				<VBox spacing="4">
+					<Label text="Confirm Password"
+                           style="-fx-font-weight:bold;"/>
+					<PasswordField fx:id="passConfirmField"
+                                  promptText="Re-enter your password"/>
+				</VBox>
+
+				<!-- Security Question -->
+				<VBox spacing="4">
+					<Label text="Security Question"
+                           style="-fx-font-weight:bold;"/>
+					<ComboBox fx:id="securityQuestionBox"
+                              promptText="Choose a security question"
+                              maxWidth="1.7976931348623157E308"/>
+				</VBox>
+
+				<!-- Security Answer -->
+				<VBox spacing="4">
+					<Label text="Security Answer"
+                           style="-fx-font-weight:bold;"/>
+					<TextField fx:id="securityAnswerField"
+                               promptText="Your answer (used for password reset)"/>
+				</VBox>
+
+				<!-- Registration Code -->
+				<VBox spacing="4">
+					<Label text="Registration Code"
+                           style="-fx-font-weight:bold;"/>
+					<TextField fx:id="codeField"
+                               promptText="Enter the registration code provided by your school"/>
+					<!-- FIX: No longer shows actual codes publicly -->
+					<Label text="Contact your school administrator for the registration code."
+                           styleClass="small-muted" wrapText="true"/>
+				</VBox>
+
+				<Separator/>
+
+				<!-- Student Fields -->
+				<Label text="Student Information (Students Only)"
+                       style="-fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+
+				<!-- Surname -->
+				<VBox spacing="4">
+					<Label text="Surname" style="-fx-font-weight:bold;"/>
+					<TextField fx:id="surnameField"
+                               promptText="Enter your surname / last name"/>
+				</VBox>
+
+				<!-- Admission No -->
+				<VBox spacing="4">
+					<Label text="Admission Number"
+                           style="-fx-font-weight:bold;"/>
+					<HBox spacing="6">
+						<TextField fx:id="admissionField"
+                                   promptText="e.g. KLC/SS2/045"
+                                   HBox.hgrow="ALWAYS"/>
+						<Button text="Auto-Generate"
+                                onAction="#suggestAdmissionNo"/>
+					</HBox>
+				</VBox>
+
+				<!-- Class -->
+				<VBox spacing="4">
+					<Label text="Class" style="-fx-font-weight:bold;"/>
+					<ComboBox fx:id="classBox"
+                              promptText="Select your class"
+                              maxWidth="1.7976931348623157E308"/>
+				</VBox>
+
+				<!-- Arm -->
+				<VBox spacing="4">
+					<Label text="Arm / Stream" style="-fx-font-weight:bold;"/>
+					<ComboBox fx:id="armBox"
+                              promptText="Select your arm"
+                              maxWidth="1.7976931348623157E308"/>
+				</VBox>
+
+				<!-- Gender -->
+				<VBox spacing="4">
+					<Label text="Gender" style="-fx-font-weight:bold;"/>
+					<ComboBox fx:id="genderBox"
+                              promptText="Select gender"
+                              maxWidth="1.7976931348623157E308"/>
+				</VBox>
+
+				<!-- Parent Phone -->
+				<VBox spacing="4">
+					<Label text="Parent / Guardian Phone"
+                           style="-fx-font-weight:bold;"/>
+					<TextField fx:id="parentPhoneField"
+                               promptText="e.g. 08012345678"/>
+				</VBox>
+
+				<Separator/>
+
+				<!-- Teacher Fields -->
+				<Label text="Teacher Information (Staff Only)"
+                       style="-fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+				<Label text="Select the subjects you teach:"
+                       styleClass="small-muted"/>
+				<VBox fx:id="subjectCheckBoxContainer" spacing="5"/>
+
+				<Separator/>
+
+				<!-- Submit -->
+				<Button text="CREATE ACCOUNT"
+                        onAction="#handleRegister"
+                        styleClass="btn-primary"
+                        maxWidth="1.7976931348623157E308"/>
+
+				<!-- Status -->
+				<Label fx:id="statusLabel"
+                       textFill="#c0392b"
+                       wrapText="true"
+                       style="-fx-font-size:13px;"/>
+
+				<Hyperlink text="Already have an account? Back to Login"
+                           onAction="#backLogin"/>
+
+				<!-- FIX: General info only — no secret codes shown -->
+				<VBox spacing="3"
+                      style="-fx-background-color:#f8f9fa;
+                             -fx-background-radius:8;
+                             -fx-padding:10;">
+					<Label text="Registration Information"
+                           style="-fx-font-weight:bold; -fx-font-size:12px;"/>
+					<Label text="- Students: Use the code provided by your school"
+                           styleClass="small-muted"/>
+					<Label text="- Teachers / Staff: Contact the administrator for your code"
+                           styleClass="small-muted"/>
+					<Label text="- Registration is MANDATORY for all users"
+                           styleClass="small-muted"/>
+					<Label text="- Staff passwords expire every 90 days"
+                           styleClass="small-muted"/>
+					<Label text="- A Security Question is required for password reset"
+                           styleClass="small-muted"/>
+					<Label text="- Result PIN = SURNAME + CLASS (e.g. KERIPESS2)"
+                           styleClass="small-muted"/>
+				</VBox>
+
+			</VBox>
+
+			<!-- Passport Photo Panel -->
+			<VBox styleClass="card" spacing="10" prefWidth="260">
+				<Label text="Student Passport Photo"
+                       style="-fx-font-weight:bold; -fx-font-size:14px;"/>
+
+				<StackPane style="-fx-background-color:#eef2f9;
+                                  -fx-background-radius:8;"
+                           prefHeight="180">
+					<ImageView fx:id="passportPreview"
+                               fitWidth="140" fitHeight="160"
+                               preserveRatio="true"/>
+				</StackPane>
+
+				<Label fx:id="passportPathLabel"
+                       text="No photo selected"
+                       styleClass="small-muted"
+                       wrapText="true"/>
+
+				<Button text="Upload Photo"
+                        onAction="#choosePassport"
+                        maxWidth="1.7976931348623157E308"/>
+
+				<Button text="Capture from Webcam"
+                        onAction="#captureWebcam"
+                        maxWidth="1.7976931348623157E308"/>
+
+				<Label text="Accepted: JPG, PNG"
+                       styleClass="small-muted"/>
+				<Label text="Photo is used on ID Card and Report Card."
+                       styleClass="small-muted" wrapText="true"/>
+				<Label text="Saved to: klc_assets/passports/"
+                       styleClass="small-muted" wrapText="true"/>
+			</VBox>
+
+		</HBox>
+	</ScrollPane>
+
+</VBox>

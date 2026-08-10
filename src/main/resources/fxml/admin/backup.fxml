@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.BackupController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Backup and Recovery"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Create, schedule and manage database backups"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="14" style="-fx-padding:16;">
+
+		<!-- Action Card -->
+		<HBox spacing="16">
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="12">
+				<Label text="Manual Backup"
+                       style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Button text="Run Backup Now"
+                        onAction="#runBackup"
+                        maxWidth="1.7976931348623157E308"
+                        styleClass="btn-primary"
+                        style="-fx-font-size:14px; -fx-padding:12 0;"/>
+				<Label text="Creates an encrypted .klcbackup ZIP file with SHA256 checksum. Includes: users, students, questions, exams, results, CA scores."
+                       wrapText="true"
+                       style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+			</VBox>
+
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="12">
+				<Label text="Auto Backup Schedule"
+                       style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<HBox spacing="10" alignment="CENTER_LEFT">
+					<CheckBox fx:id="autoBackupCheck"
+                              text="Enable auto-backup"
+                              onAction="#toggleAutoBackup"
+                              style="-fx-font-size:13px;"/>
+					<ComboBox fx:id="autoBackupTimeBox"
+                              prefWidth="120"
+                              style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+				</HBox>
+				<Label text="Runs automatically every 24 hours while app is open. For scheduled overnight backup, use Windows Task Scheduler."
+                       wrapText="true"
+                       style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+			</VBox>
+
+			<VBox styleClass="card" prefWidth="240" spacing="12">
+				<Label text="Restore Information"
+                       style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Button text="How to Restore"
+                        onAction="#restoreInfo"
+                        maxWidth="1.7976931348623157E308"
+                        style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8;
+                               -fx-border-radius:8; -fx-background-radius:8;
+                               -fx-padding:10 0; -fx-cursor:hand;"/>
+				<Label text="Supabase Cloud Pro: Dashboard point-in-time restore. Free tier: CSV import restore."
+                       wrapText="true"
+                       style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+			</VBox>
+		</HBox>
+
+		<!-- Status -->
+		<Label fx:id="status"
+               wrapText="true"
+               style="-fx-font-size:13px; -fx-font-weight:bold;
+                      -fx-text-fill:#0f7a3a;"/>
+
+		<!-- History Table -->
+		<VBox styleClass="card" spacing="10" VBox.vgrow="ALWAYS">
+			<Label text="Backup History"
+                   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+			<TableView fx:id="table" prefHeight="300"
+                       style="-fx-background-radius:10; -fx-border-color:#e2e8f0;
+                              -fx-border-radius:10;">
+				<columns>
+					<TableColumn fx:id="colDate"     text="Date/Time"  prefWidth="160"/>
+					<TableColumn fx:id="colType"     text="Type"       prefWidth="100"/>
+					<TableColumn fx:id="colFile"     text="File"       prefWidth="260"/>
+					<TableColumn fx:id="colSize"     text="Size"       prefWidth="90"/>
+					<TableColumn fx:id="colChecksum" text="SHA256"     prefWidth="130"/>
+				</columns>
+				<placeholder>
+					<Label text="No backups yet. Click Run Backup Now to create the first backup."
+                           style="-fx-text-fill:#94a3b8; -fx-font-size:14px;"/>
+				</placeholder>
+			</TableView>
+		</VBox>
+	</VBox>
+</VBox>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox spacing="12" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+  fx:controller="com.femzyk.klc.admin.SubjectManagerController" style="-fx-padding:12;">
+  <Label text="Subject Management – Add / Edit / Delete Subjects + Codes" style="-fx-font-size:18px; -fx-font-weight:bold;"/>
+  <HBox spacing="8">
+    <TextField fx:id="fName" promptText="Subject Name e.g. DATA PROCESSING"/>
+    <TextField fx:id="fCode" promptText="Code e.g. DTP-SS2"/>
+    <ComboBox fx:id="fClass" promptText="Class"/>
+    <Button text="Add Subject" onAction="#addSubject" styleClass="btn-primary"/>
+    <Button text="Delete Selected" onAction="#deleteSubject"/>
+  </HBox>
+  <TableView fx:id="table" VBox.vgrow="ALWAYS">
+    <columns>
+      <TableColumn fx:id="colCode" text="Subject Code" prefWidth="140"/>
+      <TableColumn fx:id="colName" text="Subject Name" prefWidth="320"/>
+      <TableColumn fx:id="colClass" text="Class" prefWidth="100"/>
+    </columns>
+  </TableView>
+  <Label fx:id="status" textFill="#c0392b"/>
+  <Label text="Super Admin can assign subjects to any teacher. Teachers only see their assigned subjects." styleClass="small-muted"/>
+</VBox>

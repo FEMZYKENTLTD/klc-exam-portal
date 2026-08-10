@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.AppealsController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Result Appeals"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Review and resolve student result appeals"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="12" style="-fx-padding:16;">
+
+		<!-- Controls -->
+		<HBox spacing="10" alignment="CENTER_LEFT"
+              style="-fx-background-color:white; -fx-padding:12;
+                     -fx-background-radius:10;
+                     -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.08),8,0,0,2);">
+			<Button text="Refresh"
+                    onAction="#load"
+                    style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8;
+                           -fx-border-radius:8; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+			<Region HBox.hgrow="ALWAYS"/>
+			<Label fx:id="statusLabel"
+                   style="-fx-font-size:12px; -fx-text-fill:#64748b;"/>
+		</HBox>
+
+		<!-- Table -->
+		<TableView fx:id="table" prefHeight="300"
+                   style="-fx-background-radius:10; -fx-border-color:#e2e8f0;
+                          -fx-border-radius:10;">
+			<columns>
+				<TableColumn fx:id="colStudent" text="Student"   prefWidth="180"/>
+				<TableColumn fx:id="colSubject" text="Subject"   prefWidth="130"/>
+				<TableColumn fx:id="colReason"  text="Reason"    prefWidth="280"/>
+				<TableColumn fx:id="colStatus"  text="Status"    prefWidth="100"/>
+				<TableColumn fx:id="colDate"    text="Date"      prefWidth="110"/>
+			</columns>
+			<placeholder>
+				<Label text="No appeals submitted yet."
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:14px;"/>
+			</placeholder>
+		</TableView>
+
+		<!-- Resolve Card -->
+		<VBox styleClass="card" spacing="12">
+			<Label text="Resolve Selected Appeal"
+                   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+			<HBox spacing="12" alignment="CENTER_LEFT">
+				<VBox spacing="4">
+					<Label text="Resolution Status"
+                           style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+					<ComboBox fx:id="statusBox"
+                              prefWidth="180"
+                              style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+				</VBox>
+			</HBox>
+
+			<VBox spacing="4">
+				<Label text="Admin Response / Notes"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#0f1f3c;"/>
+				<TextArea fx:id="responseArea"
+                          prefRowCount="3"
+                          wrapText="true"
+                          promptText="Enter your response to the student's appeal here..."
+                          style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                 -fx-background-radius:8; -fx-font-size:13px;
+                                 -fx-prompt-text-fill:#64748b;"/>
+			</VBox>
+
+			<Button text="Submit Resolution"
+                    onAction="#resolve"
+                    styleClass="btn-primary"
+                    style="-fx-font-size:14px; -fx-padding:10 24;"/>
+
+			<Label text="All appeal resolutions are logged in the Audit Trail. Students are notified via email if SMTP is configured."
+                   wrapText="true"
+                   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+		</VBox>
+	</VBox>
+</VBox>

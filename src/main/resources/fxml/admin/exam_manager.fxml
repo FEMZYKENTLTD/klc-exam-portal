@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0" xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.ExamManagerController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Page Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20;">
+		<Label text="Exam Manager"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Create, Schedule and Manage Exams"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;
+                       -fx-background:transparent;">
+		<VBox spacing="14" style="-fx-padding:16;">
+
+			<!-- Create Exam Card -->
+			<VBox styleClass="card" spacing="12">
+				<Label text="Create New Exam"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+				<GridPane hgap="12" vgap="10">
+					<!-- Row 0 -->
+					<VBox GridPane.rowIndex="0" GridPane.columnIndex="0" spacing="4">
+						<Label text="Subject"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<ComboBox fx:id="subjectBox"
+								  promptText="Select subject"
+								  prefWidth="220"
+								  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                     -fx-background-radius:8;"/>
+					</VBox>
+					<VBox GridPane.rowIndex="0" GridPane.columnIndex="1" spacing="4">
+						<Label text="Class"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<ComboBox fx:id="classBox"
+								  promptText="Select class"
+								  prefWidth="130"
+								  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                     -fx-background-radius:8;"/>
+					</VBox>
+					<VBox GridPane.rowIndex="0" GridPane.columnIndex="2" spacing="4">
+						<Label text="Term"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<ComboBox fx:id="termBox"
+								  promptText="Select term"
+								  prefWidth="120"
+								  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                     -fx-background-radius:8;"/>
+					</VBox>
+					<VBox GridPane.rowIndex="0" GridPane.columnIndex="3" spacing="4">
+						<Label text="Duration (minutes)"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<TextField fx:id="durationField"
+								   promptText="e.g. 40"
+								   prefWidth="120"
+								   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                      -fx-background-radius:8; -fx-padding:8;"/>
+					</VBox>
+
+					<!-- Row 1 -->
+					<VBox GridPane.rowIndex="1" GridPane.columnIndex="0"
+						  GridPane.columnSpan="4" spacing="4">
+						<Label text="Exam Title"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<TextField fx:id="titleField"
+								   promptText="e.g. 1st Term Examination - Data Processing SS2"
+								   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                      -fx-background-radius:8; -fx-padding:8;
+                                      -fx-font-size:14px;"/>
+					</VBox>
+				</GridPane>
+
+				<!-- Schedule Row -->
+				<HBox spacing="12" alignment="CENTER_LEFT">
+					<VBox spacing="4">
+						<Label text="Start Date"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<DatePicker fx:id="startDate"
+									style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+					</VBox>
+					<VBox spacing="4">
+						<Label text="Start Hour"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<Spinner fx:id="startHour" prefWidth="80"
+								 style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+					</VBox>
+					<Label text=":" style="-fx-font-size:18px; -fx-padding:16 0 0 0;"/>
+					<VBox spacing="4">
+						<Label text="Start Min"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<Spinner fx:id="startMin" prefWidth="80"
+								 style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+					</VBox>
+					<Label text="  to  "
+						   style="-fx-font-size:14px; -fx-padding:16 0 0 0;
+                              -fx-text-fill:#64748b;"/>
+					<VBox spacing="4">
+						<Label text="End Date"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<DatePicker fx:id="endDate"
+									style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+					</VBox>
+					<VBox spacing="4">
+						<Label text="End Hour"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<Spinner fx:id="endHour" prefWidth="80"
+								 style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+					</VBox>
+					<Label text=":" style="-fx-font-size:18px; -fx-padding:16 0 0 0;"/>
+					<VBox spacing="4">
+						<Label text="End Min"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<Spinner fx:id="endMin" prefWidth="80"
+								 style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+					</VBox>
+				</HBox>
+
+				<!-- Instructions -->
+				<VBox spacing="4">
+					<Label text="Instructions"
+						   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+					<TextArea fx:id="instructionsArea"
+							  promptText="Enter exam instructions e.g. Answer all questions. Duration: 40 minutes."
+							  prefRowCount="2"
+							  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                 -fx-background-radius:8; -fx-font-size:13px;"/>
+				</VBox>
+
+				<!-- Question Pool Settings -->
+				<HBox spacing="16" alignment="CENTER_LEFT">
+					<VBox spacing="4">
+						<Label text="No. of Questions"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<Spinner fx:id="questionCountSpinner" prefWidth="100"
+								 style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+					</VBox>
+					<VBox spacing="4">
+						<Label text="Difficulty Filter"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<ComboBox fx:id="difficultyFilter" prefWidth="130"
+								  promptText="Any difficulty"
+								  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+					</VBox>
+					<VBox spacing="4" HBox.hgrow="ALWAYS">
+						<Label text="Topic Filter (optional)"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<TextField fx:id="topicFilter"
+								   promptText="e.g. Quadratic Equations"
+								   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                      -fx-background-radius:8; -fx-padding:8;"/>
+					</VBox>
+				</HBox>
+
+				<!-- Options + Action Buttons -->
+				<HBox spacing="12" alignment="CENTER_LEFT">
+					<CheckBox fx:id="practiceCheck" text="Practice Mode"/>
+					<CheckBox fx:id="feeGateCheck"  text="Fee Gate"/>
+					<CheckBox fx:id="negativeMarkCheck" text="Negative Marking (-0.25)"/>
+					<Region HBox.hgrow="ALWAYS"/>
+					<Button text="Create Exam"
+							onAction="#createExam"
+							styleClass="btn-primary"
+							style="-fx-font-size:14px; -fx-padding:10 20;"/>
+					<Button text="Toggle Active"
+							onAction="#toggleActive"
+							style="-fx-background-color:#f59e0b; -fx-text-fill:#0f1f3c;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:10 14; -fx-cursor:hand;"/>
+					<Button text="Clone Exam"
+							onAction="#cloneExam"
+							style="-fx-background-color:#8b5cf6; -fx-text-fill:white;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:10 14; -fx-cursor:hand;"/>
+				</HBox>
+
+				<Label fx:id="status" wrapText="true"
+					   style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+			</VBox>
+
+			<!-- Exams Table -->
+			<VBox styleClass="card" spacing="10">
+				<Label text="All Exams"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+				<TableView fx:id="table" prefHeight="320">
+					<columns>
+						<TableColumn fx:id="colTitle"    text="Exam Title"   prefWidth="280"/>
+						<TableColumn fx:id="colSubject"  text="Subject"      prefWidth="130"/>
+						<TableColumn fx:id="colClass"    text="Class"        prefWidth="70"/>
+						<TableColumn fx:id="colStatus"   text="Status"       prefWidth="90"/>
+						<TableColumn fx:id="colSchedule" text="Schedule"     prefWidth="200"/>
+					</columns>
+					<placeholder>
+						<Label text="No exams yet. Create your first exam above."
+							   style="-fx-text-fill:#94a3b8; -fx-font-size:14px;"/>
+					</placeholder>
+				</TableView>
+			</VBox>
+
+		</VBox>
+	</ScrollPane>
+</VBox>

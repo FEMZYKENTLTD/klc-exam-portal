@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.student.ExamInstructionsController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:6;">
+		<Label text="KNOWLEDGE LAND COLLEGE"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label fx:id="examTitleLabel" text="Exam Title"
+               style="-fx-text-fill:#d4af37; -fx-font-size:16px;
+                      -fx-font-weight:bold;"/>
+		<HBox spacing="24">
+			<Label fx:id="subjectLabel"  text="Subject: -"
+                   style="-fx-text-fill:#cdd6e8; -fx-font-size:13px;"/>
+			<Label fx:id="durationLabel" text="Duration: -"
+                   style="-fx-text-fill:#cdd6e8; -fx-font-size:13px;"/>
+			<Label fx:id="questionsLabel" text="Questions: -"
+                   style="-fx-text-fill:#cdd6e8; -fx-font-size:13px;"/>
+		</HBox>
+	</VBox>
+
+	<VBox spacing="16" style="-fx-padding:24;" alignment="CENTER">
+		<VBox styleClass="card" maxWidth="800" spacing="14">
+
+			<Label text="Exam Rules and Instructions"
+                   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+			<ScrollPane fitToWidth="true" prefHeight="320"
+                        style="-fx-background-color:#f8fafc;
+                               -fx-background-radius:8;
+                               -fx-border-color:#e2e8f0;
+                               -fx-border-radius:8;">
+				<Label fx:id="rulesLabel"
+                       wrapText="true"
+                       maxWidth="740"
+                       style="-fx-padding:16; -fx-font-size:13px;
+                              -fx-text-fill:#1e293b; -fx-line-spacing:4;"/>
+			</ScrollPane>
+
+			<CheckBox fx:id="acceptCheck"
+                      text="I have read and accept all KNOWLEDGE LAND COLLEGE examination rules. I understand that malpractice results in automatic submission and account lockout."
+                      onAction="#onAcceptChanged"
+                      wrapText="true"
+                      style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+
+			<HBox spacing="16" alignment="CENTER">
+				<Button text="Cancel - Return to Dashboard"
+                        onAction="#cancel"
+                        prefWidth="220"
+                        style="-fx-background-color:#eaf0fb;
+                               -fx-border-color:#c8d3e8; -fx-border-radius:8;
+                               -fx-background-radius:8; -fx-padding:11 0;
+                               -fx-cursor:hand; -fx-font-size:13px;"/>
+				<Button fx:id="startBtn"
+                        text="I Accept - Start Exam Now"
+                        onAction="#startExam"
+                        disable="true"
+                        prefWidth="220"
+                        style="-fx-background-color:#0f7a3a; -fx-text-fill:white;
+                               -fx-font-weight:bold; -fx-font-size:14px;
+                               -fx-padding:12 0; -fx-background-radius:8;
+                               -fx-cursor:hand;"/>
+			</HBox>
+
+			<Label text="Powered by FEMZYK | Lead Developer: OLUFEMI BENUA KERIPE"
+                   style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"
+                   alignment="CENTER"/>
+		</VBox>
+	</VBox>
+</VBox>

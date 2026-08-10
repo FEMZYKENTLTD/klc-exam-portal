@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.QuestionImporterController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Question Importer"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Upload from PDF, DOCX, CSV or TXT - Preview and Edit before importing"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;
+                       -fx-background:transparent;">
+		<VBox spacing="14" style="-fx-padding:16;">
+
+			<!-- Step 1: Subject + Class + File -->
+			<VBox styleClass="card" spacing="12">
+				<Label text="Step 1 - Select Subject, Class and Upload File"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+				<HBox spacing="16">
+					<VBox spacing="4" HBox.hgrow="ALWAYS">
+						<Label text="Subject"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<ComboBox fx:id="subjectBox"
+								  promptText="Select the subject for these questions"
+								  maxWidth="1.7976931348623157E308"
+								  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+					</VBox>
+					<VBox spacing="4">
+						<Label text="Class Level"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<ComboBox fx:id="classBox"
+								  promptText="Select class"
+								  prefWidth="140"
+								  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+					</VBox>
+				</HBox>
+
+				<Button text="Choose File and Preview Questions"
+						onAction="#chooseFile"
+						style="-fx-background-color:#3b82f6; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:10 20; -fx-cursor:hand; -fx-font-size:13px;"/>
+			</VBox>
+
+			<!-- Step 2: Editable Preview -->
+			<VBox styleClass="card" spacing="10">
+				<HBox alignment="CENTER_LEFT" spacing="10">
+					<Label text="Step 2 - Preview and Edit Questions"
+						   style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+					<Label text="(You can edit questions directly below before importing)"
+						   style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				</HBox>
+
+				<Label text="Format: Each line = one question. Remove numbering if needed. The importer handles both '1. Question text' and plain question text."
+					   wrapText="true"
+					   style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+
+				<!-- EDITABLE preview area -->
+				<TextArea fx:id="previewArea"
+						  prefRowCount="10"
+						  editable="true"
+						  wrapText="true"
+						  promptText="Parsed questions appear here. You can EDIT them before importing. Each line = one question."
+						  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                             -fx-background-radius:8; -fx-font-size:13px;
+                             -fx-prompt-text-fill:#94a3b8;
+                             -fx-font-family:Consolas,monospace;"/>
+			</VBox>
+
+			<!-- Step 3: Answer Key -->
+			<VBox styleClass="card" spacing="10">
+				<Label text="Step 3 - Enter Answer Key (Optional)"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+				<Label text="Format: 1:A  2:B  3:C  4:D  (question number : answer letter)"
+					   style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label text="If you skip this, all answers default to A. Edit in Question Editor after import."
+					   wrapText="true"
+					   style="-fx-text-fill:#f59e0b; -fx-font-size:12px;"/>
+				<TextArea fx:id="answerKeyArea"
+						  prefRowCount="3"
+						  wrapText="true"
+						  promptText="e.g.  1:A  2:C  3:B  4:D  5:A  6:B  (leave blank to set answers later)"
+						  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                             -fx-background-radius:8; -fx-font-size:14px;
+                             -fx-prompt-text-fill:#64748b;"/>
+			</VBox>
+
+			<!-- Step 4: Import -->
+			<VBox styleClass="card" spacing="10">
+				<Label text="Step 4 - Import to Question Bank"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+				<Button text="Import Questions to Question Bank"
+						onAction="#commitImport"
+						styleClass="btn-primary"
+						maxWidth="1.7976931348623157E308"
+						style="-fx-font-size:14px; -fx-padding:12 0;"/>
+
+				<Label fx:id="statusLabel"
+					   wrapText="true"
+					   style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+
+				<Label text="Imported questions are PENDING approval. Exam Officer or Super Admin must approve before they appear in exams."
+					   wrapText="true"
+					   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+			</VBox>
+
+		</VBox>
+	</ScrollPane>
+</VBox>

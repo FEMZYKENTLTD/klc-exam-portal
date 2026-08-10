@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.AuditLogController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Audit Logs"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Immutable WORM audit trail - all actions logged with user email and role"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="12" style="-fx-padding:16;">
+
+		<!-- Toolbar -->
+		<HBox spacing="10" alignment="CENTER_LEFT"
+              style="-fx-background-color:white; -fx-padding:12;
+                     -fx-background-radius:10;
+                     -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.08),8,0,0,2);">
+			<Button text="Refresh"
+                    onAction="#load"
+                    style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8;
+                           -fx-border-radius:8; -fx-background-radius:8;
+                           -fx-padding:9 16; -fx-cursor:hand;"/>
+			<Button text="Export to CSV"
+                    onAction="#exportCsv"
+                    style="-fx-background-color:#10b981; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+			<Region HBox.hgrow="ALWAYS"/>
+			<Label fx:id="status"
+                   style="-fx-font-size:12px; -fx-text-fill:#64748b;"/>
+		</HBox>
+
+		<!-- Table with Email and Role columns added -->
+		<TableView fx:id="table" VBox.vgrow="ALWAYS" prefHeight="520"
+                   style="-fx-background-radius:10; -fx-border-color:#e2e8f0;
+                          -fx-border-radius:10;">
+			<columns>
+				<TableColumn fx:id="colTime"    text="Timestamp"   prefWidth="145"/>
+				<TableColumn fx:id="colUser"    text="User Name"   prefWidth="150"/>
+				<TableColumn fx:id="colEmail"   text="Email"       prefWidth="190"/>
+				<TableColumn fx:id="colRole"    text="Role"        prefWidth="110"/>
+				<TableColumn fx:id="colAction"  text="Action"      prefWidth="140"/>
+				<TableColumn fx:id="colEntity"  text="Entity"      prefWidth="100"/>
+				<TableColumn fx:id="colDetails" text="Details"     prefWidth="180"/>
+			</columns>
+			<placeholder>
+				<Label text="No audit log entries yet."
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:14px;"/>
+			</placeholder>
+		</TableView>
+
+		<Label text="Audit logs are immutable (WORM) - cannot be edited or deleted. Export to CSV for compliance reporting. Shows all logins, registrations, exam events and admin actions."
+               wrapText="true"
+               style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+	</VBox>
+</VBox>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.HealthMonitorController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="System Health Monitor"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Real-time status of database, email, SMS and disk"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="16" style="-fx-padding:16;">
+
+		<!-- Status Cards -->
+		<HBox spacing="14">
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="8">
+				<Label text="Database"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#64748b;"/>
+				<Label fx:id="cloudDbLabel"
+                       text="Checking..."
+                       wrapText="true"
+                       style="-fx-font-size:13px; -fx-text-fill:#0f1f3c;"/>
+				<Label fx:id="cacheLabel"
+                       text="Checking..."
+                       wrapText="true"
+                       style="-fx-font-size:13px; -fx-text-fill:#0f1f3c;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="8">
+				<Label text="Notifications"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#64748b;"/>
+				<Label fx:id="emailLabel"
+                       text="Checking..."
+                       style="-fx-font-size:13px; -fx-text-fill:#0f1f3c;"/>
+				<Label fx:id="smsLabel"
+                       text="Checking..."
+                       style="-fx-font-size:13px; -fx-text-fill:#0f1f3c;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="8">
+				<Label text="System"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#64748b;"/>
+				<Label fx:id="diskLabel"
+                       text="Checking..."
+                       style="-fx-font-size:13px; -fx-text-fill:#0f1f3c;"/>
+				<Label fx:id="uptimeLabel"
+                       text="Uptime: 0m"
+                       style="-fx-font-size:13px; -fx-text-fill:#0f1f3c;"/>
+			</VBox>
+		</HBox>
+
+		<!-- Sync Log -->
+		<VBox styleClass="card" spacing="10" VBox.vgrow="ALWAYS">
+			<Label text="Sync Activity Log (auto-refresh every 5 seconds)"
+                   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+			<TextArea fx:id="logArea"
+                      editable="false"
+                      wrapText="true"
+                      prefHeight="300"
+                      style="-fx-font-family:Consolas,monospace;
+                             -fx-font-size:12px;
+                             -fx-border-color:#e2e8f0; -fx-border-radius:8;
+                             -fx-background-radius:8;"/>
+		</VBox>
+	</VBox>
+</VBox>

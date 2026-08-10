@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+  fx:id="examRoot" fx:controller="com.femzyk.klc.student.ExamController" prefWidth="1200" prefHeight="750">
+  <top>
+    <VBox>
+    <HBox styleClass="header" spacing="18" alignment="CENTER_LEFT">
+      <Label text="KNOWLEDGE LAND COLLEGE CBT" styleClass="header-title"/>
+      <Region HBox.hgrow="ALWAYS"/>
+      <Label fx:id="strikeLabel" text="Malpractice Strikes: 0/3" textFill="#ffb86c"/>
+      <Label text="Time Left:" textFill="white"/>
+      <Label fx:id="timerLabel" text="00:00:00" styleClass="exam-timer"/>
+    </HBox>
+    <ToolBar>
+      <Button text="A-" onAction="#decreaseFont" tooltip="Decrease Font"/>
+      <Button text="A+" onAction="#increaseFont" tooltip="Increase Font"/>
+      <Button text="◐ Contrast" onAction="#toggleContrast" tooltip="High Contrast Mode"/>
+      <Button text="Aa Dyslexic" onAction="#toggleDyslexic" tooltip="Dyslexic-friendly font"/>
+      <Separator/>
+      <Button fx:id="calcBtn" text="🧮 Calculator" onAction="#openCalculator"/>
+      <Button fx:id="formulaBtn" text="📐 Formula Sheet" onAction="#openFormulaSheet"/>
+      <Pane HBox.hgrow="ALWAYS"/>
+      <Label text="Keys: N=Next P=Prev F=Flag 1-5=A-E" styleClass="small-muted"/>
+    </ToolBar>
+    </VBox>
+  </top>
+  <left>
+    <VBox spacing="8" prefWidth="260" style="-fx-padding:12; -fx-background-color:#eef2f9;">
+      <Label text="Question Navigator"/>
+      <FlowPane fx:id="navPane" hgap="6" vgap="6"/>
+      <Label fx:id="progressLabel" styleClass="small-muted"/>
+      <Separator/>
+      <Label text="Proctoring" style="-fx-font-weight:bold; -fx-font-size:11px;"/>
+      <ImageView fx:id="webcamThumb" fitWidth="220" fitHeight="165" preserveRatio="true" style="-fx-background-color:#000;"/>
+      <Label text="Webcam: auto-capture every 60s – if available" styleClass="small-muted" wrapText="true"/>
+      <Separator/>
+      <Button text="Submit Exam" fx:id="submitBtn" onAction="#submitExamClicked" styleClass="btn-gold" maxWidth="1.7976931348623157E308"/>
+      <Label text="3-Strike Proctoring Active" textFill="#c0392b" wrapText="true" styleClass="small-muted"/>
+    </VBox>
+  </left>
+  <center>
+    <ScrollPane fitToWidth="true" style="-fx-background-color:transparent;">
+    <VBox spacing="14" style="-fx-padding:24;">
+      <Label fx:id="examTitleLabel" text="Exam in Progress" style="-fx-font-size:18px; -fx-font-weight:bold;"/>
+      <ImageView fx:id="questionImageView" fitWidth="560" preserveRatio="true" visible="false" managed="false"/>
+      <Label fx:id="questionLabel" wrapText="true" style="-fx-font-size:16px;"/>
+      <VBox spacing="8">
+        <RadioButton fx:id="optA" text="A"/><RadioButton fx:id="optB" text="B"/>
+        <RadioButton fx:id="optC" text="C"/><RadioButton fx:id="optD" text="D"/>
+        <RadioButton fx:id="optE" text="E"/>
+        <ToggleGroup fx:id="optionsGroup"/>
+      </VBox>
+      <HBox spacing="10">
+        <Button text="◀ Previous (P)" onAction="#prev" fx:id="prevBtn"/>
+        <Button text="Flag / Unflag (F)" onAction="#toggleFlag" fx:id="flagBtn"/>
+        <Button text="Next ▶ (N)" onAction="#next" fx:id="nextBtn" styleClass="btn-primary"/>
+      </HBox>
+      <Label text="Accessibility: A-/A+ font, ◐ Contrast, Aa Dyslexic, Keyboard: 1-5 = A-E, N/P = Next/Prev, F = Flag | Calculator &amp; Formula Sheet in toolbar | Auto-save every 30s" styleClass="small-muted" wrapText="true"/>
+    </VBox>
+    </ScrollPane>
+  </center>
+</BorderPane>

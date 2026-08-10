@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.GradingScaleController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Grading Scale Configuration"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Configure WAEC A1-F9 grading and CA weightings"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="14" style="-fx-padding:16;">
+
+		<!-- CA Weights Card -->
+		<VBox styleClass="card" spacing="12">
+			<Label text="CA Weighting (must sum to 100%)"
+                   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+			<HBox spacing="20" alignment="CENTER_LEFT">
+				<VBox spacing="4">
+					<Label text="CA1 Weight (%)"
+                           style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+					<Spinner fx:id="ca1Weight" prefWidth="100"
+                             style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+				</VBox>
+				<VBox spacing="4">
+					<Label text="CA2 Weight (%)"
+                           style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+					<Spinner fx:id="ca2Weight" prefWidth="100"
+                             style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+				</VBox>
+				<VBox spacing="4">
+					<Label text="Exam Weight (%)"
+                           style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+					<Spinner fx:id="examWeight" prefWidth="100"
+                             style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+				</VBox>
+				<Label text="CA1 + CA2 + Exam = 100"
+                       style="-fx-text-fill:#64748b; -fx-font-size:13px;
+                              -fx-padding:16 0 0 0;"/>
+				<Region HBox.hgrow="ALWAYS"/>
+				<Button text="Save Grading Scale"
+                        onAction="#save"
+                        styleClass="btn-primary"
+                        style="-fx-padding:10 20; -fx-margin:16 0 0 0;"/>
+			</HBox>
+
+			<Label fx:id="status"
+                   wrapText="true"
+                   style="-fx-font-size:13px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f7a3a;"/>
+		</VBox>
+
+		<!-- Grade Table Card -->
+		<VBox styleClass="card" spacing="10" VBox.vgrow="ALWAYS">
+			<Label text="Grade Scale (double-click any cell to edit)"
+                   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+			<TableView fx:id="gradeTable" editable="true"
+                       VBox.vgrow="ALWAYS" prefHeight="380"
+                       style="-fx-background-radius:10;
+                              -fx-border-color:#e2e8f0; -fx-border-radius:10;">
+				<columns>
+					<TableColumn fx:id="colGrade"  text="Grade"   prefWidth="100"/>
+					<TableColumn fx:id="colMin"    text="Min %"   prefWidth="100"/>
+					<TableColumn fx:id="colMax"    text="Max %"   prefWidth="100"/>
+					<TableColumn fx:id="colRemark" text="Remark"  prefWidth="240"/>
+				</columns>
+			</TableView>
+
+			<Label text="Default: WAEC A1(75-100), B2(70-74), B3(65-69), C4(60-64), C5(55-59), C6(50-54), D7(45-49), E8(40-44), F9(0-39). Saved to school_profile and applied to all CA aggregations."
+                   wrapText="true"
+                   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+		</VBox>
+	</VBox>
+</VBox>

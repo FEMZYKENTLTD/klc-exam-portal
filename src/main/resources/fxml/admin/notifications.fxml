@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0" xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.NotificationController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Page Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20;">
+		<Label text="Notifications and Announcements"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Send announcements and email notifications"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;
+                       -fx-background:transparent;">
+		<VBox spacing="14" style="-fx-padding:16;">
+
+			<!-- Compose Card -->
+			<VBox styleClass="card" spacing="12">
+				<Label text="Send Announcement"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+				<GridPane hgap="12" vgap="10">
+					<VBox GridPane.rowIndex="0" GridPane.columnIndex="0"
+						  spacing="4" prefWidth="400">
+						<Label text="Title"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<TextField fx:id="titleField"
+								   promptText="e.g. Exam Schedule Update"
+								   style="-fx-border-color:#c8d3e8;
+                                      -fx-border-radius:8;
+                                      -fx-background-radius:8;
+                                      -fx-padding:9; -fx-font-size:14px;"/>
+					</VBox>
+					<VBox GridPane.rowIndex="0" GridPane.columnIndex="1"
+						  spacing="4">
+						<Label text="Target Audience"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+						<ComboBox fx:id="targetRoleBox" prefWidth="180"
+								  style="-fx-border-color:#c8d3e8;
+                                     -fx-border-radius:8;"/>
+					</VBox>
+				</GridPane>
+
+				<VBox spacing="4">
+					<Label text="Message"
+						   style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+					<TextArea fx:id="messageArea"
+							  promptText="Type your announcement message here..."
+							  prefRowCount="4"
+							  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                 -fx-background-radius:8; -fx-font-size:13px;"/>
+				</VBox>
+
+				<HBox spacing="10" alignment="CENTER_LEFT">
+					<Button text="Send Announcement"
+							onAction="#sendTest"
+							styleClass="btn-primary"
+							style="-fx-padding:10 18;"/>
+					<Button text="Flush Email Queue"
+							onAction="#flushQueue"
+							style="-fx-background-color:#3b82f6; -fx-text-fill:white;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:10 14; -fx-cursor:hand;"/>
+					<Button text="Notify All Students"
+							onAction="#notifyResults"
+							style="-fx-background-color:#10b981; -fx-text-fill:white;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:10 14; -fx-cursor:hand;"/>
+					<Button text="Refresh"
+							onAction="#loadNotifications"
+							style="-fx-background-color:#eaf0fb;
+                               -fx-border-color:#c8d3e8; -fx-border-radius:8;
+                               -fx-background-radius:8; -fx-padding:10 14;
+                               -fx-cursor:hand;"/>
+					<Region HBox.hgrow="ALWAYS"/>
+					<Label fx:id="statusLabel"
+						   style="-fx-font-size:13px; -fx-font-weight:bold;"
+						   wrapText="true"/>
+				</HBox>
+			</VBox>
+
+			<!-- Notification Queue Table -->
+			<VBox styleClass="card" spacing="10">
+				<Label text="Notification Queue"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+				<TableView fx:id="table" prefHeight="300"
+						   style="-fx-background-radius:10;
+                              -fx-border-color:#e2e8f0; -fx-border-radius:10;">
+					<columns>
+						<TableColumn fx:id="colTo"      text="Recipient"  prefWidth="220"/>
+						<TableColumn fx:id="colSubject" text="Subject"    prefWidth="260"/>
+						<TableColumn fx:id="colStatus"  text="Status"     prefWidth="90"/>
+						<TableColumn fx:id="colDate"    text="Date"       prefWidth="140"/>
+					</columns>
+					<placeholder>
+						<Label text="No notifications sent yet."
+							   style="-fx-text-fill:#94a3b8;"/>
+					</placeholder>
+				</TableView>
+			</VBox>
+
+			<Label text="SMTP config: set smtp.host, smtp.port, smtp.user, smtp.pass in config.properties. If not configured, messages are queued and sent later."
+				   wrapText="true"
+				   style="-fx-text-fill:#667085; -fx-font-size:12px;"/>
+
+		</VBox>
+	</ScrollPane>
+</VBox>

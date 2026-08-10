@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.LiveMonitorController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#c0392b; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Live Exam Monitor"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Real-time view of students currently sitting exams"
+               style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="12" style="-fx-padding:16;">
+
+		<!-- Toolbar -->
+		<HBox spacing="10" alignment="CENTER_LEFT"
+              style="-fx-background-color:white; -fx-padding:12;
+                     -fx-background-radius:10;
+                     -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.08),8,0,0,2);">
+			<Button text="Refresh Now"
+                    onAction="#loadLive"
+                    style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8;
+                           -fx-border-radius:8; -fx-background-radius:8;
+                           -fx-padding:9 16; -fx-cursor:hand;"/>
+			<CheckBox fx:id="autoRefreshBox"
+                      text="Auto-refresh every 5 seconds"
+                      style="-fx-font-size:13px;"/>
+			<Region HBox.hgrow="ALWAYS"/>
+			<Button text="Force Submit Selected"
+                    onAction="#forceSubmit"
+                    style="-fx-background-color:#c0392b; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+			<Button text="Extend Time"
+                    onAction="#extendTime"
+                    style="-fx-background-color:#f59e0b; -fx-text-fill:#0f1f3c;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+			<Label fx:id="status"
+                   style="-fx-font-size:12px; -fx-text-fill:#64748b;"/>
+		</HBox>
+
+		<!-- Table -->
+		<TableView fx:id="table" VBox.vgrow="ALWAYS" prefHeight="520"
+                   style="-fx-background-radius:10; -fx-border-color:#e2e8f0;
+                          -fx-border-radius:10;">
+			<columns>
+				<TableColumn fx:id="colName"     text="Student Name"  prefWidth="200"/>
+				<TableColumn fx:id="colAdm"      text="Admission No"  prefWidth="120"/>
+				<TableColumn fx:id="colExam"     text="Exam"          prefWidth="180"/>
+				<TableColumn fx:id="colStarted"  text="Started At"    prefWidth="100"/>
+				<TableColumn fx:id="colAnswered" text="Answered"      prefWidth="90"/>
+				<TableColumn fx:id="colStrikes"  text="Strikes"       prefWidth="80"/>
+				<TableColumn fx:id="colStatus"   text="Status"        prefWidth="110"/>
+			</columns>
+			<placeholder>
+				<Label text="No active exams at this time."
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:14px;"/>
+			</placeholder>
+		</TableView>
+
+		<Label text="Super Admin only: Force Submit terminates the exam immediately. Extend Time adds minutes for the selected student. Updates every 5 seconds via Supabase Realtime."
+               wrapText="true"
+               style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+	</VBox>
+</VBox>

@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+
+<ScrollPane fitToWidth="true"
+            xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.femzyk.klc.admin.AdminHomeController"
+            style="-fx-background-color:#f5f7fb; -fx-background:transparent;">
+
+	<VBox spacing="20" style="-fx-padding:24;">
+
+		<!-- Header Row -->
+		<HBox alignment="CENTER_LEFT" spacing="12">
+			<VBox spacing="3">
+				<Label text="Dashboard Overview"
+                       style="-fx-font-size:22px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Label fx:id="lastUpdatedLabel"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+			</VBox>
+			<Region HBox.hgrow="ALWAYS"/>
+			<HBox alignment="CENTER" spacing="6"
+                  style="-fx-padding:6 14; -fx-background-color:#ecfdf5;
+                         -fx-background-radius:20; -fx-border-color:#a7f3d0;
+                         -fx-border-radius:20;">
+				<Circle fx:id="liveDot" radius="6" fill="#10b981"/>
+				<Label fx:id="liveStatusLabel" text="Live"
+                       style="-fx-text-fill:#10b981; -fx-font-size:12px;
+                              -fx-font-weight:bold;"/>
+			</HBox>
+		</HBox>
+
+		<!-- Stats Row 1 -->
+		<!-- FIX: Removed -fx-border-left (not supported in JavaFX)  -->
+		<!-- Use -fx-border-width:0 0 0 4 with -fx-border-color only -->
+		<HBox spacing="16">
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-color:#3b82f6; -fx-border-width:0 0 0 4;">
+				<Label text="Total Students"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="lblStudents" text="--"
+                       style="-fx-font-size:32px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Label text="Registered students"
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-color:#10b981; -fx-border-width:0 0 0 4;">
+				<Label text="Active Exams"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="lblExams" text="--"
+                       style="-fx-font-size:32px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Label text="Published exams"
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-color:#f59e0b; -fx-border-width:0 0 0 4;">
+				<Label text="Teachers"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="lblTeachers" text="--"
+                       style="-fx-font-size:32px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Label text="Active teachers"
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-color:#8b5cf6; -fx-border-width:0 0 0 4;">
+				<Label text="Questions"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="lblQuestions" text="--"
+                       style="-fx-font-size:32px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Label text="Approved questions"
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"/>
+			</VBox>
+		</HBox>
+
+		<!-- Stats Row 2 -->
+		<HBox spacing="16">
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-color:#ef4444; -fx-border-width:0 0 0 4;">
+				<Label text="Live Exams Now"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="lblLiveExams" text="--"
+                       style="-fx-font-size:32px; -fx-font-weight:bold;
+                              -fx-text-fill:#ef4444;"/>
+				<Label text="Students in exam"
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-color:#06b6d4; -fx-border-width:0 0 0 4;">
+				<Label text="New Today"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="lblNewRegistrations" text="--"
+                       style="-fx-font-size:32px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Label text="Registrations today"
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-color:#f97316; -fx-border-width:0 0 0 4;">
+				<Label text="Malpractice"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="lblMalpractice" text="--"
+                       style="-fx-font-size:32px; -fx-font-weight:bold;
+                              -fx-text-fill:#f97316;"/>
+				<Label text="Flagged attempts"
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-color:#10b981; -fx-border-width:0 0 0 4;">
+				<Label text="System Health"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="lblHealth" text="--"
+                       style="-fx-font-size:22px; -fx-font-weight:bold;
+                              -fx-text-fill:#10b981;"/>
+				<Label text="Database status"
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"/>
+			</VBox>
+		</HBox>
+
+		<!-- Bottom Row -->
+		<HBox spacing="16">
+
+			<!-- Recent Registrations -->
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="10">
+				<Label text="Recent Registrations (Live)"
+                       style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<TableView fx:id="recentRegistrationsTable" prefHeight="280">
+					<columns>
+						<TableColumn fx:id="colRegName" text="Full Name"
+                                     prefWidth="220"/>
+						<TableColumn fx:id="colRegRole" text="Role"
+                                     prefWidth="130"/>
+						<TableColumn fx:id="colRegTime" text="Registered"
+                                     prefWidth="160"/>
+					</columns>
+					<placeholder>
+						<Label text="No registrations yet today"
+                               style="-fx-text-fill:#94a3b8;"/>
+					</placeholder>
+				</TableView>
+			</VBox>
+
+			<!-- Quick Actions -->
+			<VBox styleClass="card" prefWidth="280" spacing="10">
+				<Label text="Quick Actions"
+                       style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Button text="View Live Monitor"
+                        maxWidth="1.7976931348623157E308"
+                        style="-fx-background-color:#ef4444; -fx-text-fill:white;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:10 18; -fx-cursor:hand;"/>
+				<Button text="Create New Exam"
+                        maxWidth="1.7976931348623157E308"
+                        styleClass="btn-primary"
+                        style="-fx-padding:10 18;"/>
+				<Button text="Import Students CSV"
+                        maxWidth="1.7976931348623157E308"
+                        style="-fx-background-color:#f59e0b; -fx-text-fill:#0f1f3c;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:10 18; -fx-cursor:hand;"/>
+				<Button text="Post Announcement"
+                        maxWidth="1.7976931348623157E308"
+                        style="-fx-background-color:#10b981; -fx-text-fill:white;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:10 18; -fx-cursor:hand;"/>
+				<Button text="Run Backup"
+                        maxWidth="1.7976931348623157E308"
+                        style="-fx-background-color:#8b5cf6; -fx-text-fill:white;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:10 18; -fx-cursor:hand;"/>
+				<Separator/>
+				<Label text="System Info"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Label text="School: KNOWLEDGE LAND COLLEGE"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"
+                       wrapText="true"/>
+				<Label text="Principal: OLUFEMI BENUA KERIPE"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label text="Session: 2024/2025"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label text="Powered by FEMZYK"
+                       style="-fx-text-fill:#d4af37; -fx-font-size:11px;
+                              -fx-font-weight:bold;"/>
+			</VBox>
+
+		</HBox>
+	</VBox>
+</ScrollPane>

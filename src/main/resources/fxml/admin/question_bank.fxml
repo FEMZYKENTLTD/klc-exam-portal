@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0" xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.QuestionBankController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Page Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Question Bank"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Questions grouped by subject - click a subject to view its questions"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="12" style="-fx-padding:16;" VBox.vgrow="ALWAYS">
+
+		<!-- Toolbar -->
+		<HBox spacing="8" alignment="CENTER_LEFT"
+              style="-fx-background-color:white; -fx-padding:12;
+                     -fx-background-radius:10;
+                     -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.08),8,0,0,2);">
+			<TextField fx:id="searchField"
+                       promptText="Search questions by text or subject..."
+                       prefWidth="260"
+                       style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                              -fx-background-radius:8; -fx-padding:8;
+                              -fx-font-size:13px;
+                              -fx-prompt-text-fill:#94a3b8;"/>
+			<ComboBox fx:id="classFilter"
+                      prefWidth="130"
+                      style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+			<Region HBox.hgrow="ALWAYS"/>
+			<Button text="Refresh"
+                    onAction="#refreshQuestions"
+                    style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8;
+                           -fx-border-radius:8; -fx-background-radius:8;
+                           -fx-padding:8 14; -fx-cursor:hand;"/>
+			<Button text="Approve Selected"
+                    onAction="#approveSelected"
+                    style="-fx-background-color:#0f7a3a; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:8 14; -fx-cursor:hand;"/>
+			<Button text="Unapprove"
+                    onAction="#unapproveSelected"
+                    style="-fx-background-color:#f59e0b; -fx-text-fill:#0f1f3c;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:8 14; -fx-cursor:hand;"/>
+			<Button text="Delete Selected"
+                    onAction="#deleteSelected"
+                    style="-fx-background-color:#ef4444; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:8 14; -fx-cursor:hand;"/>
+		</HBox>
+
+		<Label fx:id="statusLabel"
+               style="-fx-font-size:13px; -fx-font-weight:bold;"
+               wrapText="true"/>
+
+		<!-- Split: Subject Tree (left) + Questions (right) -->
+		<SplitPane dividerPositions="0.28" VBox.vgrow="ALWAYS" prefHeight="540">
+
+			<!-- LEFT: Subject Tree -->
+			<VBox style="-fx-background-color:white;
+                         -fx-border-color:#e2e8f0;
+                         -fx-border-radius:10;
+                         -fx-background-radius:10;
+                         -fx-padding:10;">
+				<Label text="Subjects"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#0f1f3c; -fx-padding:0 0 8 4;"/>
+				<TreeView fx:id="subjectTree"
+                          VBox.vgrow="ALWAYS"
+                          style="-fx-background-color:transparent;
+                                 -fx-border-color:transparent;">
+					<placeholder>
+						<Label text="No subjects yet."
+                               style="-fx-text-fill:#94a3b8;"/>
+					</placeholder>
+				</TreeView>
+			</VBox>
+
+			<!-- RIGHT: Question Table -->
+			<VBox style="-fx-background-color:white;
+                         -fx-border-color:#e2e8f0;
+                         -fx-border-radius:10;
+                         -fx-background-radius:10;
+                         -fx-padding:10;">
+				<Label text="Questions (click a subject on the left)"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#64748b; -fx-padding:0 0 8 0;"/>
+				<TableView fx:id="questionTable"
+                           VBox.vgrow="ALWAYS"
+                           style="-fx-background-radius:8;
+                                  -fx-border-color:#e2e8f0;
+                                  -fx-border-radius:8;">
+					<columns>
+						<TableColumn fx:id="colQuestion"
+                                     text="Question Text"
+                                     prefWidth="380"/>
+						<TableColumn fx:id="colClass"
+                                     text="Class"
+                                     prefWidth="70"/>
+						<TableColumn fx:id="colDifficulty"
+                                     text="Difficulty"
+                                     prefWidth="90"/>
+						<TableColumn fx:id="colApproved"
+                                     text="Status"
+                                     prefWidth="90"/>
+					</columns>
+					<placeholder>
+						<Label text="Select a subject from the left panel to view its questions."
+                               style="-fx-text-fill:#94a3b8; -fx-font-size:13px;"/>
+					</placeholder>
+				</TableView>
+			</VBox>
+
+		</SplitPane>
+
+		<Label text="Click a subject to see its questions. Expand a subject to filter by class. Approve: makes question available in exams. Super Admin and Exam Officers can approve."
+               wrapText="true"
+               style="-fx-text-fill:#667085; -fx-font-size:12px;"/>
+
+	</VBox>
+</VBox>

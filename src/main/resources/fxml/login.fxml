@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.auth.LoginController"
+      prefWidth="1200" prefHeight="760">
+
+	<!-- LEFT PANEL: Artwork — fixed width 55% -->
+	<VBox alignment="CENTER"
+          style="-fx-background-color:linear-gradient(to bottom,#0f1f3c,#1b2f5a);"
+          prefWidth="660" minWidth="500">
+
+		<ImageView preserveRatio="true" fitWidth="580" fitHeight="580">
+			<image>
+				<Image url="@../images/school_artwork.png"/>
+			</image>
+		</ImageView>
+
+		<VBox alignment="CENTER" spacing="6"
+              style="-fx-padding:0 40 30 40;">
+			<Label text="KNOWLEDGE LAND COLLEGE"
+                   style="-fx-text-fill:white; -fx-font-size:18px;
+                          -fx-font-weight:bold;"/>
+			<Label text="Secondary School, Igando, Lagos State"
+                   style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+			<Separator maxWidth="280"/>
+			<Label text="Powered by FEMZYK"
+                   style="-fx-text-fill:#d4af37; -fx-font-size:11px;
+                          -fx-font-weight:bold;"/>
+		</VBox>
+	</VBox>
+
+	<!-- RIGHT PANEL: Login Form — takes remaining space -->
+	<VBox alignment="CENTER"
+          style="-fx-background-color:white;"
+          HBox.hgrow="ALWAYS" minWidth="380">
+
+		<VBox spacing="18" style="-fx-padding:48 44 32 44;" maxWidth="400">
+
+			<!-- Logo + Branding -->
+			<VBox alignment="CENTER" spacing="8">
+				<ImageView fitWidth="64" fitHeight="64"
+                           preserveRatio="true">
+					<image>
+						<Image url="@../images/klc_logo.png"/>
+					</image>
+				</ImageView>
+				<Label text="CBT SUITE v6.3"
+                       style="-fx-font-size:20px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Label text="Enterprise Examination Portal"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+			</VBox>
+
+			<Separator/>
+
+			<VBox spacing="4">
+				<Label text="Welcome Back"
+                       style="-fx-font-size:22px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Label text="Sign in to continue"
+                       style="-fx-text-fill:#64748b; -fx-font-size:13px;"/>
+			</VBox>
+
+			<!-- Status -->
+			<Label fx:id="statusLabel"
+                   wrapText="true" maxWidth="360"
+                   style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+
+			<!-- Email -->
+			<VBox spacing="6">
+				<Label text="Email Address"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#374151;"/>
+				<TextField fx:id="emailField"
+                           promptText="your@email.com"
+                           style="-fx-border-color:#d1d5db;
+                                  -fx-border-radius:8;
+                                  -fx-background-radius:8;
+                                  -fx-padding:11 14;
+                                  -fx-font-size:14px;
+                                  -fx-prompt-text-fill:#9ca3af;
+                                  -fx-background-color:white;"/>
+			</VBox>
+
+			<!-- Password with Eye Icon -->
+			<VBox spacing="6">
+				<Label text="Password"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#374151;"/>
+				<HBox spacing="8" alignment="CENTER_LEFT">
+					<PasswordField fx:id="passField"
+                                   promptText="Enter your password"
+                                   HBox.hgrow="ALWAYS"
+                                   style="-fx-border-color:#d1d5db;
+                                          -fx-border-radius:8;
+                                          -fx-background-radius:8;
+                                          -fx-padding:11 14;
+                                          -fx-font-size:14px;
+                                          -fx-prompt-text-fill:#9ca3af;
+                                          -fx-background-color:white;"/>
+					<TextField fx:id="passVisible"
+                               promptText="Enter your password"
+                               HBox.hgrow="ALWAYS"
+                               style="-fx-border-color:#d1d5db;
+                                      -fx-border-radius:8;
+                                      -fx-background-radius:8;
+                                      -fx-padding:11 14;
+                                      -fx-font-size:14px;
+                                      -fx-prompt-text-fill:#9ca3af;
+                                      -fx-background-color:white;"
+                               visible="false" managed="false"/>
+
+					<!-- Eye icon button — dark background so icon is visible -->
+					<Button fx:id="togglePassBtn"
+                            text="&#128065;"
+                            onAction="#togglePassword"
+                            prefWidth="46" prefHeight="44"
+                            style="-fx-background-color:#0f1f3c;
+                                   -fx-border-color:#0f1f3c;
+                                   -fx-border-radius:8;
+                                   -fx-background-radius:8;
+                                   -fx-padding:8;
+                                   -fx-cursor:hand;
+                                   -fx-font-size:16px;
+                                   -fx-text-fill:white;"/>
+				</HBox>
+			</VBox>
+
+			<!-- 2FA -->
+			<VBox spacing="6">
+				<Label fx:id="totpLabel"
+                       text="Authenticator Code (6 digits)"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#374151;"
+                       visible="false" managed="false"/>
+				<TextField fx:id="totpField"
+                           promptText="000000"
+                           visible="false" managed="false"
+                           style="-fx-border-color:#d1d5db;
+                                  -fx-border-radius:8;
+                                  -fx-background-radius:8;
+                                  -fx-padding:11 14;
+                                  -fx-font-size:18px;
+                                  -fx-alignment:CENTER;"/>
+			</VBox>
+
+			<!-- Sign In Button -->
+			<Button text="SIGN IN"
+                    onAction="#handleLogin"
+                    defaultButton="true"
+                    maxWidth="1.7976931348623157E308"
+                    style="-fx-background-color:#0f1f3c;
+                           -fx-text-fill:white;
+                           -fx-font-weight:bold;
+                           -fx-font-size:15px;
+                           -fx-background-radius:8;
+                           -fx-padding:13 0;
+                           -fx-cursor:hand;"/>
+
+			<!-- Links -->
+			<HBox alignment="CENTER" spacing="6">
+				<Label text="No account?"
+                       style="-fx-text-fill:#64748b; -fx-font-size:13px;"/>
+				<Hyperlink text="Register" onAction="#goRegister"
+                           style="-fx-text-fill:#0f1f3c;
+                                  -fx-font-weight:bold; -fx-font-size:13px;"/>
+				<Label text="  |  " style="-fx-text-fill:#d1d5db;"/>
+				<Hyperlink text="Forgot Password?" onAction="#goReset"
+                           style="-fx-text-fill:#64748b; -fx-font-size:13px;"/>
+			</HBox>
+
+			<!-- Footer info -->
+			<VBox spacing="4"
+                  style="-fx-background-color:#f9fafb;
+                         -fx-background-radius:10;
+                         -fx-border-color:#e5e7eb;
+                         -fx-border-radius:10;
+                         -fx-border-width:1;
+                         -fx-padding:12;">
+				<Label text="Result PIN: SURNAME + CLASS  e.g. KERIPESS2"
+                       style="-fx-text-fill:#6b7280; -fx-font-size:12px;"/>
+				<Label text="Registration mandatory for all users."
+                       style="-fx-text-fill:#6b7280; -fx-font-size:12px;"/>
+			</VBox>
+
+		</VBox>
+	</VBox>
+
+</HBox>

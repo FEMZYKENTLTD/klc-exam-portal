@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.student.StudentDashboardController">
+
+	<!-- Header with Logo -->
+	<HBox styleClass="header" spacing="14" alignment="CENTER_LEFT"
+          style="-fx-padding:10 20;">
+		<ImageView fitWidth="44" fitHeight="44" preserveRatio="true">
+			<image>
+				<Image url="@../images/klc_logo.png"/>
+			</image>
+		</ImageView>
+		<VBox spacing="2">
+			<Label text="KNOWLEDGE LAND COLLEGE"
+                   style="-fx-text-fill:white; -fx-font-size:16px;
+                          -fx-font-weight:bold;"/>
+			<Label text="Secondary School, Igando, Lagos State - Student Portal"
+                   style="-fx-text-fill:#d4af37; -fx-font-size:11px;"/>
+		</VBox>
+		<Region HBox.hgrow="ALWAYS"/>
+		<Label fx:id="welcomeLabel"
+               style="-fx-text-fill:white; -fx-font-size:13px;"/>
+		<Button text="Logout" onAction="#logout"
+                style="-fx-background-color:#ef4444; -fx-text-fill:white;
+                       -fx-font-weight:bold; -fx-background-radius:8;
+                       -fx-padding:8 14; -fx-cursor:hand;"/>
+	</HBox>
+
+	<!-- PIN / CGPA Bar -->
+	<HBox style="-fx-background-color:#1b2f5a; -fx-padding:8 20;"
+          alignment="CENTER_LEFT" spacing="8">
+		<Label fx:id="pinLabel"
+               style="-fx-text-fill:#d4af37; -fx-font-size:12px;
+                      -fx-font-weight:bold;"/>
+		<Region HBox.hgrow="ALWAYS"/>
+		<Label fx:id="cgpaLabel"
+               style="-fx-text-fill:#10b981; -fx-font-size:12px;
+                      -fx-font-weight:bold;"/>
+	</HBox>
+
+	<!-- TAB NAVIGATION -->
+	<TabPane fx:id="mainTabs" tabClosingPolicy="UNAVAILABLE"
+             VBox.vgrow="ALWAYS"
+             style="-fx-tab-min-height:40;
+                    -fx-background-color:#f5f7fb;">
+
+		<!-- ═══════════ TAB 1: DASHBOARD ═══════════ -->
+		<Tab text="Dashboard" onSelectionChanged="#onDashboardTab">
+			<ScrollPane fitToWidth="true"
+                        style="-fx-background-color:#f5f7fb;
+                               -fx-background:transparent;">
+				<VBox spacing="16" style="-fx-padding:18;">
+
+					<HBox spacing="16" alignment="TOP_LEFT">
+
+						<!-- LEFT: Start Exam -->
+						<VBox styleClass="card" spacing="12" prefWidth="400">
+							<Label text="Start Exam"
+								   style="-fx-font-size:16px; -fx-font-weight:bold;
+                                      -fx-text-fill:#0f1f3c;"/>
+
+							<VBox spacing="4">
+								<Label text="Subject"
+									   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                          -fx-text-fill:#0f1f3c;"/>
+								<ComboBox fx:id="subjectBox"
+										  promptText="Select your subject"
+										  maxWidth="1.7976931348623157E308"
+										  style="-fx-border-color:#c8d3e8;
+                                             -fx-border-radius:8;"/>
+							</VBox>
+
+							<HBox spacing="10">
+								<VBox spacing="4" HBox.hgrow="ALWAYS">
+									<Label text="Class"
+										   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                              -fx-text-fill:#0f1f3c;"/>
+									<TextField fx:id="classField" editable="false"
+											   promptText="e.g. SS2"
+											   style="-fx-border-color:#c8d3e8;
+                                                  -fx-border-radius:8;
+                                                  -fx-background-radius:8;
+                                                  -fx-padding:9;"/>
+								</VBox>
+								<VBox spacing="4" HBox.hgrow="ALWAYS">
+									<Label text="Arm"
+										   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                              -fx-text-fill:#0f1f3c;"/>
+									<TextField fx:id="armField" editable="false"
+											   promptText="e.g. Science"
+											   style="-fx-border-color:#c8d3e8;
+                                                  -fx-border-radius:8;
+                                                  -fx-background-radius:8;
+                                                  -fx-padding:9;"/>
+								</VBox>
+							</HBox>
+
+							<VBox spacing="4">
+								<Label text="Full Name"
+									   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                          -fx-text-fill:#0f1f3c;"/>
+								<TextField fx:id="nameField" editable="false"
+										   style="-fx-border-color:#c8d3e8;
+                                              -fx-border-radius:8;
+                                              -fx-background-radius:8;
+                                              -fx-padding:9;"/>
+							</VBox>
+
+							<VBox spacing="4">
+								<Label text="Admission Number"
+									   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                          -fx-text-fill:#0f1f3c;"/>
+								<TextField fx:id="admissionField" editable="false"
+										   style="-fx-border-color:#c8d3e8;
+                                              -fx-border-radius:8;
+                                              -fx-background-radius:8;
+                                              -fx-padding:9;"/>
+							</VBox>
+
+							<Button text="START EXAM"
+									onAction="#startExam"
+									styleClass="btn-primary"
+									maxWidth="1.7976931348623157E308"
+									style="-fx-font-size:15px; -fx-padding:12 0;"/>
+
+							<Label text="3-Strike Proctoring active. Do NOT minimize or switch apps."
+								   wrapText="true"
+								   style="-fx-text-fill:#c0392b; -fx-font-size:11px;"/>
+						</VBox>
+
+						<!-- RIGHT: Info panels -->
+						<VBox spacing="14" HBox.hgrow="ALWAYS">
+
+							<!-- Announcements -->
+							<VBox styleClass="card" spacing="8">
+								<Label text="Announcements / Notice Board"
+									   style="-fx-font-size:14px; -fx-font-weight:bold;
+                                          -fx-text-fill:#0f1f3c;"/>
+								<ListView fx:id="announcementsList" prefHeight="90"
+										  style="-fx-border-color:#e2e8f0;
+                                             -fx-border-radius:8;">
+									<placeholder>
+										<Label text="No announcements."
+											   style="-fx-text-fill:#94a3b8;"/>
+									</placeholder>
+								</ListView>
+							</VBox>
+
+							<!-- Top 3 Leaderboard -->
+							<VBox styleClass="card" spacing="8">
+								<Label text="Top 3 Students Per Subject (Global)"
+									   style="-fx-font-size:14px; -fx-font-weight:bold;
+                                          -fx-text-fill:#0f1f3c;"/>
+								<ListView fx:id="leaderboardList" prefHeight="150"
+										  style="-fx-border-color:#e2e8f0;
+                                             -fx-border-radius:8;">
+									<placeholder>
+										<Label text="No exam results yet."
+											   style="-fx-text-fill:#94a3b8;"/>
+									</placeholder>
+								</ListView>
+							</VBox>
+
+							<!-- Recent Results Preview -->
+							<VBox styleClass="card" spacing="8">
+								<Label text="My Recent Results"
+									   style="-fx-font-size:14px; -fx-font-weight:bold;
+                                          -fx-text-fill:#0f1f3c;"/>
+								<TableView fx:id="resultsTable" prefHeight="150"
+										   style="-fx-border-color:#e2e8f0;
+                                              -fx-border-radius:8;">
+									<columns>
+										<TableColumn fx:id="colRSub"   text="Subject"
+													 prefWidth="130"/>
+										<TableColumn fx:id="colRScore" text="Score"
+													 prefWidth="80"/>
+										<TableColumn fx:id="colRGrade" text="Grade"
+													 prefWidth="70"/>
+										<TableColumn fx:id="colRDate"  text="Date"
+													 prefWidth="110"/>
+									</columns>
+									<placeholder>
+										<Label text="No results yet."
+											   style="-fx-text-fill:#94a3b8;"/>
+									</placeholder>
+								</TableView>
+							</VBox>
+
+							<!-- Trend Chart -->
+							<VBox styleClass="card" spacing="8">
+								<Label text="Performance Trend"
+									   style="-fx-font-size:14px; -fx-font-weight:bold;
+                                          -fx-text-fill:#0f1f3c;"/>
+								<LineChart fx:id="trendChart" prefHeight="160"
+										   createSymbols="true" animated="false">
+									<xAxis>
+										<NumberAxis label="Exam #" side="BOTTOM"/>
+									</xAxis>
+									<yAxis>
+										<NumberAxis label="Score %" side="LEFT"
+													autoRanging="false"
+													lowerBound="0" upperBound="100"/>
+									</yAxis>
+								</LineChart>
+							</VBox>
+
+						</VBox>
+					</HBox>
+				</VBox>
+			</ScrollPane>
+		</Tab>
+
+		<!-- ═══════════ TAB 2: MY RESULTS ═══════════ -->
+		<Tab text="My Results" onSelectionChanged="#onResultsTab">
+			<VBox spacing="0" style="-fx-background-color:#f5f7fb;">
+
+				<!-- Toolbar -->
+				<HBox spacing="10" alignment="CENTER_LEFT"
+                      style="-fx-background-color:white; -fx-padding:12 16;
+                             -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.06),6,0,0,2);">
+					<Label text="My Academic Results - Lifetime Tracking"
+                           style="-fx-font-size:15px; -fx-font-weight:bold;
+                                  -fx-text-fill:#0f1f3c;"/>
+					<Region HBox.hgrow="ALWAYS"/>
+					<Button text="Download Report Card"
+                            onAction="#downloadReport"
+                            styleClass="btn-primary"
+                            style="-fx-padding:8 14;"/>
+					<Button text="Download Transcript"
+                            onAction="#downloadTranscript"
+                            style="-fx-background-color:#8b5cf6; -fx-text-fill:white;
+                                   -fx-font-weight:bold; -fx-background-radius:8;
+                                   -fx-padding:8 14; -fx-cursor:hand;"/>
+					<Button text="Dashboard"
+                            onAction="#goToDashboard"
+                            style="-fx-background-color:#eaf0fb;
+                                   -fx-border-color:#c8d3e8;
+                                   -fx-border-radius:8; -fx-background-radius:8;
+                                   -fx-padding:8 14; -fx-cursor:hand;"/>
+				</HBox>
+
+				<ScrollPane fitToWidth="true"
+                            style="-fx-background-color:#f5f7fb;
+                                   -fx-background:transparent;" VBox.vgrow="ALWAYS">
+					<VBox spacing="14" style="-fx-padding:16;">
+
+						<Label fx:id="resultSummaryLabel"
+							   wrapText="true"
+							   style="-fx-font-size:13px; -fx-font-weight:bold;
+                                  -fx-text-fill:#0f1f3c;"/>
+
+						<!-- My full results table -->
+						<VBox styleClass="card" spacing="8" VBox.vgrow="ALWAYS">
+							<Label text="All My Results"
+								   style="-fx-font-size:14px; -fx-font-weight:bold;
+                                      -fx-text-fill:#0f1f3c;"/>
+							<TableView fx:id="myFullResultsTable"
+									   prefHeight="380"
+									   style="-fx-border-color:#e2e8f0;
+                                          -fx-border-radius:10;">
+								<columns>
+									<TableColumn fx:id="colMySubject"  text="Subject"
+												 prefWidth="160"/>
+									<TableColumn fx:id="colMyScore"    text="Score"
+												 prefWidth="90"/>
+									<TableColumn fx:id="colMyGrade"    text="Grade"
+												 prefWidth="80"/>
+									<TableColumn fx:id="colMyPosition" text="Position"
+												 prefWidth="90"/>
+									<TableColumn fx:id="colMyDate"     text="Date"
+												 prefWidth="120"/>
+								</columns>
+								<placeholder>
+									<Label text="No results yet. Complete an exam first."
+										   style="-fx-text-fill:#94a3b8;"/>
+								</placeholder>
+							</TableView>
+						</VBox>
+
+						<!-- Result Sharing -->
+						<VBox styleClass="card" spacing="10">
+							<Label text="Share My Result with Another Student"
+								   style="-fx-font-size:14px; -fx-font-weight:bold;
+                                      -fx-text-fill:#0f1f3c;"/>
+							<Label text="Enter the admission number of the student you want to share your result with. They will receive a notification to accept or decline."
+								   wrapText="true"
+								   style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+							<HBox spacing="10" alignment="CENTER_LEFT">
+								<VBox spacing="4" HBox.hgrow="ALWAYS">
+									<Label text="Recipient Admission Number"
+										   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                              -fx-text-fill:#0f1f3c;"/>
+									<TextField fx:id="shareAdmissionField"
+											   promptText="e.g. KLC/SS2/012"
+											   style="-fx-border-color:#c8d3e8;
+                                                  -fx-border-radius:8;
+                                                  -fx-background-radius:8;
+                                                  -fx-padding:9; -fx-font-size:14px;
+                                                  -fx-prompt-text-fill:#64748b;"/>
+								</VBox>
+								<Button text="Send Share Request"
+										onAction="#shareResult"
+										style="-fx-background-color:#10b981;
+                                           -fx-text-fill:white;
+                                           -fx-font-weight:bold;
+                                           -fx-background-radius:8;
+                                           -fx-padding:10 16; -fx-cursor:hand;
+                                           -fx-margin:18 0 0 0;"/>
+							</HBox>
+							<Label fx:id="shareStatusLabel"
+								   style="-fx-font-size:12px; -fx-font-weight:bold;"/>
+						</VBox>
+
+						<!-- Submit Appeal -->
+						<VBox styleClass="card" spacing="10">
+							<Label text="Submit Result Appeal"
+								   style="-fx-font-size:14px; -fx-font-weight:bold;
+                                      -fx-text-fill:#0f1f3c;"/>
+							<Label text="Select a result from the table above, then type your reason below."
+								   wrapText="true"
+								   style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+							<VBox spacing="4">
+								<Label text="Appeal Reason"
+									   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                          -fx-text-fill:#0f1f3c;"/>
+								<TextArea fx:id="appealText"
+										  prefRowCount="3"
+										  wrapText="true"
+										  promptText="Explain why you are appealing this result..."
+										  style="-fx-border-color:#c8d3e8;
+                                             -fx-border-radius:8;
+                                             -fx-background-radius:8;
+                                             -fx-font-size:13px;
+                                             -fx-prompt-text-fill:#64748b;"/>
+							</VBox>
+							<Button text="Submit Appeal"
+									onAction="#submitAppeal"
+									style="-fx-background-color:#f59e0b;
+                                       -fx-text-fill:#0f1f3c;
+                                       -fx-font-weight:bold;
+                                       -fx-background-radius:8;
+                                       -fx-padding:10 20; -fx-cursor:hand;"/>
+						</VBox>
+
+					</VBox>
+				</ScrollPane>
+			</VBox>
+		</Tab>
+
+		<!-- ═══════════ TAB 3: NOTIFICATIONS ═══════════ -->
+		<Tab text="Notifications" onSelectionChanged="#onNotificationsTab">
+			<VBox spacing="0" style="-fx-background-color:#f5f7fb;">
+				<HBox spacing="10" alignment="CENTER_LEFT"
+                      style="-fx-background-color:white; -fx-padding:12 16;
+                             -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.06),6,0,0,2);">
+					<Label text="Notifications and Result Share Requests"
+                           style="-fx-font-size:15px; -fx-font-weight:bold;
+                                  -fx-text-fill:#0f1f3c;"/>
+					<Region HBox.hgrow="ALWAYS"/>
+					<Button text="Refresh" onAction="#loadNotifications"
+                            style="-fx-background-color:#eaf0fb;
+                                   -fx-border-color:#c8d3e8;
+                                   -fx-border-radius:8; -fx-background-radius:8;
+                                   -fx-padding:8 14; -fx-cursor:hand;"/>
+					<Button text="Dashboard" onAction="#goToDashboard"
+                            style="-fx-background-color:#eaf0fb;
+                                   -fx-border-color:#c8d3e8;
+                                   -fx-border-radius:8; -fx-background-radius:8;
+                                   -fx-padding:8 14; -fx-cursor:hand;"/>
+				</HBox>
+
+				<ScrollPane fitToWidth="true"
+                            style="-fx-background-color:#f5f7fb;
+                                   -fx-background:transparent;" VBox.vgrow="ALWAYS">
+					<VBox spacing="14" style="-fx-padding:16;">
+
+						<!-- Incoming Result Share Requests -->
+						<VBox styleClass="card" spacing="10">
+							<Label text="Result Share Requests (from other students)"
+								   style="-fx-font-size:14px; -fx-font-weight:bold;
+                                      -fx-text-fill:#0f1f3c;"/>
+							<Label text="When you accept, the sender's full result breakdown will be forwarded to you."
+								   wrapText="true"
+								   style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+							<ListView fx:id="shareRequestsList" prefHeight="200"
+									  style="-fx-border-color:#e2e8f0;
+                                         -fx-border-radius:8;">
+								<placeholder>
+									<Label text="No pending share requests."
+										   style="-fx-text-fill:#94a3b8;"/>
+								</placeholder>
+							</ListView>
+							<HBox spacing="10">
+								<Button text="Accept and Receive Result"
+										onAction="#acceptShareRequest"
+										style="-fx-background-color:#10b981;
+                                           -fx-text-fill:white;
+                                           -fx-font-weight:bold;
+                                           -fx-background-radius:8;
+                                           -fx-padding:9 16; -fx-cursor:hand;"/>
+								<Button text="Decline"
+										onAction="#declineShareRequest"
+										style="-fx-background-color:#ef4444;
+                                           -fx-text-fill:white;
+                                           -fx-font-weight:bold;
+                                           -fx-background-radius:8;
+                                           -fx-padding:9 16; -fx-cursor:hand;"/>
+							</HBox>
+							<Label fx:id="notifStatusLabel"
+								   style="-fx-font-size:12px; -fx-font-weight:bold;"/>
+						</VBox>
+
+						<!-- Received Results -->
+						<VBox styleClass="card" spacing="10">
+							<Label text="Results Received from Other Students"
+								   style="-fx-font-size:14px; -fx-font-weight:bold;
+                                      -fx-text-fill:#0f1f3c;"/>
+							<TableView fx:id="receivedResultsTable" prefHeight="220"
+									   style="-fx-border-color:#e2e8f0;
+                                          -fx-border-radius:10;">
+								<columns>
+									<TableColumn fx:id="colRcvFrom"    text="From"
+												 prefWidth="160"/>
+									<TableColumn fx:id="colRcvSubject" text="Subject"
+												 prefWidth="140"/>
+									<TableColumn fx:id="colRcvScore"   text="Score"
+												 prefWidth="90"/>
+									<TableColumn fx:id="colRcvGrade"   text="Grade"
+												 prefWidth="80"/>
+									<TableColumn fx:id="colRcvDate"    text="Shared"
+												 prefWidth="120"/>
+								</columns>
+								<placeholder>
+									<Label text="No results received from other students yet."
+										   style="-fx-text-fill:#94a3b8;"/>
+								</placeholder>
+							</TableView>
+						</VBox>
+
+					</VBox>
+				</ScrollPane>
+			</VBox>
+		</Tab>
+
+		<!-- ═══════════ TAB 4: PRACTICE ═══════════ -->
+		<Tab text="Practice" onSelectionChanged="#onPracticeTab">
+			<VBox spacing="0" style="-fx-background-color:#f5f7fb;">
+				<HBox spacing="10" alignment="CENTER_LEFT"
+                      style="-fx-background-color:white; -fx-padding:12 16;
+                             -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.06),6,0,0,2);">
+					<Label text="Practice Mode"
+                           style="-fx-font-size:15px; -fx-font-weight:bold;
+                                  -fx-text-fill:#0f1f3c;"/>
+					<Region HBox.hgrow="ALWAYS"/>
+					<Button text="Dashboard" onAction="#goToDashboard"
+                            style="-fx-background-color:#eaf0fb;
+                                   -fx-border-color:#c8d3e8;
+                                   -fx-border-radius:8; -fx-background-radius:8;
+                                   -fx-padding:8 14; -fx-cursor:hand;"/>
+				</HBox>
+				<VBox spacing="16" style="-fx-padding:24;" alignment="CENTER">
+					<VBox styleClass="card" maxWidth="520" spacing="14">
+						<Label text="Select Subject and Class to Practice"
+                               style="-fx-font-size:15px; -fx-font-weight:bold;
+                                      -fx-text-fill:#0f1f3c;"/>
+						<VBox spacing="4">
+							<Label text="Subject"
+                                   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                          -fx-text-fill:#0f1f3c;"/>
+							<ComboBox fx:id="practiceSubjectBox"
+                                      promptText="Select subject to practice"
+                                      maxWidth="1.7976931348623157E308"
+                                      style="-fx-border-color:#c8d3e8;
+                                             -fx-border-radius:8;"/>
+						</VBox>
+						<VBox spacing="4">
+							<Label text="Class Level"
+                                   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                          -fx-text-fill:#0f1f3c;"/>
+							<ComboBox fx:id="practiceClassBox"
+                                      promptText="Select class level"
+                                      maxWidth="1.7976931348623157E308"
+                                      style="-fx-border-color:#c8d3e8;
+                                             -fx-border-radius:8;"/>
+						</VBox>
+						<Button text="Start Practice Session"
+                                onAction="#startPractice"
+                                styleClass="btn-primary"
+                                maxWidth="1.7976931348623157E308"
+                                style="-fx-font-size:14px; -fx-padding:11 0;"/>
+						<Label fx:id="practiceStatusLabel"
+                               style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+						<Label text="Practice results are NOT recorded. Use this to prepare for exams."
+                               wrapText="true"
+                               style="-fx-text-fill:#667085; -fx-font-size:12px;"/>
+					</VBox>
+				</VBox>
+			</VBox>
+		</Tab>
+
+		<!-- ═══════════ TAB 5: E-LIBRARY ═══════════ -->
+		<Tab text="E-Library" onSelectionChanged="#onLibraryTab">
+			<VBox spacing="0" style="-fx-background-color:#f5f7fb;">
+				<HBox spacing="10" alignment="CENTER_LEFT"
+                      style="-fx-background-color:white; -fx-padding:12 16;
+                             -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.06),6,0,0,2);">
+					<Label text="E-Library - Study Materials"
+                           style="-fx-font-size:15px; -fx-font-weight:bold;
+                                  -fx-text-fill:#0f1f3c;"/>
+					<Region HBox.hgrow="ALWAYS"/>
+					<Button text="Dashboard" onAction="#goToDashboard"
+                            style="-fx-background-color:#eaf0fb;
+                                   -fx-border-color:#c8d3e8;
+                                   -fx-border-radius:8; -fx-background-radius:8;
+                                   -fx-padding:8 14; -fx-cursor:hand;"/>
+				</HBox>
+				<VBox spacing="14" style="-fx-padding:16;" VBox.vgrow="ALWAYS">
+					<Label text="Double-click any material to open it."
+                           style="-fx-text-fill:#64748b; -fx-font-size:13px;"/>
+					<TableView fx:id="materialsTable" VBox.vgrow="ALWAYS"
+                               prefHeight="480"
+                               style="-fx-border-color:#e2e8f0;
+                                      -fx-border-radius:10;">
+						<columns>
+							<TableColumn fx:id="colMatTitle" text="Title"
+                                         prefWidth="360"/>
+							<TableColumn fx:id="colMatSub"   text="Subject"
+                                         prefWidth="160"/>
+						</columns>
+						<placeholder>
+							<Label text="No study materials uploaded yet."
+                                   style="-fx-text-fill:#94a3b8;"/>
+						</placeholder>
+					</TableView>
+				</VBox>
+			</VBox>
+		</Tab>
+
+	</TabPane>
+
+</VBox>

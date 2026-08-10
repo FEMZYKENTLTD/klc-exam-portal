@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.CAUploadController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="CA Scores Management"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Upload CA scores from CSV file or enter manually"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;
+                       -fx-background:transparent;">
+		<VBox spacing="14" style="-fx-padding:16;">
+
+			<!-- Two input options side by side -->
+			<HBox spacing="14" alignment="TOP_LEFT">
+
+				<!-- LEFT: CSV Upload -->
+				<VBox styleClass="card" spacing="12" HBox.hgrow="ALWAYS">
+					<Label text="Option 1 - Upload from CSV File"
+						   style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+
+					<VBox spacing="6"
+						  style="-fx-background-color:#f0f9ff; -fx-padding:12;
+                             -fx-background-radius:8; -fx-border-color:#bae6fd;
+                             -fx-border-radius:8; -fx-border-width:1;">
+						<Label text="CSV Format:"
+							   style="-fx-font-weight:bold; -fx-font-size:12px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<Label text="admission_no, subject_name, ca1_score, ca2_score, term, session"
+							   style="-fx-font-family:Consolas,monospace;
+                                  -fx-font-size:12px; -fx-text-fill:#1e293b;"/>
+						<Label text="Example: KLC/SS2/001, MATHEMATICS, 18, 16, 1st, 2024/2025"
+							   style="-fx-font-family:Consolas,monospace;
+                                  -fx-font-size:11px; -fx-text-fill:#64748b;"/>
+						<Label text="CA1 max: 20  |  CA2 max: 20  |  Total: 40"
+							   style="-fx-text-fill:#64748b; -fx-font-size:11px;"/>
+					</VBox>
+
+					<Button text="Choose CSV File and Upload"
+							onAction="#uploadCAFile"
+							styleClass="btn-primary"
+							maxWidth="1.7976931348623157E308"
+							style="-fx-font-size:14px; -fx-padding:12 0;"/>
+
+					<Label fx:id="statusLabel"
+						   wrapText="true"
+						   style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+				</VBox>
+
+				<!-- RIGHT: Manual Entry -->
+				<VBox styleClass="card" spacing="12" HBox.hgrow="ALWAYS">
+					<Label text="Option 2 - Enter Manually"
+						   style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+
+					<!-- Student -->
+					<VBox spacing="4">
+						<Label text="Student Name"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<ComboBox fx:id="manualStudentBox"
+								  promptText="Search and select student..."
+								  maxWidth="1.7976931348623157E308"
+								  style="-fx-border-color:#c8d3e8;
+                                     -fx-border-radius:8;"/>
+					</VBox>
+
+					<!-- Subject -->
+					<VBox spacing="4">
+						<Label text="Subject"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<ComboBox fx:id="manualSubjectBox"
+								  promptText="Select subject..."
+								  maxWidth="1.7976931348623157E308"
+								  style="-fx-border-color:#c8d3e8;
+                                     -fx-border-radius:8;"/>
+					</VBox>
+
+					<!-- Term -->
+					<VBox spacing="4">
+						<Label text="Term"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<ComboBox fx:id="manualTermBox"
+								  promptText="Select term (1st / 2nd / 3rd)"
+								  maxWidth="1.7976931348623157E308"
+								  style="-fx-border-color:#c8d3e8;
+                                     -fx-border-radius:8;"/>
+					</VBox>
+
+					<!-- CA Scores -->
+					<HBox spacing="12">
+						<VBox spacing="4" HBox.hgrow="ALWAYS">
+							<Label text="CA1 Score (max 20)"
+								   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+							<TextField fx:id="manualCA1Field"
+									   promptText="e.g. 18"
+									   style="-fx-border-color:#c8d3e8;
+                                          -fx-border-radius:8;
+                                          -fx-background-radius:8;
+                                          -fx-padding:9; -fx-font-size:14px;
+                                          -fx-prompt-text-fill:#64748b;"/>
+						</VBox>
+						<VBox spacing="4" HBox.hgrow="ALWAYS">
+							<Label text="CA2 Score (max 20)"
+								   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+							<TextField fx:id="manualCA2Field"
+									   promptText="e.g. 16"
+									   style="-fx-border-color:#c8d3e8;
+                                          -fx-border-radius:8;
+                                          -fx-background-radius:8;
+                                          -fx-padding:9; -fx-font-size:14px;
+                                          -fx-prompt-text-fill:#64748b;"/>
+						</VBox>
+					</HBox>
+
+					<Button text="Save CA Score"
+							onAction="#saveManualEntry"
+							style="-fx-background-color:#10b981; -fx-text-fill:white;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:11 0; -fx-cursor:hand;
+                               -fx-font-size:14px;"
+							maxWidth="1.7976931348623157E308"/>
+
+					<Label fx:id="manualStatusLabel"
+						   wrapText="true"
+						   style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+				</VBox>
+
+			</HBox>
+
+			<!-- CA Scores Table with Student Name -->
+			<VBox styleClass="card" spacing="10" VBox.vgrow="ALWAYS">
+				<HBox alignment="CENTER_LEFT">
+					<Label text="All CA Scores"
+						   style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+					<Region HBox.hgrow="ALWAYS"/>
+					<Button text="Refresh"
+							onAction="#refreshTable"
+							style="-fx-background-color:#eaf0fb;
+                               -fx-border-color:#c8d3e8; -fx-border-radius:8;
+                               -fx-background-radius:8; -fx-padding:8 16;
+                               -fx-cursor:hand;"/>
+				</HBox>
+
+				<TableView fx:id="caTable" prefHeight="380"
+						   style="-fx-background-radius:10;
+                              -fx-border-color:#e2e8f0; -fx-border-radius:10;">
+					<columns>
+						<TableColumn fx:id="colStudent"  text="Student Name"
+									 prefWidth="200"/>
+						<TableColumn fx:id="colSubject"  text="Subject"
+									 prefWidth="160"/>
+						<TableColumn fx:id="colClass"    text="Class"
+									 prefWidth="70"/>
+						<TableColumn fx:id="colTerm"     text="Term"
+									 prefWidth="60"/>
+						<TableColumn fx:id="colCA1"      text="CA1 (/20)"
+									 prefWidth="80"/>
+						<TableColumn fx:id="colCA2"      text="CA2 (/20)"
+									 prefWidth="80"/>
+						<TableColumn fx:id="colTotal"    text="Total (/40)"
+									 prefWidth="90"/>
+					</columns>
+					<placeholder>
+						<Label text="No CA scores recorded yet."
+							   style="-fx-text-fill:#94a3b8; -fx-font-size:14px;"/>
+					</placeholder>
+				</TableView>
+
+				<Label text="CA1 and CA2 each max 20 marks. Exam score is added separately. Total CA = CA1 + CA2 (max 40). Exam Officer, Teachers and Admins can enter CA scores."
+					   wrapText="true"
+					   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+			</VBox>
+
+		</VBox>
+	</ScrollPane>
+</VBox>

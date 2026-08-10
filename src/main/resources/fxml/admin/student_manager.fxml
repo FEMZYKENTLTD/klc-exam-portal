@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.StudentManagerController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Student Manager"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="View, import and manage student records"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="12" style="-fx-padding:16;">
+
+		<!-- Toolbar -->
+		<HBox spacing="8" alignment="CENTER_LEFT"
+              style="-fx-background-color:white; -fx-padding:12;
+                     -fx-background-radius:10;
+                     -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.08),8,0,0,2);">
+			<Button text="Import Students CSV"
+                    onAction="#importCsv"
+                    styleClass="btn-primary"
+                    style="-fx-padding:9 14;"/>
+			<Button text="Regenerate Result PIN"
+                    onAction="#regeneratePin"
+                    style="-fx-background-color:#f59e0b; -fx-text-fill:#0f1f3c;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+			<Button text="Toggle Fee Status"
+                    onAction="#toggleFee"
+                    style="-fx-background-color:#8b5cf6; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+			<Button text="Reset Password"
+                    onAction="#resetPassword"
+                    style="-fx-background-color:#ef4444; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+			<Button text="Refresh"
+                    onAction="#load"
+                    style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8;
+                           -fx-border-radius:8; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+			<Region HBox.hgrow="ALWAYS"/>
+			<Label fx:id="status"
+                   style="-fx-font-size:12px; -fx-text-fill:#64748b;"/>
+		</HBox>
+
+		<!-- Table -->
+		<TableView fx:id="table" VBox.vgrow="ALWAYS" prefHeight="520"
+                   style="-fx-background-radius:10; -fx-border-color:#e2e8f0;
+                          -fx-border-radius:10;">
+			<columns>
+				<TableColumn fx:id="colAdm"   text="Admission No"  prefWidth="130"/>
+				<TableColumn fx:id="colName"  text="Full Name"     prefWidth="220"/>
+				<TableColumn fx:id="colClass" text="Class"         prefWidth="80"/>
+				<TableColumn fx:id="colArm"   text="Arm"           prefWidth="100"/>
+				<TableColumn fx:id="colPin"   text="Result PIN"    prefWidth="140"/>
+				<TableColumn fx:id="colFee"   text="Fee Status"    prefWidth="100"/>
+			</columns>
+			<placeholder>
+				<Label text="No students registered yet. Import a CSV or students register themselves."
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:14px;"/>
+			</placeholder>
+		</TableView>
+
+		<Label text="CSV columns: full_name, email, admission_no, surname, class_level, arm, gender, parent_phone | Admission No auto-generated if blank: KLC/CLASS/### | PIN = SURNAME+CLASS e.g. KERIPESS2 | Default password: Student123"
+               wrapText="true"
+               style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+	</VBox>
+</VBox>

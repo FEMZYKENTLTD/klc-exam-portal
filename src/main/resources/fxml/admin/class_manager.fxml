@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox spacing="12" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+  fx:controller="com.femzyk.klc.admin.ClassManagerController" style="-fx-padding:12;">
+  <Label text="🏫 Class / Arm / Term / Session Manager – Secondary School" style="-fx-font-size:18px; -fx-font-weight:bold;"/>
+  <HBox spacing="16">
+    <VBox styleClass="card" spacing="8" prefWidth="520">
+      <Label text="Class / Arm Manager – CRUD" style="-fx-font-weight:bold;"/>
+      <HBox spacing="8">
+        <ComboBox fx:id="cClassLevel" promptText="Class"/>
+        <ComboBox fx:id="cArm" promptText="Arm"/>
+        <ComboBox fx:id="cSession" promptText="Session" editable="true"/>
+        <Button text="Add Class/Arm" onAction="#addClass" styleClass="btn-primary"/>
+        <Button text="Delete" onAction="#deleteClass"/>
+        <Button text="Refresh" onAction="#loadClasses"/>
+      </HBox>
+      <TableView fx:id="classTable" prefHeight="280">
+        <columns>
+          <TableColumn fx:id="colClassLevel" text="Class" prefWidth="80"/>
+          <TableColumn fx:id="colArm" text="Arm" prefWidth="95"/>
+          <TableColumn fx:id="colSession" text="Session" prefWidth="100"/>
+          <TableColumn fx:id="colTeacher" text="Class Teacher" prefWidth="180"/>
+        </columns>
+      </TableView>
+      <Label fx:id="cStatus" textFill="#0f7a3a"/>
+      <Label text="Classes: JSS1, JSS2, JSS3, SS1, SS2, SS3 | Arms: A, B, C, Science, Art, Commercial – fully editable, add custom arms" wrapText="true" styleClass="small-muted"/>
+    </VBox>
+    <VBox styleClass="card" spacing="10" prefWidth="340">
+      <Label text="Academic Session / Term Control" style="-fx-font-weight:bold;"/>
+      <Label text="Current Session"/>
+      <TextField fx:id="sessionNameField" promptText="2024/2025"/>
+      <Label text="Current Term"/>
+      <ComboBox fx:id="termCurrentBox" prefWidth="150"/>
+      <HBox spacing="8">
+        <Button text="Save Academic Calendar" onAction="#saveAcademic" styleClass="btn-primary"/>
+        <Button text="Create New Session" onAction="#createSession"/>
+      </HBox>
+      <Label fx:id="academicStatus" textFill="#0f7a3a" wrapText="true"/>
+      <Separator/>
+      <Label text="Session format: YYYY/YYYY e.g. 2025/2026 – unlimited years supported – 10+ year archive" wrapText="true" styleClass="small-muted"/>
+      <Label text="Term Rollover: Admin → School Settings → Term Rollover Wizard – Promote JSS1→JSS2, Graduate SS3" wrapText="true" styleClass="small-muted"/>
+    </VBox>
+  </HBox>
+</VBox>

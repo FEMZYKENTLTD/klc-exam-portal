@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.student.PracticeExamController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Practice Mode"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Practice past questions without being graded"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="16" style="-fx-padding:24;" alignment="CENTER">
+		<VBox styleClass="card" maxWidth="520" spacing="14">
+
+			<Label text="Select Subject and Class"
+                   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+			<VBox spacing="4">
+				<Label text="Subject"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#0f1f3c;"/>
+				<ComboBox fx:id="subjectBox"
+                          promptText="Select a subject to practice"
+                          maxWidth="1.7976931348623157E308"
+                          style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+			</VBox>
+
+			<VBox spacing="4">
+				<Label text="Class Level"
+                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#0f1f3c;"/>
+				<ComboBox fx:id="classBox"
+                          promptText="Select your class"
+                          maxWidth="1.7976931348623157E308"
+                          style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+			</VBox>
+
+			<Button text="Start Practice Session"
+                    onAction="#startPractice"
+                    styleClass="btn-primary"
+                    maxWidth="1.7976931348623157E308"
+                    style="-fx-font-size:14px; -fx-padding:11 0;"/>
+
+			<Label fx:id="statusLabel"
+                   wrapText="true"
+                   style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+
+			<Label text="Practice mode uses approved questions from the question bank. Results are NOT recorded."
+                   wrapText="true"
+                   style="-fx-text-fill:#667085; -fx-font-size:12px;"/>
+		</VBox>
+	</VBox>
+</VBox>

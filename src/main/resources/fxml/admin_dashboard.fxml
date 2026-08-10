@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.femzyk.klc.admin.AdminDashboardController"
+            prefWidth="1280" prefHeight="800">
+
+	<!-- TOP HEADER -->
+	<top>
+		<HBox styleClass="header" alignment="CENTER_LEFT" spacing="12"
+              style="-fx-padding:10 20;">
+			<ImageView fitWidth="42" fitHeight="42" preserveRatio="true">
+				<image>
+					<Image url="@../images/klc_logo.png"/>
+				</image>
+			</ImageView>
+			<VBox spacing="2">
+				<Label text="KNOWLEDGE LAND COLLEGE"
+                       style="-fx-text-fill:white; -fx-font-size:16px;
+                              -fx-font-weight:bold;"/>
+				<Label text="CBT SUITE v6.3 - Admin Portal"
+                       style="-fx-text-fill:#d4af37; -fx-font-size:11px;"/>
+			</VBox>
+			<Region HBox.hgrow="ALWAYS"/>
+			<Label fx:id="sessionStatusLabel"
+                   style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"/>
+			<Button text="Logout" onAction="#logout"
+                    style="-fx-background-color:#c0392b; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:8 16; -fx-cursor:hand;"/>
+		</HBox>
+	</top>
+
+	<!-- LEFT SIDEBAR -->
+	<left>
+		<ScrollPane fitToWidth="true" hbarPolicy="NEVER"
+                    style="-fx-background-color:#0f1f3c;
+                           -fx-background:transparent;">
+			<VBox styleClass="sidebar" prefWidth="225" spacing="4">
+
+				<!-- OVERVIEW -->
+				<Label text="OVERVIEW"
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
+                              -fx-font-weight:bold; -fx-padding:8 0 4 14;"/>
+				<Button text="Dashboard"
+                        onAction="#showDashboard" styleClass="sidebar-btn"/>
+				<Button text="Live Monitor"
+                        onAction="#showLiveMonitor" styleClass="sidebar-btn"/>
+				<Button text="Analytics"
+                        onAction="#showAnalytics" styleClass="sidebar-btn"/>
+
+				<!-- ACADEMIC -->
+				<Label text="ACADEMIC"
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
+                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+				<Button text="Subjects"
+                        onAction="#showSubjects" styleClass="sidebar-btn"/>
+				<Button text="Class Manager"
+                        onAction="#showClassManager" styleClass="sidebar-btn"/>
+				<Button text="Grading Scale"
+                        onAction="#showGradingScale" styleClass="sidebar-btn"/>
+
+				<!-- QUESTION BANK -->
+				<Label text="QUESTION BANK"
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
+                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+				<Button text="Question Bank"
+                        onAction="#showQuestions" styleClass="sidebar-btn"/>
+				<Button text="Question Editor"
+                        onAction="#showQuestionEditor" styleClass="sidebar-btn"/>
+				<Button text="Import Questions"
+                        onAction="#showImporter" styleClass="sidebar-btn"/>
+				<Button text="Study Materials"
+                        onAction="#showStudyMaterials" styleClass="sidebar-btn"/>
+
+				<!-- EXAMS -->
+				<Label text="EXAMS"
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
+                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+				<Button text="Exam Manager"
+                        onAction="#showExams" styleClass="sidebar-btn"/>
+				<Button text="CA Scores"
+                        onAction="#showCaScores" styleClass="sidebar-btn"/>
+
+				<!-- RESULTS -->
+				<Label text="RESULTS"
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
+                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+				<Button text="Results / Reports"
+                        onAction="#showResults" styleClass="sidebar-btn"/>
+				<Button text="Broadsheet"
+                        onAction="#showBroadsheet" styleClass="sidebar-btn"/>
+				<Button text="Appeals"
+                        onAction="#showAppeals" styleClass="sidebar-btn"/>
+
+				<!-- PEOPLE -->
+				<Label text="PEOPLE"
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
+                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+				<Button text="Students"
+                        onAction="#showStudents" styleClass="sidebar-btn"/>
+				<Button text="Teachers"
+                        onAction="#showTeachers" styleClass="sidebar-btn"/>
+				<Button text="ID Cards"
+                        onAction="#showIdCards" styleClass="sidebar-btn"/>
+
+				<!-- NEW: Manual User Creation -->
+				<Button text="Create User (Admin)"
+                        onAction="#showManualUserCreation"
+                        style="-fx-background-color:transparent;
+                               -fx-text-fill:#d4af37;
+                               -fx-font-size:14px;
+                               -fx-alignment:CENTER_LEFT;
+                               -fx-padding:11 14;
+                               -fx-background-radius:8;
+                               -fx-cursor:hand;
+                               -fx-max-width:infinity;
+                               -fx-font-weight:bold;"/>
+
+				<!-- SYSTEM -->
+				<Label text="SYSTEM"
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
+                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+				<Button text="Notifications"
+                        onAction="#showNotifications" styleClass="sidebar-btn"/>
+				<Button text="School Settings"
+                        onAction="#showSettings" styleClass="sidebar-btn"/>
+				<Button text="Audit Logs"
+                        onAction="#showAuditLogs" styleClass="sidebar-btn"/>
+				<Button text="Backup"
+                        onAction="#showBackup" styleClass="sidebar-btn"/>
+				<Button text="Health Monitor"
+                        onAction="#showHealthMonitor" styleClass="sidebar-btn"/>
+				<Button text="About / FEMZYK"
+                        onAction="#showAbout" styleClass="sidebar-btn"/>
+
+				<Region VBox.vgrow="ALWAYS"/>
+				<Separator style="-fx-background-color:#1b2f5a;"/>
+				<Label text="Powered by FEMZYK"
+                       style="-fx-text-fill:#d4af37; -fx-font-size:11px;
+                              -fx-padding:8 0 8 14;"/>
+			</VBox>
+		</ScrollPane>
+	</left>
+
+	<!-- MAIN CONTENT -->
+	<center>
+		<StackPane fx:id="contentPane"
+                   style="-fx-background-color:#f5f7fb;"/>
+	</center>
+
+</BorderPane>

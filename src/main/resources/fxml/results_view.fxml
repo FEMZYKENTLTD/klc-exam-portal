@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0" xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.ResultsViewController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Page Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20;">
+		<Label text="Results and Reports"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="View, Export and Notify Student Results"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="12" style="-fx-padding:16;">
+
+		<!-- Toolbar -->
+		<HBox spacing="8" alignment="CENTER_LEFT"
+              style="-fx-background-color:white; -fx-padding:12;
+                     -fx-background-radius:10;
+                     -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.08),8,0,0,2);">
+			<TextField fx:id="searchField"
+                       promptText="Search by student name..."
+                       prefWidth="220"
+                       style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                              -fx-background-radius:8; -fx-padding:8;"/>
+			<ComboBox fx:id="termBox" promptText="Filter by Term"
+                      prefWidth="130"
+                      style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+			<Region HBox.hgrow="ALWAYS"/>
+			<Button text="Refresh"
+                    onAction="#loadResults"
+                    style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8;
+                           -fx-border-radius:8; -fx-background-radius:8;
+                           -fx-padding:8 14; -fx-cursor:hand;"/>
+			<Button text="Report Card PDF"
+                    onAction="#exportReportCard"
+                    styleClass="btn-primary"
+                    style="-fx-padding:8 14;"/>
+			<Button text="Full Transcript"
+                    onAction="#exportTranscript"
+                    style="-fx-background-color:#8b5cf6; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:8 14; -fx-cursor:hand;"/>
+			<Button text="Notify Parent"
+                    onAction="#notifyResult"
+                    style="-fx-background-color:#10b981; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:8 14; -fx-cursor:hand;"/>
+		</HBox>
+
+		<Label fx:id="status" wrapText="true"
+               style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+
+		<!-- Table -->
+		<TableView fx:id="table" VBox.vgrow="ALWAYS" prefHeight="500"
+                   style="-fx-background-radius:10; -fx-border-color:#e2e8f0;
+                          -fx-border-radius:10;">
+			<columns>
+				<TableColumn fx:id="colName"    text="Student"     prefWidth="200"/>
+				<TableColumn fx:id="colAdm"     text="Admission"   prefWidth="110"/>
+				<TableColumn fx:id="colSubject" text="Subject"     prefWidth="130"/>
+				<TableColumn fx:id="colScore"   text="Score"       prefWidth="80"/>
+				<TableColumn fx:id="colGrade"   text="Grade"       prefWidth="70"/>
+				<TableColumn fx:id="colPos"     text="Position"    prefWidth="80"/>
+				<TableColumn fx:id="colDate"    text="Date"        prefWidth="110"/>
+			</columns>
+			<placeholder>
+				<Label text="No results yet. Results appear after students complete exams."
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:14px;"/>
+			</placeholder>
+		</TableView>
+
+		<Label text="Report Card includes: School Logo, Student Photo, Principal Signature, QR Verification. No FEMZYK watermark. PIN = SURNAME+CLASS e.g. KERIPESS2"
+               wrapText="true"
+               style="-fx-text-fill:#667085; -fx-font-size:12px;"/>
+	</VBox>
+</VBox>

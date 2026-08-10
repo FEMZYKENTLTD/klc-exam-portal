@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.SchoolSettingsController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Page Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="School Settings"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Configure school profile, term rollover, announcements and backups"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent; -fx-background:transparent;">
+		<VBox spacing="16" style="-fx-padding:16;">
+
+			<!-- Row 1: School Profile + Term Rollover -->
+			<HBox spacing="16" alignment="TOP_LEFT">
+
+				<!-- School Profile Card -->
+				<VBox styleClass="card" spacing="10" prefWidth="480" HBox.hgrow="ALWAYS">
+					<Label text="School Profile"
+						   style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+					<Label text="These details appear on ALL Report Cards, Transcripts and ID Cards."
+						   wrapText="true"
+						   style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+
+					<!-- School Name -->
+					<VBox spacing="4">
+						<Label text="School Name"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<TextField fx:id="schoolNameField"
+								   text="KNOWLEDGE LAND COLLEGE"
+								   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                      -fx-background-radius:8; -fx-padding:9;
+                                      -fx-font-size:14px;"/>
+					</VBox>
+
+					<!-- Motto -->
+					<VBox spacing="4">
+						<Label text="School Motto"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<TextArea fx:id="mottoArea"
+								  text="Knowledge is Power"
+								  prefRowCount="2"
+								  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                     -fx-background-radius:8; -fx-font-size:14px;"/>
+					</VBox>
+
+					<!-- Principal Name -->
+					<VBox spacing="4">
+						<Label text="Principal / Head Teacher Name"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<TextField fx:id="principalField"
+								   text="OLUFEMI BENUA KERIPE"
+								   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                      -fx-background-radius:8; -fx-padding:9;
+                                      -fx-font-size:14px;"/>
+					</VBox>
+
+					<!-- Session + Term -->
+					<HBox spacing="12">
+						<VBox spacing="4" HBox.hgrow="ALWAYS">
+							<Label text="Current Academic Session"
+								   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+							<TextField fx:id="sessionField"
+									   text="2024/2025"
+									   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                          -fx-background-radius:8; -fx-padding:9;
+                                          -fx-font-size:14px;"/>
+						</VBox>
+						<VBox spacing="4">
+							<Label text="Current Term"
+								   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                      -fx-text-fill:#0f1f3c;"/>
+							<ComboBox fx:id="termBox"
+									  promptText="Select term"
+									  prefWidth="140"
+									  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                         -fx-padding:5;"/>
+						</VBox>
+					</HBox>
+
+					<!-- School Logo -->
+					<VBox spacing="4">
+						<Label text="School Logo (JPG/PNG)"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<HBox spacing="6">
+							<TextField fx:id="logoPathField"
+									   promptText="klc_assets/klc_logo.png"
+									   HBox.hgrow="ALWAYS"
+									   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                          -fx-background-radius:8; -fx-padding:9;
+                                          -fx-font-size:13px;
+                                          -fx-prompt-text-fill:#94a3b8;"/>
+							<Button text="Choose File"
+									onAction="#chooseLogo"
+									style="-fx-background-color:#eaf0fb;
+                                       -fx-border-color:#c8d3e8;
+                                       -fx-border-radius:8; -fx-background-radius:8;
+                                       -fx-padding:9 14; -fx-cursor:hand;"/>
+						</HBox>
+					</VBox>
+
+					<!-- Principal Signature -->
+					<VBox spacing="4">
+						<Label text="Principal Signature Image (PNG recommended)"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<HBox spacing="6">
+							<TextField fx:id="signaturePathField"
+									   promptText="klc_assets/principal_signature.png"
+									   HBox.hgrow="ALWAYS"
+									   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                          -fx-background-radius:8; -fx-padding:9;
+                                          -fx-font-size:13px;
+                                          -fx-prompt-text-fill:#94a3b8;"/>
+							<Button text="Choose File"
+									onAction="#chooseSignature"
+									style="-fx-background-color:#eaf0fb;
+                                       -fx-border-color:#c8d3e8;
+                                       -fx-border-radius:8; -fx-background-radius:8;
+                                       -fx-padding:9 14; -fx-cursor:hand;"/>
+						</HBox>
+					</VBox>
+
+					<Button text="Save School Profile"
+							onAction="#saveProfile"
+							styleClass="btn-primary"
+							maxWidth="1.7976931348623157E308"
+							style="-fx-font-size:14px; -fx-padding:11 0;"/>
+
+					<Label text="Logo and Signature are saved to klc_assets/ and used on Report Cards, Transcripts and ID Cards. NO FEMZYK watermark on any official document."
+						   wrapText="true"
+						   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+				</VBox>
+
+				<!-- Right Column -->
+				<VBox spacing="16" prefWidth="360">
+
+					<!-- Term Rollover Card -->
+					<VBox styleClass="card" spacing="10">
+						<Label text="Term Rollover Wizard"
+							   style="-fx-font-size:15px; -fx-font-weight:bold;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<Label text="Promote an entire class to the next level."
+							   style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+
+						<HBox spacing="12">
+							<VBox spacing="4" HBox.hgrow="ALWAYS">
+								<Label text="From Class"
+									   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                          -fx-text-fill:#0f1f3c;"/>
+								<ComboBox fx:id="fromClassBox"
+										  promptText="e.g. JSS1"
+										  maxWidth="1.7976931348623157E308"
+										  style="-fx-border-color:#c8d3e8;
+                                             -fx-border-radius:8;"/>
+							</VBox>
+							<VBox spacing="4" HBox.hgrow="ALWAYS">
+								<Label text="To Class"
+									   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                          -fx-text-fill:#0f1f3c;"/>
+								<ComboBox fx:id="toClassBox"
+										  promptText="e.g. JSS2"
+										  maxWidth="1.7976931348623157E308"
+										  style="-fx-border-color:#c8d3e8;
+                                             -fx-border-radius:8;"/>
+							</VBox>
+						</HBox>
+
+						<Button text="Promote Class"
+								onAction="#runRollover"
+								maxWidth="1.7976931348623157E308"
+								style="-fx-background-color:#d4af37; -fx-text-fill:#0f1f3c;
+                                   -fx-font-weight:bold; -fx-background-radius:8;
+                                   -fx-padding:10 0; -fx-cursor:hand;
+                                   -fx-font-size:13px;"/>
+
+						<Label text="Promotes all ACTIVE students from one class to the next. SS3 can be set to GRADUATED. Super Admin only."
+							   wrapText="true"
+							   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+					</VBox>
+
+					<!-- Backup + Security Card -->
+					<VBox styleClass="card" spacing="10">
+						<Label text="Backup and Security"
+							   style="-fx-font-size:15px; -fx-font-weight:bold;
+                                  -fx-text-fill:#0f1f3c;"/>
+
+						<Button text="Backup Database Now"
+								onAction="#backupDb"
+								maxWidth="1.7976931348623157E308"
+								style="-fx-background-color:#8b5cf6; -fx-text-fill:white;
+                                   -fx-font-weight:bold; -fx-background-radius:8;
+                                   -fx-padding:10 0; -fx-cursor:hand;"/>
+
+						<Button text="Rotate Registration Codes"
+								onAction="#rotateCodes"
+								maxWidth="1.7976931348623157E308"
+								style="-fx-background-color:#eaf0fb;
+                                   -fx-border-color:#c8d3e8;
+                                   -fx-border-radius:8; -fx-background-radius:8;
+                                   -fx-padding:10 0; -fx-cursor:hand;"/>
+
+						<Label text="Codes: Super Admin = FEMZYK ENTERPRISES LTD | Teacher = FEMZYK | Student = FEMZYKENTLTD"
+							   wrapText="true"
+							   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+					</VBox>
+
+				</VBox>
+			</HBox>
+
+			<!-- Announcements Card -->
+			<VBox styleClass="card" spacing="10">
+				<Label text="Post Announcement to Notice Board"
+					   style="-fx-font-size:15px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+
+				<VBox spacing="4">
+					<Label text="Announcement Title"
+						   style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#0f1f3c;"/>
+					<TextField fx:id="announceTitle"
+							   promptText="e.g. Exam Timetable Released - Check Notice Board"
+							   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                  -fx-background-radius:8; -fx-padding:9;
+                                  -fx-font-size:14px;
+                                  -fx-prompt-text-fill:#94a3b8;"/>
+				</VBox>
+
+				<VBox spacing="4">
+					<Label text="Message Body"
+						   style="-fx-font-weight:bold; -fx-font-size:13px;
+                              -fx-text-fill:#0f1f3c;"/>
+					<TextArea fx:id="announceBody"
+							  promptText="Type your announcement message to students and staff here..."
+							  prefRowCount="3"
+							  style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                 -fx-background-radius:8; -fx-font-size:13px;
+                                 -fx-prompt-text-fill:#94a3b8;"/>
+				</VBox>
+
+				<Button text="Post Announcement"
+						onAction="#postAnnouncement"
+						style="-fx-background-color:#10b981; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:10 24; -fx-cursor:hand; -fx-font-size:13px;"/>
+			</VBox>
+
+			<!-- Status Label -->
+			<Label fx:id="status"
+				   wrapText="true"
+				   style="-fx-font-size:13px; -fx-font-weight:bold;
+                      -fx-text-fill:#0f7a3a;"/>
+
+		</VBox>
+	</ScrollPane>
+</VBox>

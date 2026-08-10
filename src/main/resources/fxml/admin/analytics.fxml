@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.AnalyticsController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Analytics and Reports"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Performance statistics, pass rates and item analysis"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="14" style="-fx-padding:16;">
+
+		<!-- Stats Row -->
+		<HBox spacing="14">
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-width:0 0 0 4; -fx-border-color:#3b82f6;">
+				<Label text="Total Students"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="statStudents" text="--"
+                       style="-fx-font-size:28px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-width:0 0 0 4; -fx-border-color:#10b981;">
+				<Label text="Active Exams"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="statExams" text="--"
+                       style="-fx-font-size:28px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-width:0 0 0 4; -fx-border-color:#8b5cf6;">
+				<Label text="Total Questions"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="statQuestions" text="--"
+                       style="-fx-font-size:28px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-width:0 0 0 4; -fx-border-color:#f59e0b;">
+				<Label text="Results Recorded"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="statResults" text="--"
+                       style="-fx-font-size:28px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+			</VBox>
+			<VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="6"
+                  style="-fx-border-width:0 0 0 4; -fx-border-color:#ef4444;">
+				<Label text="Malpractice Cases"
+                       style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+				<Label fx:id="statMalpractice" text="--"
+                       style="-fx-font-size:28px; -fx-font-weight:bold;
+                              -fx-text-fill:#ef4444;"/>
+			</VBox>
+		</HBox>
+
+		<!-- Analytics Report -->
+		<VBox styleClass="card" spacing="10" VBox.vgrow="ALWAYS">
+			<HBox alignment="CENTER_LEFT">
+				<Label text="Detailed Analytics Report"
+                       style="-fx-font-size:15px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Region HBox.hgrow="ALWAYS"/>
+				<Button text="Refresh Analytics"
+                        onAction="#refresh"
+                        style="-fx-background-color:#eaf0fb;
+                               -fx-border-color:#c8d3e8; -fx-border-radius:8;
+                               -fx-background-radius:8; -fx-padding:8 16;
+                               -fx-cursor:hand;"/>
+			</HBox>
+			<TextArea fx:id="reportArea"
+                      editable="false"
+                      wrapText="true"
+                      VBox.vgrow="ALWAYS"
+                      prefHeight="380"
+                      style="-fx-font-family:Consolas,monospace;
+                             -fx-font-size:13px;
+                             -fx-border-color:#e2e8f0; -fx-border-radius:8;
+                             -fx-background-radius:8;"/>
+		</VBox>
+	</VBox>
+</VBox>

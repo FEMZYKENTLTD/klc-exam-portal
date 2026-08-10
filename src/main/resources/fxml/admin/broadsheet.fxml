@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.BroadsheetController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Class Broadsheet"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Generate and export class performance broadsheets"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<VBox spacing="12" style="-fx-padding:16;">
+
+		<!-- Controls -->
+		<HBox spacing="10" alignment="CENTER_LEFT"
+              style="-fx-background-color:white; -fx-padding:12;
+                     -fx-background-radius:10;
+                     -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.08),8,0,0,2);">
+
+			<VBox spacing="3">
+				<Label text="Class"
+                       style="-fx-font-size:11px; -fx-font-weight:bold;
+                              -fx-text-fill:#64748b;"/>
+				<ComboBox fx:id="classBox"
+                          promptText="Select Class"
+                          prefWidth="120"
+                          style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+			</VBox>
+
+			<VBox spacing="3">
+				<Label text="Term"
+                       style="-fx-font-size:11px; -fx-font-weight:bold;
+                              -fx-text-fill:#64748b;"/>
+				<ComboBox fx:id="termBox"
+                          promptText="Select Term"
+                          prefWidth="120"
+                          style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+			</VBox>
+
+			<Button text="Load Broadsheet"
+                    onAction="#loadBroadsheet"
+                    styleClass="btn-primary"
+                    style="-fx-padding:9 16; -fx-margin:16 0 0 0;"/>
+
+			<Region HBox.hgrow="ALWAYS"/>
+
+			<Button text="Export Excel"
+                    onAction="#exportExcel"
+                    style="-fx-background-color:#10b981; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+			<Button text="Export PDF"
+                    onAction="#exportPdf"
+                    style="-fx-background-color:#8b5cf6; -fx-text-fill:white;
+                           -fx-font-weight:bold; -fx-background-radius:8;
+                           -fx-padding:9 14; -fx-cursor:hand;"/>
+
+			<Label fx:id="status"
+                   style="-fx-font-size:12px; -fx-text-fill:#64748b;"
+                   wrapText="true"/>
+		</HBox>
+
+		<!-- Broadsheet Table -->
+		<TableView fx:id="table" VBox.vgrow="ALWAYS" prefHeight="520"
+                   style="-fx-background-radius:10; -fx-border-color:#e2e8f0;
+                          -fx-border-radius:10;">
+			<placeholder>
+				<Label text="Select a class and term, then click Load Broadsheet."
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:14px;"/>
+			</placeholder>
+		</TableView>
+
+	</VBox>
+</VBox>

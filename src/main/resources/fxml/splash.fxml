@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.femzyk.klc.auth.SplashController"
+           prefWidth="720" prefHeight="420"
+           style="-fx-background-color:linear-gradient(to bottom right,#0f1f3c,#1b2f5a);">
+
+	<VBox alignment="CENTER" spacing="10">
+		<Label text="KNOWLEDGE LAND COLLEGE"
+               style="-fx-text-fill:white; -fx-font-size:28px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Secondary School - Lagos, Kwara State"
+               style="-fx-text-fill:#cdd6e8; -fx-font-size:13px;"/>
+		<Separator prefWidth="360" maxWidth="360"/>
+		<Label text="CBT SUITE v6.3"
+               style="-fx-text-fill:#d4af37; -fx-font-size:22px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Cloud Online / Auto-Sync - Enterprise Edition"
+               style="-fx-text-fill:#cdd6e8; -fx-font-size:13px;"/>
+		<Label text=" "/>
+		<Label text="Powered by FEMZYK"
+               style="-fx-text-fill:#d4af37; -fx-font-size:14px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Lead Developer: OLUFEMI BENUA KERIPE"
+               style="-fx-text-fill:white; -fx-font-size:13px;"/>
+		<Label text=" "/>
+		<ProgressBar prefWidth="320" progress="-1"
+                     style="-fx-accent:#d4af37;"/>
+		<Label fx:id="statusLabel"
+               text="Initializing Cloud Database..."
+               style="-fx-text-fill:#8899bb; -fx-font-size:11px;"/>
+		<Label text="c 2025 KNOWLEDGE LAND COLLEGE - All Rights Reserved"
+               style="-fx-text-fill:#667799; -fx-font-size:10px;"/>
+		<Label text="Result slips are KLC Official - No FEMZYK watermark"
+               style="-fx-text-fill:#667799; -fx-font-size:10px;"/>
+	</VBox>
+</StackPane>
