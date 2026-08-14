@@ -19,3 +19,5 @@ files_batch2.txt
 files_for_review.txt
 klc_error_log.txt
 sample_*.csv
+src/main/resources/config.properties
+src/main/resources/config.properties

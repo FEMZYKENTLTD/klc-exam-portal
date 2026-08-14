@@ -49,6 +49,7 @@ public class ExamController {
     private double fontScale   = 1.0;
     private boolean highContrast  = false;
     private boolean dyslexicFont  = false;
+    private boolean isPractice    = false;
     private String formulaSheetText =
         "Area = L x W\nVolume = L x W x H\na^2 + b^2 = c^2\n" +
         "Quadratic: x = (-b +/- sqrt(b^2-4ac))/2a\nSpeed = Distance / Time";
@@ -101,20 +102,26 @@ public class ExamController {
         Stage st = (Stage) timerLabel.getScene().getWindow();
         st.setFullScreen(true);
 
-        // Anti-Malpractice
-        new FocusLossDetector(
-            st,
-            strikes -> {
-                strikeLabel.setText("Malpractice Strikes: " + strikes + "/3");
-                if (strikes == 1)
-                    alert("WARNING: Do not minimize or switch apps! Strike " + strikes + "/3");
-                if (strikes == 2)
-                    alert("FINAL WARNING! Next offense = Auto-submit");
-            },
-            () -> submitExam(true)
-        );
+        // Anti-Malpractice: Only enable 3-strike proctoring for official (non-practice) exams
+        if (!isPractice) {
+            new FocusLossDetector(
+                st,
+                strikes -> {
+                    strikeLabel.setText("Malpractice Strikes: " + strikes + "/3");
+                    if (strikes == 1)
+                        alert("WARNING: Do not minimize or switch apps! Strike " + strikes + "/3");
+                    if (strikes == 2)
+                        alert("FINAL WARNING! Next offense = Auto-submit");
+                },
+                () -> submitExam(true)
+            );
+        } else {
+            if (strikeLabel != null) {
+                strikeLabel.setText("Practice Mode | Anti-Malpractice Disabled");
+            }
+        }
 
-        // Webcam
+        // Webcam (Optional in Practice Mode)
         try {
             final String finalAdmNo = admissionNo;
             webcamProctor = new WebcamProctorService(finalAdmNo, img -> {
@@ -122,7 +129,7 @@ public class ExamController {
             });
             if (webcamProctor.isEnabled()) {
                 webcamProctor.start();
-                if (strikeLabel != null)
+                if (strikeLabel != null && !isPractice)
                     strikeLabel.setText(strikeLabel.getText() + " | Webcam ON");
             }
         } catch (Exception ignored) {}
@@ -134,38 +141,42 @@ public class ExamController {
     private String checkFeeAndSchedule(Connection c) throws SQLException {
         String sql = """
             SELECT e.fee_gate, sp.fee_status, e.start_at, e.end_at,
-                   e.negative_marking, sp.admission_no
+                   e.negative_marking, sp.admission_no, COALESCE(e.is_practice, FALSE)
             FROM exams e
             LEFT JOIN student_profiles sp ON sp.user_id = ?
             WHERE e.id = ?
             """;
         try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, AuthService.Session.userId);
-            ps.setString(2, examId);
+            AuthService.setUuid(ps, 1, AuthService.Session.userId, c);
+            AuthService.setUuid(ps, 2, examId, c);
             ResultSet rs = ps.executeQuery();
             if (!rs.next()) {
                 alert("Exam not found in database.");
                 return null;
             }
-            boolean feeGate  = rs.getBoolean(1);
-            String feeStatus = rs.getString(2);
-            Timestamp start  = rs.getTimestamp(3);
-            Timestamp end    = rs.getTimestamp(4);
-            negativeMarking  = rs.getDouble(5);
-            String admNo     = rs.getString(6);
+            boolean feeGate    = rs.getBoolean(1);
+            String feeStatus   = rs.getString(2);
+            Timestamp start    = rs.getTimestamp(3);
+            Timestamp end      = rs.getTimestamp(4);
+            negativeMarking    = rs.getDouble(5);
+            String admNo       = rs.getString(6);
+            boolean prFlag     = rs.getBoolean(7);
 
-            if (feeGate && "UNPAID".equalsIgnoreCase(feeStatus)) {
-                alert("Fee Clearance Required.\nYour fee status is UNPAID.\nContact the Bursar.");
-                return null;
-            }
-            Timestamp now = new Timestamp(System.currentTimeMillis());
-            if (start != null && now.before(start)) {
-                alert("Exam has not started yet.\nScheduled start: " + start);
-                return null;
-            }
-            if (end != null && now.after(end)) {
-                alert("Exam window has closed.\nEnd time: " + end);
-                return null;
+            // Skip fee and schedule gates if this is a practice exam
+            if (!prFlag) {
+                if (feeGate && "UNPAID".equalsIgnoreCase(feeStatus)) {
+                    alert("Fee Clearance Required.\nYour fee status is UNPAID.\nContact the Bursar.");
+                    return null;
+                }
+                Timestamp now = new Timestamp(System.currentTimeMillis());
+                if (start != null && now.before(start)) {
+                    alert("Exam has not started yet.\nScheduled start: " + start);
+                    return null;
+                }
+                if (end != null && now.after(end)) {
+                    alert("Exam window has closed.\nEnd time: " + end);
+                    return null;
+                }
             }
             return admNo == null ? "student" : admNo;
         }
@@ -176,9 +187,9 @@ public class ExamController {
         try (PreparedStatement ps = c.prepareStatement(
                 "INSERT INTO exam_attempts(id, exam_id, student_id, variant) " +
                 "VALUES(?,?,?,?)")) {
-            ps.setString(1, newId);
-            ps.setString(2, examId);
-            ps.setString(3, AuthService.Session.userId);
+            AuthService.setUuid(ps, 1, newId, c);
+            AuthService.setUuid(ps, 2, examId, c);
+            AuthService.setUuid(ps, 3, AuthService.Session.userId, c);
             ps.setString(4, examVariant);
             ps.executeUpdate();
         }
@@ -190,7 +201,8 @@ public class ExamController {
             SELECT e.duration_minutes,
                    s.subject_code || ' - ' || e.class_level AS title,
                    COALESCE(fs.content,'') AS formula,
-                   e.negative_marking
+                   e.negative_marking,
+                   COALESCE(e.is_practice, FALSE)
             FROM exams e
             JOIN subjects s ON s.id = e.subject_id
             LEFT JOIN formula_sheets fs
@@ -198,16 +210,20 @@ public class ExamController {
             WHERE e.id = ?
             """;
         try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, examId);
+            AuthService.setUuid(ps, 1, examId, c);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 timeLeft = rs.getInt(1) * 60;
-                if (examTitleLabel != null)
-                    examTitleLabel.setText(
-                        rs.getString(2) + "  [Variant " + examVariant + "]");
+                String titleText = rs.getString(2) + "  [Variant " + examVariant + "]";
                 String f = rs.getString(3);
                 if (f != null && !f.isBlank()) formulaSheetText = f;
                 negativeMarking = rs.getDouble(4);
+                isPractice = rs.getBoolean(5);
+                if (isPractice) {
+                    titleText += "  [PRACTICE MODE - NOT RECORDED]";
+                }
+                if (examTitleLabel != null)
+                    examTitleLabel.setText(titleText);
             }
         }
     }
@@ -224,7 +240,7 @@ public class ExamController {
             """;
 
         try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, examId);
+            AuthService.setUuid(ps, 1, examId, c);
             ResultSet rs = ps.executeQuery();
 
             Map<String, Question> map           = new LinkedHashMap<>();
@@ -467,17 +483,17 @@ public class ExamController {
             try (PreparedStatement del = c.prepareStatement(
                     "DELETE FROM attempt_answers " +
                     "WHERE attempt_id=? AND question_id=?")) {
-                del.setString(1, attemptId);
-                del.setString(2, q.id);
+                AuthService.setUuid(del, 1, attemptId, c);
+                AuthService.setUuid(del, 2, q.id, c);
                 del.executeUpdate();
             }
             try (PreparedStatement ins = c.prepareStatement(
                     "INSERT INTO attempt_answers" +
                     "(id, attempt_id, question_id, selected_option) " +
                     "VALUES(?,?,?,?)")) {
-                ins.setString(1, UUID.randomUUID().toString());
-                ins.setString(2, attemptId);
-                ins.setString(3, q.id);
+                AuthService.setUuid(ins, 1, UUID.randomUUID().toString(), c);
+                AuthService.setUuid(ins, 2, attemptId, c);
+                AuthService.setUuid(ins, 3, q.id, c);
                 ins.setString(4, ans);
                 ins.executeUpdate();
             }
@@ -597,7 +613,8 @@ public class ExamController {
     private void startTimer() {
         timer = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             timeLeft--;
-            timerLabel.setText(String.format("%02d:%02d:%02d",
+            timerLabel.setText(
+                String.format("%02d:%02d:%02d",
                 timeLeft / 3600, (timeLeft % 3600) / 60, timeLeft % 60));
             if (timerLabel.getStyle() == null
                     || !timerLabel.getStyle().contains("red")) {
@@ -653,7 +670,7 @@ public class ExamController {
                     try (PreparedStatement ps = c.prepareStatement(
                             "SELECT option_label FROM question_options " +
                             "WHERE question_id=? AND is_correct=TRUE")) {
-                        ps.setString(1, q.id);
+                        AuthService.setUuid(ps, 1, q.id, c);
                         ResultSet rs = ps.executeQuery();
                         if (rs.next()) correctLabel = rs.getString(1);
                     }
@@ -666,67 +683,94 @@ public class ExamController {
             double pct = questions.isEmpty()
                 ? 0 : rawScore * 100.0 / questions.size();
 
-            // Update attempt status
-            try (PreparedStatement ps = c.prepareStatement(
-                    "UPDATE exam_attempts " +
-                    "SET submitted_at = CURRENT_TIMESTAMP, status = ? " +
-                    "WHERE id = ?")) {
-                ps.setString(1, malpractice ? "MALPRACTICE" : "SUBMITTED");
-                ps.setString(2, attemptId);
-                ps.executeUpdate();
-            }
-
-            // Insert result
-            try (PreparedStatement ps = c.prepareStatement(
-                    "INSERT INTO results(" +
-                    "id, attempt_id, student_id, exam_id, score, " +
-                    "total_questions, correct_answers, percentage) " +
-                    "VALUES(?,?,?,?,?,?,?,?)")) {
-                ps.setString(1, UUID.randomUUID().toString());
-                ps.setString(2, attemptId);
-                ps.setString(3, AuthService.Session.userId);
-                ps.setString(4, examId);
-                ps.setDouble(5, rawScore);
-                ps.setInt   (6, questions.size());
-                ps.setInt   (7, correct);
-                ps.setDouble(8, pct);
-                ps.executeUpdate();
-            }
-
-            // Email notification (best-effort)
-            try {
-                String email = null;
+            if (isPractice) {
+                // Practice Mode: update attempt status only, DO NOT insert into official results table
                 try (PreparedStatement ps = c.prepareStatement(
-                        "SELECT email FROM users WHERE id=?")) {
-                    ps.setString(1, AuthService.Session.userId);
-                    ResultSet rs = ps.executeQuery();
-                    if (rs.next()) email = rs.getString(1);
+                        "UPDATE exam_attempts " +
+                        "SET submitted_at = CURRENT_TIMESTAMP, status = ? " +
+                        "WHERE id = ?")) {
+                    ps.setString(1, "PRACTICE_SUBMITTED");
+                    AuthService.setUuid(ps, 2, attemptId, c);
+                    ps.executeUpdate();
                 }
-                if (email != null) {
-                    String title = examTitleLabel != null
-                        ? examTitleLabel.getText() : "Exam";
-                    com.femzyk.klc.util.EmailService
-                        .sendResultNotification(email,
-                            AuthService.Session.fullName, title, pct);
-                }
-            } catch (Exception ignored) {}
 
-            resultSummary = String.format(
-                "%s\n\n" +
-                "Correct:    %d\n" +
-                "Wrong:      %d\n" +
-                "Unanswered: %d\n" +
-                "Negative marking: %.2f per wrong answer\n\n" +
-                "RAW SCORE:  %.1f / %d\n" +
-                "PERCENTAGE: %.1f%%\n\n" +
-                "Well done, %s!\n" +
-                "You may now view your full result on your dashboard.",
-                malpractice
-                    ? "EXAM AUTO-SUBMITTED (MALPRACTICE DETECTED)"
-                    : "EXAM SUBMITTED SUCCESSFULLY",
-                correct, wrong, unanswered, negativeMarking,
-                rawScore, questions.size(), pct,
-                AuthService.Session.fullName);
+                resultSummary = String.format(
+                    "PRACTICE EXAM COMPLETED\n\n" +
+                    "Correct:    %d\n" +
+                    "Wrong:      %d\n" +
+                    "Unanswered: %d\n" +
+                    "Negative marking: %.2f per wrong answer\n\n" +
+                    "PRACTICE SCORE:  %.1f / %d\n" +
+                    "PERCENTAGE:      %.1f%%\n\n" +
+                    "Well done, %s!\n" +
+                    "Note: Practice results are NOT recorded on your permanent academic record.",
+                    correct, wrong, unanswered, negativeMarking,
+                    rawScore, questions.size(), pct,
+                    AuthService.Session.fullName);
+
+            } else {
+                // Official Exam Mode: update attempt status, save official result, and send email
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE exam_attempts " +
+                        "SET submitted_at = CURRENT_TIMESTAMP, status = ? " +
+                        "WHERE id = ?")) {
+                    ps.setString(1, malpractice ? "MALPRACTICE" : "SUBMITTED");
+                    AuthService.setUuid(ps, 2, attemptId, c);
+                    ps.executeUpdate();
+                }
+
+                // Insert result
+                try (PreparedStatement ps = c.prepareStatement(
+                        "INSERT INTO results(" +
+                        "id, attempt_id, student_id, exam_id, score, " +
+                        "total_questions, correct_answers, percentage) " +
+                        "VALUES(?,?,?,?,?,?,?,?)")) {
+                    AuthService.setUuid(ps, 1, UUID.randomUUID().toString(), c);
+                    AuthService.setUuid(ps, 2, attemptId, c);
+                    AuthService.setUuid(ps, 3, AuthService.Session.userId, c);
+                    AuthService.setUuid(ps, 4, examId, c);
+                    ps.setDouble(5, rawScore);
+                    ps.setInt   (6, questions.size());
+                    ps.setInt   (7, correct);
+                    ps.setDouble(8, pct);
+                    ps.executeUpdate();
+                }
+
+                // Email notification (best-effort)
+                try {
+                    String email = null;
+                    try (PreparedStatement ps = c.prepareStatement(
+                            "SELECT email FROM users WHERE id=?")) {
+                        AuthService.setUuid(ps, 1, AuthService.Session.userId, c);
+                        ResultSet rs = ps.executeQuery();
+                        if (rs.next()) email = rs.getString(1);
+                    }
+                    if (email != null) {
+                        String title = examTitleLabel != null
+                            ? examTitleLabel.getText() : "Exam";
+                        com.femzyk.klc.util.EmailService
+                            .sendResultNotification(email,
+                                AuthService.Session.fullName, title, pct);
+                    }
+                } catch (Exception ignored) {}
+
+                resultSummary = String.format(
+                    "%s\n\n" +
+                    "Correct:    %d\n" +
+                    "Wrong:      %d\n" +
+                    "Unanswered: %d\n" +
+                    "Negative marking: %.2f per wrong answer\n\n" +
+                    "RAW SCORE:  %.1f / %d\n" +
+                    "PERCENTAGE: %.1f%%\n\n" +
+                    "Well done, %s!\n" +
+                    "You may now view your full result on your dashboard.",
+                    malpractice
+                        ? "EXAM AUTO-SUBMITTED (MALPRACTICE DETECTED)"
+                        : "EXAM SUBMITTED SUCCESSFULLY",
+                    correct, wrong, unanswered, negativeMarking,
+                    rawScore, questions.size(), pct,
+                    AuthService.Session.fullName);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -740,7 +784,7 @@ public class ExamController {
         // FIX: Show result dialog THEN redirect to dashboard when OK clicked
         Alert resultAlert = new Alert(Alert.AlertType.INFORMATION);
         resultAlert.setTitle("Exam Result");
-        resultAlert.setHeaderText("Your Result");
+        resultAlert.setHeaderText(isPractice ? "Practice Result" : "Your Result");
         resultAlert.setContentText(resultSummary);
         resultAlert.getDialogPane().setPrefWidth(480);
         resultAlert.showAndWait();

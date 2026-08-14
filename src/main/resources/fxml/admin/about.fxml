@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
@@ -11,10 +12,9 @@
 
 	<!-- Page Header -->
 	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
-		<Label text="About KLC CBT Suite"
-               style="-fx-text-fill:white; -fx-font-size:20px;
-                      -fx-font-weight:bold;"/>
-		<Label text="System information and credits"
+		<Label text="About KNOWLEDGE LAND COLLEGE CBT Suite v6.3"
+               style="-fx-text-fill:white; -fx-font-size:20px; -fx-font-weight:bold;"/>
+		<Label text="WAEC / NECO-Standard Examination Management for Nigerian Secondary Schools"
                style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
 	</VBox>
 
@@ -22,72 +22,111 @@
                 style="-fx-background-color:transparent; -fx-background:transparent;">
 		<VBox spacing="16" style="-fx-padding:24;" alignment="CENTER">
 
-			<!-- Logo / Branding Card -->
-			<VBox styleClass="card" maxWidth="700" spacing="12" alignment="CENTER">
-
-				<Label text="KNOWLEDGE LAND COLLEGE"
-					   style="-fx-font-size:26px; -fx-font-weight:bold;
-                          -fx-text-fill:#0f1f3c;"/>
-				<Label text="Secondary School - Lagos, Kwara State"
-					   style="-fx-font-size:14px; -fx-text-fill:#64748b;"/>
-
-				<Separator maxWidth="500"/>
-
-				<Label text="CBT SUITE v6.3"
-					   style="-fx-font-size:20px; -fx-font-weight:bold;
-                          -fx-text-fill:#d4af37;"/>
-				<Label text="Cloud Online / Auto-Sync - Enterprise Edition"
-					   style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
-
+			<!-- Logo and Branding Card -->
+			<VBox styleClass="card" maxWidth="750" spacing="12" alignment="CENTER">
+				<Label text="KNOWLEDGE LAND COLLEGE CBT SUITE"
+                       style="-fx-font-size:24px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+				<Label text="WAEC / NECO-Standard Examination Management for Nigerian Secondary Schools"
+                       style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
+				<Separator maxWidth="550"/>
+				<Label text="VERSION 6.3.0 — ENTERPRISE EDITION"
+                       style="-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:#d4af37;"/>
+				<Label text="3-Strike Proctoring | Cloud Auto-Sync | Lifetime Student Tracking | Offline Safe"
+                       style="-fx-font-size:13px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
 			</VBox>
 
-			<!-- Developer Card -->
-			<VBox styleClass="card" maxWidth="700" spacing="10">
-				<Label text="Powered By"
-					   style="-fx-font-size:14px; -fx-font-weight:bold;
-                          -fx-text-fill:#64748b;"/>
-				<Label text="FEMZYK"
-					   style="-fx-font-size:22px; -fx-font-weight:bold;
-                          -fx-text-fill:#d4af37;"/>
+			<!-- Developer Credit Card -->
+			<VBox styleClass="card" maxWidth="750" spacing="8" alignment="CENTER">
+				<Label text="POWERED BY"
+                       style="-fx-font-size:12px; -fx-font-weight:bold; -fx-text-fill:#64748b;"/>
+				<Label text="FEMZYK ENTERPRISES LTD"
+                       style="-fx-font-size:22px; -fx-font-weight:bold; -fx-text-fill:#d4af37;"/>
 				<Label text="Lead Developer: OLUFEMI BENUA KERIPE"
-					   style="-fx-font-size:14px; -fx-text-fill:#0f1f3c;
-                          -fx-font-weight:bold;"/>
-				<Label text="Contact: femzykenterprisesltd@gmail.com"
-					   style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
-				<Label text="Phone: +2349049903679"
-					   style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
+                       style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+				<Label text="Contact: femzykenterprisesltd@gmail.com  |  WhatsApp / Cell: +234 904 990 3679"
+                       style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
+				<Label text="Website: femzyk.my.canva.site/femzyk"
+                       style="-fx-font-size:13px; -fx-text-fill:#1b2f5a; -fx-font-weight:bold;"/>
 			</VBox>
 
-			<!-- Tech Stack Card -->
-			<VBox styleClass="card" maxWidth="700" spacing="8">
-				<Label text="Technology Stack"
-					   style="-fx-font-size:14px; -fx-font-weight:bold;
-                          -fx-text-fill:#0f1f3c;"/>
+			<!-- Impact Metrics Card -->
+			<VBox styleClass="card" maxWidth="750" spacing="10">
+				<Label text="WHAT KNOWLEDGE LAND CBT MEANS FOR YOUR SCHOOL"
+                       style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+				<Label fx:id="metricsLabel"
+                       wrapText="true"
+                       style="-fx-font-size:13px; -fx-text-fill:#1e293b; -fx-line-spacing:4;"/>
+			</VBox>
 
+			<!-- Nigerian Examination Crisis Card -->
+			<VBox styleClass="card" maxWidth="750" spacing="10">
+				<Label text="THE EXAMINATION CRISIS IN NIGERIAN SECONDARY SCHOOLS"
+                       style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+				<Label fx:id="crisisLabel"
+                       wrapText="true"
+                       style="-fx-font-size:13px; -fx-text-fill:#64748b; -fx-line-spacing:4;"/>
+			</VBox>
+
+			<!-- 3-Step Setup Card -->
+			<VBox styleClass="card" maxWidth="750" spacing="10">
+				<Label text="GETTING STARTED — SMOOTHER THAN YOU THINK"
+                       style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+				<Label fx:id="stepsLabel"
+                       wrapText="true"
+                       style="-fx-font-size:13px; -fx-text-fill:#1e293b; -fx-line-spacing:4;"/>
+			</VBox>
+
+			<!-- Tiers and Editions Card -->
+			<VBox styleClass="card" maxWidth="750" spacing="10">
+				<Label text="AN INVESTMENT IN YOUR SCHOOL'S REPUTATION"
+                       style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+				<Label fx:id="tiersLabel"
+                       wrapText="true"
+                       style="-fx-font-size:13px; -fx-font-family:Consolas,monospace; -fx-text-fill:#0f1f3c; -fx-line-spacing:4;"/>
+			</VBox>
+
+			<!-- Testimonials Card -->
+			<VBox styleClass="card" maxWidth="750" spacing="10">
+				<Label text="DESIGNED WITH EDUCATORS IN MIND"
+                       style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+				<Label fx:id="testimonialsLabel"
+                       wrapText="true"
+                       style="-fx-font-size:13px; -fx-text-fill:#1e293b; -fx-font-style:italic; -fx-line-spacing:4;"/>
+			</VBox>
+
+			<!-- System Architecture & Registration Codes Card -->
+			<VBox styleClass="card" maxWidth="750" spacing="8">
+				<Label text="TECHNICAL STACK & REGISTRATION CODES"
+                       style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
 				<Label fx:id="versionLabel"
-					   wrapText="true"
-					   style="-fx-font-family:Consolas,monospace;
-                          -fx-font-size:13px;
-                          -fx-text-fill:#1e293b;
-                          -fx-line-spacing:4;"/>
+                       wrapText="true"
+                       style="-fx-font-family:Consolas,monospace; -fx-font-size:13px; -fx-text-fill:#1e293b; -fx-line-spacing:4;"/>
 			</VBox>
 
-			<!-- Legal Card -->
-			<VBox styleClass="card" maxWidth="700" spacing="6">
-				<Label text="Legal and Attribution"
-					   style="-fx-font-size:14px; -fx-font-weight:bold;
-                          -fx-text-fill:#0f1f3c;"/>
-				<Label text="Result slips, Report Cards, Transcripts and ID Cards are KLC official documents."
-					   wrapText="true"
-					   style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
-				<Label text="FEMZYK credit appears on Splash Screen and About Page only. No watermark on any official document."
-					   wrapText="true"
-					   style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
-				<Label text="Result PIN Format: SURNAME + CLASS   e.g. KERIPESS2"
-					   style="-fx-font-size:13px; -fx-text-fill:#0f1f3c;
-                          -fx-font-weight:bold;"/>
+			<!-- References & Research Basis Card -->
+			<VBox styleClass="card" maxWidth="750" spacing="8">
+				<Label text="REFERENCES & RESEARCH BASIS"
+                       style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+				<Label fx:id="referencesLabel"
+                       wrapText="true"
+                       style="-fx-font-size:12px; -fx-text-fill:#64748b; -fx-line-spacing:4;"/>
+			</VBox>
+
+			<!-- Legal & Attribution Rule Card -->
+			<VBox styleClass="card" maxWidth="750" spacing="6">
+				<Label text="LEGAL AND ATTRIBUTION RULE"
+                       style="-fx-font-size:14px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+				<Label text="Result slips, Report Cards, Transcripts and ID Cards are official Knowledge Land College school documents."
+                       wrapText="true"
+                       style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
+				<Label text="FEMZYK credit appears on Splash Screen and About Page only. NO FEMZYK WATERMARK on any official school document."
+                       wrapText="true"
+                       style="-fx-font-size:13px; -fx-font-weight:bold; -fx-text-fill:#ef4444;"/>
+				<Label text="Result PIN Format: SURNAME + CLASS e.g. KERIPESS2"
+                       style="-fx-font-size:13px; -fx-text-fill:#0f1f3c; -fx-font-weight:bold;"/>
 			</VBox>
 
 		</VBox>
 	</ScrollPane>
+
 </VBox>

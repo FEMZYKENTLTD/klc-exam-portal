@@ -21,7 +21,7 @@ public class LoginController {
     private boolean passShown     = false;
 
     // Eye icon unicode characters
-    private static final String ICON_EYE_OPEN   = "\uD83D\uDC41";  // eye
+    private static final String ICON_EYE_OPEN    = "\uD83D\uDC41";  // eye
     private static final String ICON_EYE_CLOSED  = "\uD83D\uDEAB"; // no entry (password hidden)
 
     // =========================================================================
@@ -302,12 +302,31 @@ public class LoginController {
     }
 
     // =========================================================================
-    //  NAVIGATION
+    //  NAVIGATION (Role-Based Access Control)
     // =========================================================================
     private void goToDashboard(String role) throws Exception {
         if ("STUDENT".equals(role)) {
             MainApp.setRoot("student_dashboard.fxml", null);
+        } else if ("TEACHER".equals(role)) {
+            // Graceful fallback to admin_dashboard if teacher_dashboard is not yet created
+            if (getClass().getResource("/fxml/admin/teacher_dashboard.fxml") != null) {
+                MainApp.setRoot("admin/teacher_dashboard.fxml", null);
+            } else if (getClass().getResource("/fxml/teacher_dashboard.fxml") != null) {
+                MainApp.setRoot("teacher_dashboard.fxml", null);
+            } else {
+                MainApp.setRoot("admin_dashboard.fxml", null);
+            }
+        } else if ("EXAM_OFFICER".equals(role)) {
+            // Graceful fallback to admin_dashboard if exam_officer_dashboard is not yet created
+            if (getClass().getResource("/fxml/admin/exam_officer_dashboard.fxml") != null) {
+                MainApp.setRoot("admin/exam_officer_dashboard.fxml", null);
+            } else if (getClass().getResource("/fxml/exam_officer_dashboard.fxml") != null) {
+                MainApp.setRoot("exam_officer_dashboard.fxml", null);
+            } else {
+                MainApp.setRoot("admin_dashboard.fxml", null);
+            }
         } else {
+            // SUPER_ADMIN and PRINCIPAL_ADMIN
             MainApp.setRoot("admin_dashboard.fxml", null);
         }
     }

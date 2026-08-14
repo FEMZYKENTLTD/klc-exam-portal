@@ -14,14 +14,14 @@ import java.util.*;
 
 public class PracticeExamController {
 
-    @FXML private VBox      practiceRoot;
-    @FXML private Label     statusLabel;
+    @FXML private VBox             practiceRoot;
+    @FXML private Label            statusLabel;
     @FXML private ComboBox<String> subjectBox;
     @FXML private ComboBox<String> classBox;
-    @FXML private Button    startPracticeBtn;
+    @FXML private Button           startPracticeBtn;
 
-    private final Map<String, String> subjectMap    = new HashMap<>();
-    private final Map<String, String> subjectIdMap  = new HashMap<>();
+    private final Map<String, String> subjectMap   = new HashMap<>();
+    private final Map<String, String> subjectIdMap = new HashMap<>();
 
     @FXML
     public void initialize() {
@@ -58,6 +58,9 @@ public class PracticeExamController {
         }
     }
 
+    // =========================================================================
+    //  START PRACTICE EXAM MODE
+    // =========================================================================
     @FXML
     private void startPractice() {
         String subject    = subjectBox.getValue();
@@ -76,10 +79,7 @@ public class PracticeExamController {
         if (startPracticeBtn != null) startPracticeBtn.setDisable(true);
 
         try {
-            // Find a practice exam OR create a virtual practice session
-            // from approved questions for this subject + class
-            String practiceExamId = findOrCreatePracticeExam(
-                subject, classLevel);
+            String practiceExamId = findOrCreatePracticeExam(subject, classLevel);
 
             if (practiceExamId == null) {
                 setStatus("No approved questions found for " +
@@ -90,8 +90,6 @@ public class PracticeExamController {
                 return;
             }
 
-            // Open exam.fxml with practice exam ID
-            // Practice mode: no malpractice detection, no result saved
             FXMLLoader loader = new FXMLLoader(
                 getClass().getResource("/fxml/exam.fxml"));
 
@@ -104,11 +102,10 @@ public class PracticeExamController {
 
             Scene scene = new Scene(loader.load(), w, h);
             scene.getStylesheets().add(
-                getClass().getResource(
-                    "/css/klc-premium.css").toExternalForm());
+                getClass().getResource("/css/klc-premium.css").toExternalForm());
 
             ExamController ctrl = loader.getController();
-            ctrl.startExam(practiceExamId, "A");  // practice variant A
+            ctrl.startExam(practiceExamId, "A");
 
             currentStage.setScene(scene);
 
@@ -120,17 +117,10 @@ public class PracticeExamController {
         }
     }
 
-    /**
-     * Finds an existing practice exam for this subject+class,
-     * OR creates a temporary one from approved questions.
-     * Returns the exam ID or null if no questions available.
-     */
     private String findOrCreatePracticeExam(
             String subject, String classLevel) throws Exception {
 
         try (Connection c = DatabaseManager.getConnection()) {
-
-            // First: check for an existing practice exam
             try (PreparedStatement ps = c.prepareStatement(
                     "SELECT e.id FROM exams e " +
                     "JOIN subjects s ON s.id = e.subject_id " +
@@ -145,7 +135,6 @@ public class PracticeExamController {
                 if (rs.next()) return rs.getString(1);
             }
 
-            // Check if approved questions exist
             int questionCount;
             try (PreparedStatement ps = c.prepareStatement(
                     "SELECT COUNT(*) FROM questions q " +
@@ -162,11 +151,9 @@ public class PracticeExamController {
 
             if (questionCount == 0) return null;
 
-            // Get subject ID
             String subjectId = subjectIdMap.get(subject);
             if (subjectId == null) return null;
 
-            // Create temporary practice exam
             String examId = UUID.randomUUID().toString();
             String saId   = AuthService.Session.userId;
 
@@ -174,19 +161,17 @@ public class PracticeExamController {
                     "INSERT INTO exams(" +
                     "  id, subject_id, class_level, title, " +
                     "  duration_minutes, is_practice, is_active, " +
-                    "  attempt_limit, negative_marking, created_by) " +
-                    "VALUES(?,?,?,?,?,TRUE,TRUE,999,0,?)")) {
+                    "  attempt_limit, negative_marking, fee_gate, created_by) " +
+                    "VALUES(?,?,?,?,?,TRUE,TRUE,999,0,FALSE,?)")) {
                 AuthService.setUuid(ps, 1, examId, c);
                 AuthService.setUuid(ps, 2, subjectId, c);
                 ps.setString(3, classLevel);
-                ps.setString(4,
-                    "Practice: " + subject + " - " + classLevel);
-                ps.setInt(5, 30); // 30 minutes for practice
+                ps.setString(4, "Practice: " + subject + " - " + classLevel);
+                ps.setInt(5, 30);
                 AuthService.setUuid(ps, 6, saId, c);
                 ps.executeUpdate();
             }
 
-            // Attach up to 20 random approved questions
             try (PreparedStatement ps = c.prepareStatement(
                     "SELECT q.id FROM questions q " +
                     "JOIN subjects s ON s.id = q.subject_id " +
@@ -224,7 +209,6 @@ public class PracticeExamController {
             : "-fx-text-fill:#2ecc71; -fx-font-weight:bold;");
     }
 
-    // Legacy inner model kept for compatibility
     public static class PracticeQuestion {
         public String id, text, imageUrl, type, correctLabel;
         public Map<String, String> opts = new LinkedHashMap<>();
