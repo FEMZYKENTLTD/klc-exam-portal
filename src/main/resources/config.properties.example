@@ -1,0 +1,14 @@
+﻿supabase.url=YOUR_SUPABASE_URL
+supabase.key=YOUR_SUPABASE_ANON_KEY
+supabase.db.pooler.url=jdbc:postgresql://YOUR_POOLER_HOST:6543/postgres
+supabase.db.pooler.user=YOUR_POOLER_USER
+supabase.db.pooler.password=YOUR_DB_PASSWORD
+h2.url=jdbc:h2:file:./klc_cache/klc_local;AUTO_SERVER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;MODE=PostgreSQL
+h2.user=sa
+h2.password=
+smtp.host=smtp-relay.brevo.com
+smtp.port=587
+smtp.user=YOUR_BREVO_SMTP_LOGIN
+smtp.pass=YOUR_BREVO_SMTP_KEY
+smtp.from.name=KNOWLEDGE LAND COLLEGE CBT
+smtp.from.email=YOUR_SENDER_EMAIL
