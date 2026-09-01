@@ -484,7 +484,23 @@ public class DatabaseInitializer {
             ")"
         );
 
-        System.out.println("[DB] H2: all 30 tables created/verified");
+        // KLC v1.0 FIX: backup_logs was referenced by BackupService /
+        // BackupController but never created in any schema - the Backup
+        // screen's history failed silently. Now created on H2 (and in the
+        // Supabase migration for cloud deployments).
+        s.execute(
+            "CREATE TABLE IF NOT EXISTS backup_logs (" +
+            "  id          VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+            "  backup_type VARCHAR(30)," +
+            "  file_path   TEXT," +
+            "  file_size   BIGINT," +
+            "  checksum    VARCHAR(80)," +
+            "  created_by  VARCHAR(36)," +
+            "  created_at  TIMESTAMP   DEFAULT CURRENT_TIMESTAMP" +
+            ")"
+        );
+
+        System.out.println("[DB] H2: all 31 tables created/verified");
     }
 
     /**

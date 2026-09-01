@@ -28,7 +28,7 @@ public class TwoFaController {
     private void loadStatus(){
         try(Connection c = DatabaseManager.getConnection();
             PreparedStatement ps = c.prepareStatement("SELECT totp_secret, totp_enabled FROM users WHERE id=?")){
-            ps.setObject(1, UUID.fromString(AuthService.Session.userId));
+            AuthService.setUuid(ps, 1, AuthService.Session.userId, c);
             ResultSet rs = ps.executeQuery();
             if(rs.next()){
                 secret = rs.getString(1);
@@ -53,7 +53,7 @@ public class TwoFaController {
             try(Connection c = DatabaseManager.getConnection();
                 PreparedStatement ps = c.prepareStatement("UPDATE users SET totp_secret=? WHERE id=?")){
                 ps.setString(1, secret);
-                ps.setObject(2, UUID.fromString(AuthService.Session.userId));
+                AuthService.setUuid(ps, 2, AuthService.Session.userId, c);
                 ps.executeUpdate();
             }
         }catch(Exception e){ statusLabel.setText(e.getMessage()); }
@@ -84,7 +84,7 @@ public class TwoFaController {
                 PreparedStatement ps = c.prepareStatement("UPDATE users SET totp_enabled=?, totp_secret=? WHERE id=?")){
                 ps.setBoolean(1, enable);
                 ps.setString(2, secret);
-                ps.setObject(3, UUID.fromString(AuthService.Session.userId));
+                AuthService.setUuid(ps, 3, AuthService.Session.userId, c);
                 ps.executeUpdate();
             }
             AuthService.logAudit(enable ? "2FA_ENABLED" : "2FA_DISABLED", "users", AuthService.Session.userId);
@@ -95,7 +95,7 @@ public class TwoFaController {
     public static boolean verifyLoginCode(String userId, String code){
         try(Connection c = DatabaseManager.getConnection();
             PreparedStatement ps = c.prepareStatement("SELECT totp_secret, totp_enabled FROM users WHERE id=?")){
-            ps.setObject(1, UUID.fromString(userId));
+            AuthService.setUuid(ps, 1, userId, c);
             ResultSet rs = ps.executeQuery();
             if(rs.next() && rs.getBoolean(2)){
                 String secret = rs.getString(1);

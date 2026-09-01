@@ -57,6 +57,18 @@ CREATE INDEX IF NOT EXISTS idx_messages_sender       ON messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_messages_receiver     ON messages(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_attempt_answers_q     ON attempt_answers(question_id);
 
+-- Backup history (referenced by BackupService/BackupController - was
+-- missing from every schema before v1.1; history failed silently).
+CREATE TABLE IF NOT EXISTS backup_logs (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  backup_type VARCHAR(30),
+  file_path   TEXT,
+  file_size   BIGINT,
+  checksum    VARCHAR(80),
+  created_by  UUID,
+  created_at  TIMESTAMP DEFAULT now()
+);
+
 -- Legacy offline caches may have created friendships with addressee_id.
 DO $$
 BEGIN

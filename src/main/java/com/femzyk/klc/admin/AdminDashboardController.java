@@ -66,7 +66,7 @@ public class AdminDashboardController {
                          btnExamMgr, btnCaScores,
                          btnResults, btnBroadsheet, btnAppeals,
                          btnStudents, btnTeachers, btnIdCards, btnCreateUser,
-                         btnNotifications, btnSettings, btnAuditLogs,
+                         btnNotifications, btnSettings, btnTwoFa, btnAuditLogs,
                          btnBackup, btnHealth, btnAbout;
 
     // RULE 3: the single application-wide OkHttp client.
@@ -303,6 +303,8 @@ public class AdminDashboardController {
     @FXML private void showBackup()         { if (allowed("backup"))       load("backup.fxml");            else denied(); }
     @FXML private void showHealthMonitor()  { if (allowed("health"))       load("health_monitor.fxml");    else denied(); }
     @FXML private void showSettings()       { if (allowed("settings"))     load("school_settings.fxml");   else denied(); }
+    // KLC v1.0: personal 2FA enrollment - every staff account, no gate
+    @FXML private void showTwoFa()          { load("twofa_setup.fxml"); }
     @FXML private void showAbout()          { load("about.fxml"); }
     @FXML private void showProfile()  { loadSocial("profile.fxml"); }
     @FXML private void showFriends()  { loadSocial("friends.fxml"); }
