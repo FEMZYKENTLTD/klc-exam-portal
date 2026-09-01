@@ -95,3 +95,22 @@ jobs:
             KLC-CBT-Suite-win.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+## GitHub Actions auto-build — 30-second activation
+
+GitHub blocks sandbox/CI apps from publishing workflow files, so the
+workflow ships at `docs/github-actions-build.yml.install-me`.
+To activate auto-builds on every push, run this ON YOUR MACHINE:
+
+```powershell
+cd path\to\klc-exam-portal
+mkdir .github\workflows -Force
+copy docs\github-actions-build.yml.install-me .github\workflows\build.yml
+git add .github/workflows/build.yml
+git commit -m "ci: enable auto-build workflow"
+git push origin main
+```
+
+From then on: every push compiles the fat JAR (Actions tab), `main` gets a
+rolling `latest-build` pre-release, and `v*` tags additionally produce a
+zero-JDK Windows bundle via jpackage.
