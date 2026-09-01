@@ -415,7 +415,44 @@ public class DatabaseInitializer {
             ")"
         );
 
-        System.out.println("[DB] H2: all 23 tables created/verified");
+        // KLC v1.0: social module tables (Profile / Friends / Messages).
+        // These mirror the Supabase migration in
+        // supabase/klc_supabase_schema_v1_0_social.sql so that offline
+        // (H2) and cloud (PostgreSQL) stay schema-compatible.
+        s.execute(
+            "CREATE TABLE IF NOT EXISTS user_profiles (" +
+            "  id            VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+            "  user_id       VARCHAR(36) UNIQUE," +
+            "  photo_url     TEXT," +
+            "  bio           TEXT," +
+            "  date_of_birth DATE," +
+            "  address       TEXT," +
+            "  updated_at    TIMESTAMP   DEFAULT CURRENT_TIMESTAMP" +
+            ")"
+        );
+
+        s.execute(
+            "CREATE TABLE IF NOT EXISTS friendships (" +
+            "  id           VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+            "  requester_id VARCHAR(36)," +
+            "  receiver_id  VARCHAR(36)," +
+            "  status       VARCHAR(20) DEFAULT 'PENDING'," +
+            "  created_at   TIMESTAMP   DEFAULT CURRENT_TIMESTAMP" +
+            ")"
+        );
+
+        s.execute(
+            "CREATE TABLE IF NOT EXISTS messages (" +
+            "  id          VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+            "  sender_id   VARCHAR(36)," +
+            "  receiver_id VARCHAR(36)," +
+            "  content     TEXT," +
+            "  is_read     BOOLEAN     DEFAULT FALSE," +
+            "  created_at  TIMESTAMP   DEFAULT CURRENT_TIMESTAMP" +
+            ")"
+        );
+
+        System.out.println("[DB] H2: all 29 tables created/verified");
     }
 
     /**
@@ -464,6 +501,29 @@ public class DatabaseInitializer {
                 "channel VARCHAR(10) DEFAULT 'EMAIL'," +
                 "status VARCHAR(20) DEFAULT 'PENDING'," +
                 "sent_at TIMESTAMP," +
+                "created_at TIMESTAMP DEFAULT now())",
+            // KLC v1.0: social module tables - receiver_id matches the
+            // live cloud schema (NOT addressee_id - see FriendsController).
+            "CREATE TABLE IF NOT EXISTS user_profiles (" +
+                "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +
+                "user_id UUID UNIQUE REFERENCES users(id)," +
+                "photo_url TEXT," +
+                "bio TEXT," +
+                "date_of_birth DATE," +
+                "address TEXT," +
+                "updated_at TIMESTAMP DEFAULT now())",
+            "CREATE TABLE IF NOT EXISTS friendships (" +
+                "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +
+                "requester_id UUID REFERENCES users(id)," +
+                "receiver_id UUID REFERENCES users(id)," +
+                "status VARCHAR(20) DEFAULT 'PENDING'," +
+                "created_at TIMESTAMP DEFAULT now())",
+            "CREATE TABLE IF NOT EXISTS messages (" +
+                "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +
+                "sender_id UUID REFERENCES users(id)," +
+                "receiver_id UUID REFERENCES users(id)," +
+                "content TEXT," +
+                "is_read BOOLEAN DEFAULT FALSE," +
                 "created_at TIMESTAMP DEFAULT now())"
         };
         for (String sql : alters) {

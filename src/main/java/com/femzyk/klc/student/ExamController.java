@@ -46,6 +46,7 @@ public class ExamController {
     private Set<String> flagged                  = new HashSet<>();
     private int timeLeft;
     private Timeline timer;
+    private Timeline autosaveTimer;
     private double fontScale   = 1.0;
     private boolean highContrast  = false;
     private boolean dyslexicFont  = false;
@@ -98,6 +99,13 @@ public class ExamController {
         showQuestion(0);
         startTimer();
         setupKeyboardShortcuts();
+
+        // KLC v1.0 FIX: README promises "answers save locally every 30
+        // seconds" - force-save the currently selected answer on a 30s
+        // cycle even if the student never navigates, and run the cloud
+        // auto-sync loop for the duration of the exam (null label = silent).
+        startAutosave();
+        com.femzyk.klc.util.SyncService.startAutoSync(null);
 
         Stage st = (Stage) timerLabel.getScene().getWindow();
         st.setFullScreen(true);
@@ -328,6 +336,21 @@ public class ExamController {
             });
             return;
         }
+
+        // KLC v1.0 FIX: README claims "copy-paste is blocked" during exams.
+        // Consume Ctrl+C / X / V / A and right-click context menus inside
+        // the exam scene so question text cannot be copied out or answers
+        // pasted in.
+        sc.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (e.isControlDown() && (
+                    e.getCode() == KeyCode.C || e.getCode() == KeyCode.V ||
+                    e.getCode() == KeyCode.X || e.getCode() == KeyCode.A)) {
+                e.consume();
+            }
+        });
+        sc.addEventFilter(javafx.scene.input.ContextMenuEvent.ANY,
+            e -> e.consume());
+
         sc.setOnKeyPressed(e -> {
             if      (e.getCode() == KeyCode.N
                   || e.getCode() == KeyCode.RIGHT) next();
@@ -610,6 +633,20 @@ public class ExamController {
     // =========================================================================
     //  TIMER
     // =========================================================================
+    // KLC v1.0: periodic answer persistence - README promises answers are
+    // saved every 30 seconds, not only on navigation.
+    private void startAutosave() {
+        stopAutosave();
+        autosaveTimer = new Timeline(
+            new KeyFrame(Duration.seconds(30), e -> saveCurrent()));
+        autosaveTimer.setCycleCount(Timeline.INDEFINITE);
+        autosaveTimer.play();
+    }
+
+    private void stopAutosave() {
+        if (autosaveTimer != null) { autosaveTimer.stop(); autosaveTimer = null; }
+    }
+
     private void startTimer() {
         timer = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             timeLeft--;
@@ -650,7 +687,9 @@ public class ExamController {
 
     private void submitExam(boolean malpractice) {
         if (timer != null)         timer.stop();
+        stopAutosave();
         if (webcamProctor != null) webcamProctor.stop();
+        com.femzyk.klc.util.SyncService.stop();
         saveCurrent();
 
         // FIX: Release exam lock so close button works again
@@ -717,6 +756,24 @@ public class ExamController {
                     ps.setString(1, malpractice ? "MALPRACTICE" : "SUBMITTED");
                     AuthService.setUuid(ps, 2, attemptId, c);
                     ps.executeUpdate();
+                }
+
+                // KLC v1.0 FIX: README promises "account lockout" on the
+                // 3rd proctoring strike. Lock the student account for 15
+                // minutes (same window as the brute-force lockout in
+                // AuthService) so the violation has consequences.
+                if (malpractice) {
+                    try (PreparedStatement ps = c.prepareStatement(
+                            "UPDATE users SET failed_login_attempts = 5, " +
+                            "locked_until = ? WHERE id = ?")) {
+                        ps.setTimestamp(1, new Timestamp(
+                            System.currentTimeMillis() + 15 * 60 * 1000L));
+                        AuthService.setUuid(ps, 2,
+                            AuthService.Session.userId, c);
+                        ps.executeUpdate();
+                    }
+                    AuthService.logAudit("MALPRACTICE_LOCKOUT",
+                        "users", AuthService.Session.userId);
                 }
 
                 // Insert result

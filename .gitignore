@@ -21,3 +21,6 @@ klc_error_log.txt
 sample_*.csv
 src/main/resources/config.properties
 src/main/resources/config.properties
+
+# KLC v1.0: runtime user assets (photos, chat attachments) - never commit
+klc_assets/

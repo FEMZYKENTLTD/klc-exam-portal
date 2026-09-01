@@ -120,13 +120,18 @@ public class MessagesController {
                         "  content     TEXT," +
                         "  is_read     BOOLEAN     DEFAULT FALSE," +
                         "  created_at  TIMESTAMP   DEFAULT CURRENT_TIMESTAMP)");
+                    // KLC v1.0 FIX: use receiver_id (matches live cloud schema
+                    // and FriendsController). The old addressee_id DDL created
+                    // an incompatible offline friendships table.
                     s.execute(
                         "CREATE TABLE IF NOT EXISTS friendships (" +
                         "  id           VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
                         "  requester_id VARCHAR(36)," +
-                        "  addressee_id VARCHAR(36)," +
+                        "  receiver_id  VARCHAR(36)," +
                         "  status       VARCHAR(20) DEFAULT 'PENDING'," +
                         "  created_at   TIMESTAMP   DEFAULT CURRENT_TIMESTAMP)");
+                    // Upgrade older offline caches created with addressee_id
+                    try { s.execute("ALTER TABLE friendships ADD COLUMN IF NOT EXISTS receiver_id VARCHAR(36)"); } catch (Exception ignored) {}
                 }
             }
         } catch (Exception ignored) {}
@@ -163,9 +168,9 @@ public class MessagesController {
                  "   WHERE m.sender_id = u.id AND m.receiver_id = ? " +
                  "     AND m.is_read = FALSE) AS unread " +
                  "FROM friendships f " +
-                 "JOIN users u ON (u.id = f.requester_id OR u.id = f.addressee_id) " +
+                 "JOIN users u ON (u.id = f.requester_id OR u.id = f.receiver_id) " +
                  "WHERE f.status = 'ACCEPTED' " +
-                 "  AND (f.requester_id = ? OR f.addressee_id = ?) " +
+                 "  AND (f.requester_id = ? OR f.receiver_id = ?) " +
                  "  AND u.id <> ? " +
                  "ORDER BY u.full_name")) {
             AuthService.setUuid(ps, 1, AuthService.Session.userId, c);
@@ -198,8 +203,8 @@ public class MessagesController {
         try (PreparedStatement ps = c.prepareStatement(
                 "SELECT COUNT(*) FROM friendships " +
                 "WHERE status = 'ACCEPTED' " +
-                "  AND ((requester_id = ? AND addressee_id = ?) " +
-                "    OR (requester_id = ? AND addressee_id = ?))")) {
+                "  AND ((requester_id = ? AND receiver_id = ?) " +
+                "    OR (requester_id = ? AND receiver_id = ?))")) {
             AuthService.setUuid(ps, 1, AuthService.Session.userId, c);
             AuthService.setUuid(ps, 2, otherId, c);
             AuthService.setUuid(ps, 3, otherId, c);
