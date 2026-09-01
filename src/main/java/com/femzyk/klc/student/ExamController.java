@@ -855,9 +855,7 @@ public class ExamController {
             if (i + 1 < s.length() && Character.isLetter(s.charAt(i + 1))) {
                 int start = ++i;
                 while (i + 1 < s.length()
-                        && (Character.isLetter(s.charAt(i + 1))
-                            || s.charAt(i + 1) == '.' == false
-                               && Character.isLetterOrDigit(s.charAt(i + 1))))
+                        && Character.isLetterOrDigit(s.charAt(i + 1)))
                     i++;
                 String fn = s.substring(start, i + 1);
                 if ("PI".equals(fn)) return Math.PI;

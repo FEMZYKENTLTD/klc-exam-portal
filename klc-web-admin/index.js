@@ -22,11 +22,6 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     const role = await klcRpc("staff_check",
       { p_email: email, p_password: password });
     session.email = email; session.password = password; session.role = role;
-    try {
-      const me = await klcRpc("staff_subjects",
-        { p_email: email, p_password: password });
-      void me; // (subjects also prove the session works)
-    } catch (_) {}
     session.name = email.split("@")[0];
     Object.entries({ klc_email: email, klc_pass: password,
                      klc_role: role, klc_name: session.name })
