@@ -1,11 +1,37 @@
-﻿supabase.url=YOUR_SUPABASE_URL
+# KLC CBT Suite v1.0 - configuration template
+# Copy to: src/main/resources/config.properties  (gitignored - never commit)
+# On lab PCs keep this file next to the packaged JAR with real values.
+
+# ── Supabase cloud (Storage + REST + DB) ────────────────────────────────────
+supabase.url=YOUR_SUPABASE_URL
 supabase.key=YOUR_SUPABASE_ANON_KEY
+supabase.storage.bucket=klc-attachments
+supabase.db.url=jdbc:postgresql://db.YOUR_PROJECT.supabase.co:5432/postgres
+supabase.db.user=postgres
+supabase.db.password=YOUR_DB_PASSWORD
 supabase.db.pooler.url=jdbc:postgresql://YOUR_POOLER_HOST:6543/postgres
 supabase.db.pooler.user=YOUR_POOLER_USER
 supabase.db.pooler.password=YOUR_DB_PASSWORD
+
+# ── Registration codes (OVERRIDE the compiled defaults - rotate per school!)
+# See SECURITY_CREDENTIALS.md - the historical codes were published and are
+# treated as compromised. Set these to fresh random values.
+code.super_admin=YOUR_NEW_SUPER_ADMIN_CODE
+code.admin=YOUR_NEW_STAFF_CODE
+code.student=YOUR_NEW_FAMILY_CODE
+
+# ── Safeguarding switches (social module) ───────────────────────────────────
+# Students messaging staff accounts (default false = blocked)
+social.allow_student_staff_dm=false
+# Students sending chat attachments (default false = blocked)
+social.allow_student_attachments=false
+
+# ── Offline cache (H2) ──────────────────────────────────────────────────────
 h2.url=jdbc:h2:file:./klc_cache/klc_local;AUTO_SERVER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;MODE=PostgreSQL
 h2.user=sa
 h2.password=
+
+# ── Email (Brevo SMTP) ──────────────────────────────────────────────────────
 smtp.host=smtp-relay.brevo.com
 smtp.port=587
 smtp.user=YOUR_BREVO_SMTP_LOGIN

@@ -141,10 +141,12 @@ public class AuthService {
                 || "PRINCIPAL_ADMIN".equals(role)) {
             if (!codeAdmin.equals(regCode))
                 return "Invalid staff code. Contact the administrator.";
-        } else if ("STUDENT".equals(role)) {
+        } else if ("STUDENT".equals(role) || "PARENT".equals(role)) {
+            // KLC v1.0: parents register FREE with the same mandatory
+            // student/family code (Parent Portal is read-only).
             if (!codeStudent.equals(
                     regCode != null ? regCode.trim() : ""))
-                return "Invalid student registration code. " +
+                return "Invalid registration code. " +
                        "Contact your school for the correct code.";
         }
 
@@ -213,6 +215,22 @@ public class AuthService {
                     ps.setString(8, pin);
                     ps.executeUpdate();
                 }
+            }
+
+            // ── Parent profile (KLC v1.0 Parent Portal) ────────────────────
+            // admissionNo carries the WARD's admission number for parents.
+            if ("PARENT".equals(role)) {
+                try (PreparedStatement ps = c.prepareStatement(
+                        "INSERT INTO parent_profiles(" +
+                        "  id, user_id, ward_admission_no) " +
+                        "VALUES(?, ?, ?)")) {
+                    setUuid(ps, 1, UUID.randomUUID().toString(), c);
+                    setUuid(ps, 2, userId, c);
+                    ps.setString(3, admissionNo == null
+                        ? "" : admissionNo.trim());
+                    ps.executeUpdate();
+                }
+                logAudit("PARENT_REGISTER", "users", userId);
             }
 
             // ── Teacher subjects ───────────────────────────────────────────

@@ -305,10 +305,10 @@ CREATE INDEX idx_audit_user ON audit_logs(user_id);
 INSERT INTO school_profile (school_name, motto, principal_name) 
 VALUES ('KNOWLEDGE LAND COLLEGE', 'Knowledge is Power', 'OLUFEMI BENUA KERIPE');
 
--- Super Admin – password: Femi2022-  (BCrypt)
--- Login: superadmin@knowledgeland.edu.ng / Femi2022-
+-- Super Admin (ROTATED - see SECURITY_CREDENTIALS.md; password no
+-- longer stored in this repo. Set password_hash manually in Supabase.)
 INSERT INTO users (id, full_name, email, password_hash, role) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'OLUFEMI BENUA KERIPE', 'superadmin@knowledgeland.edu.ng', '$2a$12$HAzNUHHOpylPi702s4pAiOwXxxbCOeNQ2wR22pP2Op/.OPrtAxgwG', 'SUPER_ADMIN');
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'OLUFEMI BENUA KERIPE', 'superadmin@knowledgeland.edu.ng', '<ROTATED_BCRYPT_HASH - set via Supabase SQL editor>', 'SUPER_ADMIN');
 
 -- Subjects – Pre-loaded
 INSERT INTO subjects (subject_name, subject_code, class_level, created_by) VALUES
@@ -343,7 +343,7 @@ INSERT INTO subjects (subject_name, subject_code, class_level, created_by) VALUE
 ('COMMERCE','COM-SS1','SS1','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
 ('ACCOUNTING','ACC-SS1','SS1','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
 
--- Super Admin login: superadmin@knowledgeland.edu.ng / Femi2022-
+-- Super Admin login: ROTATED - see SECURITY_CREDENTIALS.md
 -- Registration codes: SUPER_ADMIN = FEMZYK ENTERPRISES LTD, TEACHER/ADMIN = FEMZYK
 
 -- Row Level Security – DISABLED for KLC v6.3 launch

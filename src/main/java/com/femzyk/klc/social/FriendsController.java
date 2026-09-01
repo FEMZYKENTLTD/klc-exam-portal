@@ -135,6 +135,19 @@ public class FriendsController {
             setStatus("Select a user from the search results first.", true);
             return;
         }
+
+        // KLC v1.0 safeguarding: students may not send friend requests to
+        // staff accounts by default (config:
+        // social.allow_student_staff_dm=true to lift for the school).
+        if ("STUDENT".equals(AuthService.Session.role)
+                && !"STUDENT".equals(sel.role)
+                && !com.femzyk.klc.util.ConfigService.flag(
+                    "social.allow_student_staff_dm", false)) {
+            setStatus("Students cannot add staff as friends. Please contact "
+                + "your teacher through the school office.", true);
+            return;
+        }
+
         try (Connection c = DatabaseManager.getConnection()) {
             try (PreparedStatement chk = c.prepareStatement(
                     "SELECT status FROM friendships " +

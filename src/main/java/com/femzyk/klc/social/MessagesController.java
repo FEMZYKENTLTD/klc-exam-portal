@@ -287,6 +287,17 @@ public class MessagesController {
             setStatus("Select a friend to chat with first.", true);
             return;
         }
+
+        // KLC v1.0 safeguarding: students may not send attachments by
+        // default (config: social.allow_student_attachments=true to lift).
+        if ("STUDENT".equals(AuthService.Session.role)
+                && !com.femzyk.klc.util.ConfigService.flag(
+                    "social.allow_student_attachments", false)) {
+            setStatus("Attachments from student accounts are disabled. "
+                + "Ask the school administrator if you need this.", true);
+            return;
+        }
+
         FileChooser fc = new FileChooser();
         fc.setTitle("Attach File (PDF, DOCX or Image)");
         fc.getExtensionFilters().addAll(
@@ -313,8 +324,22 @@ public class MessagesController {
             File dest = new File(dir, safeName);
             Files.copy(f.toPath(), dest.toPath(),
                 StandardCopyOption.REPLACE_EXISTING);
-            insertMessage(ATTACH_PREFIX + " " + dest.getPath());
-            setStatus("Attachment sent: " + f.getName(), false);
+
+            // KLC v1.0 FIX: upload to Supabase Storage so the receiver on
+            // ANOTHER computer can actually open the file. Falls back to
+            // the local path when offline/unconfigured.
+            String remote = com.femzyk.klc.util.StorageService.upload(
+                dest, AuthService.Session.userId);
+            String body = (remote != null)
+                ? ATTACH_PREFIX + " " + remote
+                : ATTACH_PREFIX + " " + dest.getPath();
+
+            insertMessage(body);
+            setStatus(remote != null
+                ? "Attachment sent (uploaded to school cloud): " + f.getName()
+                : "Attachment sent (saved on this computer only - "
+                  + "cloud upload unavailable offline): " + f.getName(),
+                false);
         } catch (Exception e) {
             setStatus("Attachment error: " + e.getMessage(), true);
         }
@@ -326,6 +351,28 @@ public class MessagesController {
                 setStatus("You can only message ACCEPTED friends.", true);
                 return;
             }
+
+            // KLC v1.0 safeguarding 1: students may only message other
+            // STUDENTS by default (config:
+            // social.allow_student_staff_dm=true to lift).
+            if ("STUDENT".equals(AuthService.Session.role)
+                    && !com.femzyk.klc.util.ConfigService.flag(
+                        "social.allow_student_staff_dm", false)
+                    && !"STUDENT".equals(roleOf(c, currentFriend.userId))) {
+                setStatus("Students cannot message staff accounts. "
+                    + "Please contact your teacher through the school office.",
+                    true);
+                return;
+            }
+
+            // KLC v1.0 safeguarding 2: chat is locked school-wide while an
+            // exam window is active (prevents exam-time collusion).
+            if (isExamWindowActive(c)) {
+                setStatus("Chat is locked while an exam is in progress. "
+                    + "Close this screen - good luck!", true);
+                return;
+            }
+
             try (PreparedStatement ps = c.prepareStatement(
                     "INSERT INTO messages(id, sender_id, receiver_id, " +
                     "content, is_read) VALUES(?,?,?,?,FALSE)")) {
@@ -335,15 +382,60 @@ public class MessagesController {
                 ps.setString(4, content);
                 ps.executeUpdate();
             }
+            // Safeguarding audit trail: metadata only (who messaged whom,
+            // attachment or not, size) - message CONTENT is never copied
+            // into audit_logs.
+            boolean isAttachment = content.startsWith(ATTACH_PREFIX);
+            AuthService.logAudit(isAttachment
+                    ? "MESSAGE_ATTACHMENT" : "MESSAGE_SEND",
+                "messages", currentFriend.userId);
             loadMessages(false);
         } catch (Exception e) {
             setStatus("Send error: " + e.getMessage(), true);
         }
     }
 
+    /** Role of another user (for the student/staff safeguarding gate). */
+    private String roleOf(Connection c, String otherUserId)
+            throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement(
+                "SELECT role FROM users WHERE id = ?")) {
+            AuthService.setUuid(ps, 1, otherUserId, c);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getString(1) : "";
+        }
+    }
+
+    /** True when ANY exam is inside its scheduled window right now. */
+    private boolean isExamWindowActive(Connection c) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement(
+                "SELECT COUNT(*) FROM exams " +
+                "WHERE is_active = TRUE " +
+                "  AND start_at IS NOT NULL AND end_at IS NOT NULL " +
+                "  AND start_at <= CURRENT_TIMESTAMP " +
+                "  AND end_at   >= CURRENT_TIMESTAMP")) {
+            ResultSet rs = ps.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
     private void openAttachment(String path) {
         try {
-            File f = new File(path);
+            File f;
+            if (path.startsWith("http")) {
+                // KLC v1.0: remote attachment - download from school
+                // cloud storage, then open the local copy.
+                String hint = new File(path).getName();
+                if (hint.length() > 40) hint = hint.substring(hint.length() - 40);
+                f = com.femzyk.klc.util.StorageService.download(path, hint);
+                if (f == null) {
+                    setStatus("Could not download the file (you may be "
+                        + "offline). Try again when connected.", true);
+                    return;
+                }
+            } else {
+                f = new File(path);
+            }
             if (!f.exists()) {
                 setStatus("File not found: " + f.getName() +
                     " (it may be on the sender's computer only).", true);

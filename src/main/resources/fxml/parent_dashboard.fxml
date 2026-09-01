@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.student.ParentPortalController"
+      spacing="14" style="-fx-padding:28; -fx-background-color:#f4f7fc;">
+
+	<Label text="PARENT PORTAL - KNOWLEDGE LAND COLLEGE"
+           style="-fx-font-size:24px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+	<Label fx:id="wardLabel" text="Loading ward information..."
+           style="-fx-font-size:15px; -fx-text-fill:#0f1f3c; -fx-font-weight:bold;"/>
+
+	<TableView fx:id="resultTable" prefHeight="420" prefWidth="1000">
+		<columns>
+			<TableColumn fx:id="colDate"    text="Date"        prefWidth="110"/>
+			<TableColumn fx:id="colSubject" text="Subject"     prefWidth="220"/>
+			<TableColumn fx:id="colClass"   text="Class"       prefWidth="90"/>
+			<TableColumn fx:id="colTerm"    text="Term"        prefWidth="90"/>
+			<TableColumn fx:id="colSession" text="Session"     prefWidth="110"/>
+			<TableColumn fx:id="colScore"   text="Score"       prefWidth="120"/>
+			<TableColumn fx:id="colPercent" text="Percentage"  prefWidth="110"/>
+		</columns>
+		<columnResizePolicy>
+			<TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+		</columnResizePolicy>
+	</TableView>
+
+	<Label fx:id="statusLabel" wrapText="true"
+           style="-fx-font-size:13px; -fx-text-fill:#555555;"/>
+	<Label text="Read-only view. Result queries: contact the school office."
+           style="-fx-font-size:12px; -fx-text-fill:#888888;"/>
+
+	<HBox spacing="10">
+		<Button text="Refresh" onAction="#refresh" styleClass="btn-primary" prefWidth="140"/>
+		<Button text="Logout"  onAction="#logout" prefWidth="140"/>
+	</HBox>
+
+	<padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+</VBox>

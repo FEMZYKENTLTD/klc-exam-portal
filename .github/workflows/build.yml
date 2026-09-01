@@ -1,0 +1,97 @@
+name: Build KLC CBT Suite
+
+on:
+  push:
+    branches: [main, 'arena/**']
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Compile & package (Java 17)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+
+      - name: Build fat JAR
+        run: mvn -B -ntp clean package
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: knowledge-land-cbt-${{ github.sha }}
+          path: target/knowledge-land-cbt-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      # Every push to main publishes the runnable JAR as a rolling
+      # "latest" pre-release - lab PCs can always grab the newest build.
+      - name: Publish rolling pre-release on main
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-build
+          name: "Latest build (main)"
+          prerelease: true
+          files: target/knowledge-land-cbt-*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    name: Versioned release (JAR + zero-JDK Windows bundle)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+
+      - name: Build fat JAR
+        shell: pwsh
+        run: mvn -B -ntp clean package
+
+      - name: Bundle zero-JDK Windows app image (jpackage)
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem "target/knowledge-land-cbt-*.jar" | Select-Object -First 1
+          jpackage --type app-image --name KLC-CBT-Suite --input target --dest dist `
+            --main-jar $jar.Name --java-options "-Xmx1g"
+          Compress-Archive -Path dist/KLC-CBT-Suite -DestinationPath KLC-CBT-Suite-win.zip
+
+      - name: Attach to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/knowledge-land-cbt-*.jar
+            KLC-CBT-Suite-win.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

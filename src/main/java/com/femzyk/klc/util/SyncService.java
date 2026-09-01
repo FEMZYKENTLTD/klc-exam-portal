@@ -7,10 +7,19 @@ import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.scene.control.Label;
 import javafx.util.Duration;
 import java.sql.*;
 import java.util.UUID;
 
+/**
+ * Background cloud synchronization - KLC CBT Suite v1.0.
+ *
+ * Queued writes are REPLAYED to Supabase whenever the network returns
+ * (README promise: "answers save locally every 30 seconds and auto-sync
+ * when the network returns"). Auto-sync runs for the duration of every
+ * exam AND on the admin dashboard.
+ */
 public class SyncService {
     private static final Gson gson = new Gson();
     private static volatile boolean syncing = false;
@@ -40,10 +49,7 @@ public class SyncService {
             }
             try(Connection local = DatabaseManager.getCacheConnection();
                 Connection cloud = DatabaseManager.getCloudConnection()){
-                // KLC v1.0 FIX: sync_queue has no created_at column (old
-                // query threw SQLState 42703 every cycle and the whole
-                // sync silently did nothing). Order by id instead, and
-                // REPLAY rows to the cloud instead of just marking them.
+                // sync_queue has no created_at column; order by id (UUID).
                 try(PreparedStatement ps = local.prepareStatement(
                     "SELECT id, table_name, record_id, operation, payload FROM sync_queue WHERE synced=FALSE ORDER BY id LIMIT 200")){
                     ResultSet rs = ps.executeQuery();
@@ -67,14 +73,11 @@ public class SyncService {
     }
 
     /**
-     * KLC v1.0 FIX (README promise: "answers save locally every 30 seconds
-     * and auto-sync when the network returns"). Queued rows are now actually
-     * replayed to the cloud. attempt_answers is the critical offline path
-     * (exam answer autosave fallback); every other write goes through
-     * getConnection() cloud-first, so those queue rows are an audit trail
-     * and can be marked applied.
-     * Returns true only when the row is safe to mark as synced; a failed
-     * replay stays unsynced and is retried on the next 30s cycle.
+     * Replay queued rows to the cloud. attempt_answers is the critical
+     * offline path (exam answer autosave fallback); every other write goes
+     * through getConnection() cloud-first, so those queue rows are an audit
+     * trail and can be marked applied. A failed replay stays unsynced and
+     * is retried on the next cycle.
      */
     private static boolean applyToCloud(Connection cloud, String table,
                                         String operation, String payload){
@@ -109,8 +112,6 @@ public class SyncService {
                 }
                 return true;
             }
-            // Everything else was written cloud-first; queue row is the
-            // audit trail only.
             return true;
         }catch(Exception e){
             System.out.println("[Sync] Deferred " + table + "/" + operation
@@ -120,7 +121,7 @@ public class SyncService {
     }
 
     // Auto-sync every 30s - Nigeria network safe
-    public static void startAutoSync(javafx.scene.control.Label statusLabel){
+    public static void startAutoSync(Label statusLabel){
         if(autoSync != null) return;
         autoSync = new Timeline(new KeyFrame(Duration.seconds(30), e -> {
             int n = syncNow();
@@ -131,5 +132,43 @@ public class SyncService {
         autoSync.setCycleCount(Timeline.INDEFINITE);
         autoSync.play();
     }
+
+    /**
+     * KLC v1.0: one-shot cloud flush used at exam submit so the final
+     * answers reach Supabase immediately rather than waiting up to 30s.
+     */
+    public static void flushOnCloudReturn(Label statusLabel){
+        Thread t = new Thread(() -> {
+            int attempts = 0;
+            while (attempts < 10) {
+                int n = syncNow();
+                if (n >= 0 && DatabaseManager.isCloudAvailable()) {
+                    int pending = countPending();
+                    if (pending == 0) {
+                        if (statusLabel != null)
+                            Platform.runLater(() -> statusLabel.setText(
+                                "All exam answers synced to cloud."));
+                        return;
+                    }
+                }
+                attempts++;
+                try { Thread.sleep(10_000); } catch (InterruptedException ie) { return; }
+            }
+        }, "klc-sync-flush");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private static int countPending(){
+        try (Connection c = DatabaseManager.getCacheConnection();
+             PreparedStatement ps = c.prepareStatement(
+                 "SELECT COUNT(*) FROM sync_queue WHERE synced=FALSE")){
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getInt(1) : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     public static void stop(){ if(autoSync != null) autoSync.stop(); }
 }

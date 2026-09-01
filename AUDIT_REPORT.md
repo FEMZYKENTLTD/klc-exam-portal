@@ -1,5 +1,9 @@
 # KLC CBT SUITE v1.0 — ENGINEERING VERIFICATION REPORT
 
+> **REMEDIATION ADDENDUM (2026-09-01, same day):** owner decisions received
+> and implemented — see **§7** at the bottom. The matrix above reflects the
+> code as first audited; §7 lists every follow-up fix shipped on this branch.
+
 **Audit date:** 2026-09-01 · **Auditor:** Acting ML/Software Engineer, project owner of record
 **Scope:** Every verifiable claim in `README.md` checked against the actual codebase at `4f98a18` ("Local updates: social upgrades") + fixes applied on this branch.
 **Method:** Full source read of all 68 controllers/services, scripted cross-checks (`tools/audit_fxml.py`: FXML↔controller↔handler↔path integrity across 41 FXML files), schema cross-referencing against `supabase/*.sql` and `DatabaseInitializer`.
@@ -95,5 +99,24 @@ Concerns for a **secondary-school** product (recommend addressing before marketi
 
 ## 6. VERIFICATION GATES
 
-- `python3 tools/audit_fxml.py` — **41 FXML / 68 Java files; 0 real defects** (remaining output lines are documented false positives: `load("admin_…")` prefix helper and `loadSocial()` prefix helper — both resolve correctly at runtime; LoginController teacher/exam-officer fallbacks are null-guarded).
-- Brace/paren balance verified on all edited files. ⚠️ Full `mvn package` could **not** be executed in this sandbox (all Maven/JDK download hosts network-blocked); owner should run `mvn clean package` locally before release. All edits are syntactically simple (SQL string renames, standard JavaFX Timeline/filters).
+- `python3 tools/audit_fxml.py` — **42 FXML / 70 Java files; 0 real defects** (remaining output lines are documented false positives: `load("admin_…")` prefix helper and `loadSocial()` prefix helper — both resolve correctly at runtime; LoginController teacher/exam-officer fallbacks are null-guarded).
+- Brace/paren balance verified on all edited files. ⚠️ Full `mvn package` could **not** be executed in this sandbox (all Maven/JDK download hosts network-blocked); the new CI workflow (`Actions → Build`) now performs the authoritative compile on every push — owner should watch the first run.
+
+---
+
+## 7. REMEDIATION ADDENDUM — OWNER DECISIONS → SHIPPED FIXES
+
+Owner directives: *maintain all features · do it the best way · "Powered by FEMZYK" stays · publish no credentials.*
+
+| Directive | What shipped |
+|---|---|
+| **"Powered by FEMZYK" stays** | FEMZYK credit lines on Transcript/Attendance PDFs left untouched. README branding rule reworded to match reality (credit allowed on documents). No watermark claims removed. |
+| **Credentials → secrets + rotation** | Full inventory + runbook in `SECURITY_CREDENTIALS.md`. Scrubbed from repo: super-admin password, **two** BCrypt hashes, project ref, and the **hardcoded Supabase anon key (JWT)** found in 3 controllers (ExamManager / LiveMonitor / ResultsView — worst find of the audit: anon key + RLS-disabled = effectively public DB). Realtime WS endpoints now config-driven (`supabase.url`/`supabase.key`), skip gracefully when absent. Super-admin H2 seed no longer uses a published password — reads `app.superadmin.password` or generates a random one-time password printed once. `config.properties.example` expanded (codes, flags, storage). `tools/generate_secrets.ps1/.sh` generate fresh codes + `gh secret set` commands. **Git history still contains the old values — rotation in Supabase is mandatory, not optional.** |
+| **Safeguarding (student DMs)** | Four gates, all server-side: (1) chat locked school-wide while any exam window is active; (2) students cannot message staff accounts (config `social.allow_student_staff_dm=false` default); (3) students cannot send attachments (config `social.allow_student_attachments=false` default); (4) metadata-only audit on every message/attachment (`MESSAGE_SEND`/`MESSAGE_ATTACHMENT` — content never copied to logs). |
+| **Attachments must transfer** | New `StorageService` (OkHttp → Supabase Storage, x-upsert, mime detection, 10s/60s timeouts). Sender: uploads and stores the public object URL; falls back to local path offline. Receiver: http URLs download before opening. Bucket `klc-attachments` provisioned by migration with public-read/auth-write policies. |
+| **README claims with no code** | All six now have real backing: **LaTeX** → WebView+MathJax rendering in exams with offline plain-text fallback; **Topic-by-topic analytics** → topic tagged per question (editor had it; schema/PG alters added), breakdown on every student's result dialog + Analytics report; **Parent Portal** → `PARENT` role (family code, free), ward linked by admission no, read-only results screen (`parent_dashboard.fxml`); **API Access** → `API.md` (Supabase REST/PostgREST, views, RLS rules); **Multi-Campus** → `campus_name` on school profile + settings UI + per-campus deployment pattern documented; **WORM audit** → DB trigger making `audit_logs` INSERT-only (`klc_supabase_v1_1_security_and_features.sql`, which also re-enables RLS that `v6_3_final` had disabled). |
+| **Auto-build on push** | `.github/workflows/build.yml`: every push/PR → JDK 17 + `mvn package` + JAR artifact; pushes to `main` publish a rolling `latest-build` pre-release; version tags (`v*`) additionally build a **zero-JDK Windows bundle** via `jpackage` (app-image zip) on a Windows runner. |
+| **Other fixes in this pass** | `SyncService.flushOnCloudReturn()` — exam submit keeps retrying until every queued answer reaches the cloud; `ConfigService.get/flag()` config accessors; parent/registration flow updated end-to-end (role box, visibility, AuthService gate + `parent_profiles`, login routing); `questions.topic` + `school_profile.campus_name` ALTERs for H2 and Postgres; FXML audit re-run: **42 FXML / 70 Java / 0 real defects**; repo-wide secret sweep: **clean**. |
+
+**Follow-ups left for owner (needs real credentials/machines):** rotate keys in Supabase (§2 of SECURITY_CREDENTIALS), decide on git-history rewrite, run first CI build, optionally restrict social module further per school policy.
+

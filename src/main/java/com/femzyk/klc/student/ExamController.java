@@ -63,7 +63,7 @@ public class ExamController {
 
     // ─── Inner Model ──────────────────────────────────────────────────────────
     static class Question {
-        String id, text, imageUrl, type;
+        String id, text, imageUrl, type, topic;
         Map<String, String> opts = new LinkedHashMap<>();
     }
 
@@ -239,7 +239,7 @@ public class ExamController {
     private void loadQuestions(Connection c) throws SQLException {
         String sql = """
             SELECT q.id, q.question_text, q.question_image_url, q.question_type,
-                   o.option_label, o.option_text, o.is_correct
+                   o.option_label, o.option_text, o.is_correct, q.topic
             FROM exam_questions eq
             JOIN questions q ON q.id = eq.question_id
             LEFT JOIN question_options o ON o.question_id = q.id
@@ -264,6 +264,7 @@ public class ExamController {
                 final String qImageUrl = rs.getString(3);
                 final String qType     = rs.getString(4) == null
                                        ? "MCQ" : rs.getString(4);
+                final String qTopic    = rs.getString(8);
 
                 Question qq = map.computeIfAbsent(qid, k -> {
                     Question n  = new Question();
@@ -271,6 +272,7 @@ public class ExamController {
                     n.text      = qText;
                     n.imageUrl  = qImageUrl;
                     n.type      = qType;
+                    n.topic     = qTopic;
                     return n;
                 });
 
@@ -407,7 +409,7 @@ public class ExamController {
         saveCurrent();
         index = i;
         Question q = questions.get(index);
-        questionLabel.setText((i + 1) + ". " + q.text);
+        renderQuestionText(i + 1, q.text);
         applyFontStyle();
 
         if (questionImageView != null) {
@@ -466,6 +468,104 @@ public class ExamController {
         questionLabel.setStyle(
             "-fx-font-size: " + (16 * fontScale) + "px;" +
             " -fx-font-family: " + family + ";");
+    }
+
+    // =========================================================================
+    //  QUESTION TEXT RENDERING (KLC v1.0 - LaTeX / WAEC formula support)
+    //  Plain label for normal text. Questions containing LaTeX markers
+    //  are ALSO rendered through an embedded WebView + MathJax.
+    //  Offline: the WebView fails silently and the plain-text label
+    //  remains - an exam never blocks on rendering.
+    // =========================================================================
+    private javafx.scene.web.WebView latexView;
+
+    private static boolean looksLikeLatex(String t) {
+        if (t == null) return false;
+        return t.contains("$") || t.contains("\\frac") || t.contains("\\sqrt")
+            || t.contains("\\int") || t.contains("\\sum") || t.contains("\\pi")
+            || t.contains("\\alpha") || t.contains("_{") || t.contains("^");
+    }
+
+    private static String escapeHtml(String s) {
+        return s == null ? "" : s
+            .replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;");
+    }
+
+    private void renderQuestionText(int number, String text) {
+        // Plain label is ALWAYS set first (offline-safe + accessibility).
+        questionLabel.setText(number + ". " + text);
+        questionLabel.setVisible(true);
+        questionLabel.setManaged(true);
+        if (latexView != null) {
+            latexView.setVisible(false);
+            latexView.setManaged(false);
+        }
+        if (!looksLikeLatex(text)) return;
+
+        try {
+            if (latexView == null) {
+                if (!(questionLabel.getParent()
+                        instanceof javafx.scene.layout.Pane parent)) return;
+                latexView = new javafx.scene.web.WebView();
+                latexView.setPrefHeight(190);
+                parent.getChildren().add(latexView);
+            }
+            String html =
+                "<html><head><meta charset='utf-8'/>"
+                + "<script>window.MathJax = {tex: {inlineMath: "
+                + "[['$','$'],['\\\\(','\\\\)']], displayMath: "
+                + "[['$$','$$']]}};</script>"
+                + "<script src='https://cdn.jsdelivr.net/npm/mathjax@3/"
+                + "es5/tex-mjx.js'></script>"
+                + "</head><body style='font-family:Segoe UI,Arial;"
+                + "font-size:15px;margin:6px;'>"
+                + number + ".&nbsp;" + escapeHtml(text)
+                + "</body></html>";
+            latexView.getEngine().loadContent(html);
+            latexView.setVisible(true);
+            latexView.setManaged(true);
+            latexView.getEngine().getLoadWorker().stateProperty()
+                .addListener((o, ov, nv) -> {
+                    if (nv == javafx.concurrent.Worker.State.SUCCEEDED) {
+                        // Rendered fine - hide the duplicate plain label
+                        questionLabel.setVisible(false);
+                        questionLabel.setManaged(false);
+                    } else if (nv
+                            == javafx.concurrent.Worker.State.FAILED) {
+                        // Offline (MathJax CDN unreachable) - keep label
+                        latexView.setVisible(false);
+                        latexView.setManaged(false);
+                        questionLabel.setVisible(true);
+                        questionLabel.setManaged(true);
+                    }
+                });
+        } catch (Exception e) {
+            // javafx-web unavailable or renderer error: plain text stands.
+            System.out.println("[Exam] LaTeX render skipped: "
+                + e.getMessage());
+        }
+    }
+
+    // =========================================================================
+    //  TOPIC-BY-TOPIC BREAKDOWN (KLC v1.0 - shown on the result dialog)
+    // =========================================================================
+    private String topicBreakdownText() {
+        Map<String, int[]> byTopic = new LinkedHashMap<>();
+        for (Question q : questions) {
+            String t = (q.topic == null || q.topic.isBlank())
+                ? "General" : q.topic;
+            int[] agg = byTopic.computeIfAbsent(t, k -> new int[2]);
+            agg[1]++;
+            String sel = answers.get(q.id);
+            if (sel != null && sel.equals(correctAnswerMap.get(q.id)))
+                agg[0]++;
+        }
+        if (byTopic.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder("TOPIC BREAKDOWN:\n");
+        byTopic.forEach((k, v) -> sb.append(String.format(
+            "  %-28s %d/%d correct%n", k, v[0], v[1])));
+        return sb.toString();
     }
 
     @FXML private void increaseFont() {
@@ -691,6 +791,10 @@ public class ExamController {
         if (webcamProctor != null) webcamProctor.stop();
         com.femzyk.klc.util.SyncService.stop();
         saveCurrent();
+        // KLC v1.0: final answer push - keep retrying in the background
+        // until every queued answer reaches the cloud (Nigeria network safe).
+        com.femzyk.klc.util.SyncService.flushOnCloudReturn(null);
+        saveCurrent();
 
         // FIX: Release exam lock so close button works again
         MainApp.examInProgress = false;
@@ -741,10 +845,12 @@ public class ExamController {
                     "Negative marking: %.2f per wrong answer\n\n" +
                     "PRACTICE SCORE:  %.1f / %d\n" +
                     "PERCENTAGE:      %.1f%%\n\n" +
+                    "%s" +
                     "Well done, %s!\n" +
                     "Note: Practice results are NOT recorded on your permanent academic record.",
                     correct, wrong, unanswered, negativeMarking,
                     rawScore, questions.size(), pct,
+                    topicBreakdownText(),
                     AuthService.Session.fullName);
 
             } else {
@@ -819,6 +925,7 @@ public class ExamController {
                     "Negative marking: %.2f per wrong answer\n\n" +
                     "RAW SCORE:  %.1f / %d\n" +
                     "PERCENTAGE: %.1f%%\n\n" +
+                    "%s" +
                     "Well done, %s!\n" +
                     "You may now view your full result on your dashboard.",
                     malpractice
@@ -826,6 +933,7 @@ public class ExamController {
                         : "EXAM SUBMITTED SUCCESSFULLY",
                     correct, wrong, unanswered, negativeMarking,
                     rawScore, questions.size(), pct,
+                    topicBreakdownText(),
                     AuthService.Session.fullName);
             }
 

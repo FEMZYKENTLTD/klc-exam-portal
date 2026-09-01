@@ -66,7 +66,7 @@ public class RegisterController {
     public void initialize() {
         roleBox.getItems().addAll(
             "STUDENT","TEACHER","EXAM_OFFICER",
-            "PRINCIPAL_ADMIN","SUPER_ADMIN");
+            "PRINCIPAL_ADMIN","SUPER_ADMIN","PARENT");
         roleBox.setValue("STUDENT");
 
         classBox.getItems().addAll(
@@ -172,10 +172,18 @@ public class RegisterController {
 
     private void updateVisibility() {
         boolean isStudent = "STUDENT".equals(roleBox.getValue());
-        boolean isStaff   = !isStudent
+        boolean isParent  = "PARENT".equals(roleBox.getValue());
+        boolean isStaff   = !isStudent && !isParent
             && !"SUPER_ADMIN".equals(roleBox.getValue());
 
-        if (admissionField   != null) admissionField.setDisable(!isStudent);
+        if (admissionField   != null) {
+            // Students: their own admission no. Parents: their WARD's
+            // admission no (links the parent to the child's results).
+            admissionField.setDisable(!isStudent && !isParent);
+            admissionField.setPromptText(isParent
+                ? "Ward's admission no, e.g. KLC/SS2/045"
+                : "e.g. KLC/SS2/045");
+        }
         if (surnameField     != null) surnameField.setDisable(!isStudent);
         if (classBox         != null) classBox.setDisable(!isStudent);
         if (armBox           != null) armBox.setDisable(!isStudent);
@@ -284,7 +292,8 @@ public class RegisterController {
         }
 
         ArrayList<String> chosenSubjects = new ArrayList<>();
-        if (!"STUDENT".equals(role) && !"SUPER_ADMIN".equals(role)) {
+        if (!"STUDENT".equals(role) && !"SUPER_ADMIN".equals(role)
+                && !"PARENT".equals(role)) {
             for (CheckBox cb : subjectChecks)
                 if (cb.isSelected())
                     chosenSubjects.add((String) cb.getUserData());
@@ -371,8 +380,13 @@ public class RegisterController {
                           ? " | Admission No: " + admissionField.getText()
                           : "") +
                       (passportFilePath != null ? " | Photo saved" : "")
-                    : "Staff account created. Subjects: " +
-                      chosenSubjects.size()), false);
+                    : "PARENT".equals(role)
+                        ? "Parent account linked to ward admission no: " +
+                          (admissionField != null
+                              ? admissionField.getText() : "") +
+                          ". Login to view your ward's results."
+                        : "Staff account created. Subjects: " +
+                          chosenSubjects.size()), false);
         } else {
             setStatus(result, true);
         }
