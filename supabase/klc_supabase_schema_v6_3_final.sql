@@ -4,10 +4,12 @@
 -- Supabase Project: <YOUR_PROJECT_REF>
 -- Powered by FEMZYK | OLUFEMI BENUA KERIPE
 
--- 1. Super Admin password was rotated - hash no longer stored here.
-UPDATE users SET password_hash = '<ROTATED_BCRYPT_HASH - set via Supabase SQL editor>',
-  email = 'superadmin@knowledgeland.edu.ng'
-WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+-- 1. Super Admin password rotation - REMOVED from the repo (the historical
+--    password + hash were published and are treated as compromised).
+--    Set the hash manually per SECURITY_CREDENTIALS.md section 2a:
+-- UPDATE users SET password_hash = '<your new bcrypt-12 hash>',
+--   email = 'superadmin@knowledgeland.edu.ng'
+-- WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 
 -- 2. 2FA TOTP for Admins
 ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR(100);
