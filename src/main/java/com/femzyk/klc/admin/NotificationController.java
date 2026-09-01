@@ -8,8 +8,29 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
+/**
+ * NotificationController v1.0
+ *
+ * FIX HISTORY (this revision):
+ * 1. notifyResults(): REMOVED H2-only "SELECT RANDOM_UUID()" SQL that
+ *    fails on Supabase PostgreSQL ("function random_uuid() does not
+ *    exist"). Now selects student emails and inserts each row with a
+ *    Java-generated UUID through AuthService.setUuid - works identically
+ *    on H2 and PostgreSQL.
+ * 2. autoApprovePendingAnnouncements(): REPLACED SQL INTERVAL syntax with
+ *    a Java-computed 3-day cutoff Timestamp parameter - dialect-safe on
+ *    both databases.
+ * 3. KEPT: teacher PENDING rule, admin instant APPROVED, no-status-column
+ *    fallback, setUuid for all UUID binds, all existing features.
+ *
+ * REQUIRES: announcements.status column
+ * (migration 01_klc_migration_v1_0.sql). Falls back gracefully if the
+ * column is missing.
+ */
 public class NotificationController {
 
     @FXML private TextField titleField;
@@ -59,7 +80,8 @@ public class NotificationController {
     }
 
     // =========================================================================
-    //  SEND / QUEUE ANNOUNCEMENT WITH TEACHER RULE & 3-DAY AUTO-APPROVAL
+    //  SEND / QUEUE ANNOUNCEMENT WITH TEACHER RULE
+    //  Teacher sends -> status PENDING. Admin/Principal -> APPROVED.
     // =========================================================================
     @FXML
     private void sendTest() {
@@ -72,12 +94,11 @@ public class NotificationController {
             return;
         }
 
-        try (Connection c = DatabaseManager.getConnection()) {
-            // Teacher Rule: Teacher sends -> status = PENDING.
-            // Admin/Principal -> status = APPROVED immediately.
-            boolean isTeacher = "TEACHER".equalsIgnoreCase(AuthService.Session.role);
-            String initialStatus = isTeacher ? "PENDING" : "APPROVED";
+        boolean isTeacher =
+            "TEACHER".equalsIgnoreCase(AuthService.Session.role);
+        String initialStatus = isTeacher ? "PENDING" : "APPROVED";
 
+        try (Connection c = DatabaseManager.getConnection()) {
             try (PreparedStatement ps = c.prepareStatement(
                     "INSERT INTO announcements(" +
                     "id, title, body, target_role, created_by, status) " +
@@ -92,16 +113,18 @@ public class NotificationController {
             }
 
             if (isTeacher) {
-                setStatus("Announcement submitted for approval (Status: PENDING)", false);
+                setStatus(
+                    "Announcement submitted for approval (Status: PENDING). " +
+                    "Auto-approves after 3 days if not reviewed.", false);
             } else {
                 setStatus("Announcement published to: " + target, false);
             }
-
             clearForm();
             loadNotifications();
 
         } catch (Exception e) {
-            // Fallback for databases where status column does not exist yet
+            // Fallback for databases where the status column is not
+            // migrated yet - announcement still goes out.
             try (Connection c2 = DatabaseManager.getConnection();
                  PreparedStatement ps = c2.prepareStatement(
                     "INSERT INTO announcements(" +
@@ -123,25 +146,56 @@ public class NotificationController {
     }
 
     // =========================================================================
-    //  3-DAY AUTO-APPROVAL CHECK (RUNS EVERY TIME NOTIFICATIONS ARE LOADED)
+    //  3-DAY AUTO-APPROVAL (Priority 3 #13)
+    //  Java-computed cutoff timestamp - identical behaviour on H2 and
+    //  PostgreSQL. Runs every time notifications are loaded.
     // =========================================================================
     private void autoApprovePendingAnnouncements(Connection c) {
-        try {
-            // Auto-approve any teacher announcement older than 3 days
-            try (PreparedStatement ps = c.prepareStatement(
-                    "UPDATE announcements " +
-                    "SET status = 'APPROVED' " +
-                    "WHERE status = 'PENDING' " +
-                    "  AND created_at < CURRENT_TIMESTAMP - INTERVAL '3' DAY")) {
-                ps.executeUpdate();
+        try (PreparedStatement ps = c.prepareStatement(
+                "UPDATE announcements " +
+                "SET status = 'APPROVED' " +
+                "WHERE status = 'PENDING' AND created_at < ?")) {
+            Timestamp cutoff = new Timestamp(
+                System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000);
+            ps.setTimestamp(1, cutoff);
+            int n = ps.executeUpdate();
+            if (n > 0) {
+                System.out.println(
+                    "[Announcements] Auto-approved " + n +
+                    " pending announcement(s) older than 3 days");
             }
         } catch (Exception ignored) {
-            // Handled gracefully for dialects/schemas without status column
+            // Status column not migrated yet - nothing to auto-approve
         }
     }
 
     // =========================================================================
-    //  NOTIFY ALL STUDENTS WITH RECENT RESULTS
+    //  MANUAL APPROVAL (Admin/Principal reviews teacher submissions)
+    // =========================================================================
+    @FXML
+    private void approvePending() {
+        String role = AuthService.Session.role;
+        if (!"SUPER_ADMIN".equals(role) && !"PRINCIPAL_ADMIN".equals(role)) {
+            setStatus("Only admins can approve announcements", true);
+            return;
+        }
+        try (Connection c = DatabaseManager.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                 "UPDATE announcements SET status='APPROVED' " +
+                 "WHERE status='PENDING'")) {
+            int n = ps.executeUpdate();
+            setStatus(n == 0
+                ? "No pending announcements to approve"
+                : "Approved " + n + " pending announcement(s)", false);
+            loadNotifications();
+        } catch (Exception e) {
+            setStatus("Error: " + e.getMessage(), true);
+        }
+    }
+
+    // =========================================================================
+    //  NOTIFY ALL ACTIVE STUDENTS
+    //  FIX: cross-database - UUIDs generated in Java, not SQL.
     // =========================================================================
     @FXML
     private void notifyResults() {
@@ -152,20 +206,50 @@ public class NotificationController {
             setStatus("Enter a title before notifying", true);
             return;
         }
+        String body = message.isBlank() ? title : message;
 
         try (Connection c = DatabaseManager.getConnection()) {
+
+            // 1. Collect active student emails
+            List<String> emails = new ArrayList<>();
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT email FROM users " +
+                    "WHERE role = 'STUDENT' AND is_active = TRUE " +
+                    "AND email IS NOT NULL");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String em = rs.getString(1);
+                    if (em != null && !em.isBlank()) emails.add(em);
+                }
+            }
+
+            if (emails.isEmpty()) {
+                setStatus("No active students with email addresses found", true);
+                return;
+            }
+
+            // 2. Queue one notification per student with a Java UUID
+            int count = 0;
             try (PreparedStatement ps = c.prepareStatement(
                     "INSERT INTO notification_queue(" +
                     "id, recipient_email, subject, body, status) " +
-                    "SELECT RANDOM_UUID(), u.email, ?, ?, 'PENDING' " +
-                    "FROM users u " +
-                    "WHERE u.role = 'STUDENT' AND u.is_active = TRUE")) {
-                ps.setString(1, title);
-                ps.setString(2, message.isBlank() ? title : message);
-                int count = ps.executeUpdate();
-                setStatus("Queued notifications for " + count + " students", false);
+                    "VALUES(?,?,?,?, 'PENDING')")) {
+                for (String em : emails) {
+                    AuthService.setUuid(ps, 1,
+                        UUID.randomUUID().toString(), c);
+                    ps.setString(2, em);
+                    ps.setString(3, title);
+                    ps.setString(4, body);
+                    ps.addBatch();
+                    count++;
+                    if (count % 100 == 0) ps.executeBatch();
+                }
+                ps.executeBatch();
             }
+
+            setStatus("Queued notifications for " + count + " students", false);
             loadNotifications();
+
         } catch (Exception e) {
             setStatus("Error: " + e.getMessage(), true);
         }
@@ -191,6 +275,7 @@ public class NotificationController {
 
     // =========================================================================
     //  LOAD NOTIFICATION QUEUE TABLE
+    //  Method name matches FXML onAction="#loadNotifications"
     // =========================================================================
     @FXML
     public void loadNotifications() {
@@ -201,8 +286,8 @@ public class NotificationController {
             try (PreparedStatement ps = c.prepareStatement(
                     "SELECT id, recipient_email, subject, status, created_at " +
                     "FROM notification_queue " +
-                    "ORDER BY created_at DESC LIMIT 100")) {
-                ResultSet rs = ps.executeQuery();
+                    "ORDER BY created_at DESC LIMIT 100");
+                 ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Timestamp ts = rs.getTimestamp(5);
                     data.add(new NotificationRow(

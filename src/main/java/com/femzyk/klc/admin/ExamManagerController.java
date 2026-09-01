@@ -184,7 +184,7 @@ public class ExamManagerController {
 
             String subjectId = null;
             try (PreparedStatement ps = c.prepareStatement(
-                    "SELECT MIN(id) FROM subjects " +
+                    "SELECT MIN(CAST(id AS VARCHAR(36))) FROM subjects " +
                     "WHERE subject_name = ? AND is_active = TRUE")) {
                 ps.setString(1, subject);
                 ResultSet rs = ps.executeQuery();

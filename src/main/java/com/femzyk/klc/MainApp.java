@@ -28,7 +28,7 @@ public class MainApp extends Application {
         });
 
         // STEP 1: Init database manager (tests cloud connection)
-        System.out.println("[App] Starting KLC CBT Suite v6.3...");
+        System.out.println("[App] Starting KLC CBT Suite v1.0...");
         DatabaseManager.init();
 
         // STEP 2: Create all tables (H2 offline + PostgreSQL column checks)
@@ -43,7 +43,7 @@ public class MainApp extends Application {
             getClass().getResource("/css/klc-premium.css").toExternalForm());
 
         stage.setTitle(
-            "KNOWLEDGE LAND COLLEGE CBT SUITE v6.3 | Powered by FEMZYK");
+            "KNOWLEDGE LAND COLLEGE CBT SUITE v1.0 | Powered by FEMZYK");
 
         // DECORATED so OS close button is visible
         stage.initStyle(StageStyle.DECORATED);

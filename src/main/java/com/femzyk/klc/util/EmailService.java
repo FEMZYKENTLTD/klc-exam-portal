@@ -1,5 +1,6 @@
 package com.femzyk.klc.util;
 
+import com.femzyk.klc.auth.AuthService;
 import com.femzyk.klc.db.DatabaseManager;
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
@@ -11,10 +12,27 @@ import java.util.Properties;
 import java.util.UUID;
 
 /**
- * Email Service - KLC CBT Suite v6.3
+ * Email Service - KLC CBT Suite v1.0
  * Uses Brevo SMTP (300 free emails/day)
  * Sender name: KNOWLEDGE LAND COLLEGE CBT
  * Falls back to notification_queue if SMTP not configured
+ *
+ * v1.0 CHANGES (Rule 11 review of the previous version):
+ * 1. RULE 5 FIX in queue(): the INSERT used ps.setString() for the
+ *    UUID id column - every queued email silently FAILED on Supabase
+ *    PostgreSQL ("column id is of type uuid but expression is of type
+ *    character varying" swallowed by the empty catch). Now uses
+ *    AuthService.setUuid - works on H2 AND PostgreSQL.
+ * 2. RULE 5 FIX in flushQueue(): the status UPDATE had the same bug -
+ *    setString on the UUID id. Fixed with AuthService.setUuid.
+ * 3. NEW sendFriendRequest(to, toName, fromName): exact method name the
+ *    FriendsController (G6) calls. Delegates to the existing
+ *    sendFriendRequestNotification - which is PRESERVED unchanged
+ *    (Rule 3: nothing removed).
+ * 4. Branding: email template updated v1.0 -> v1.0.
+ * ALL other methods preserved byte-for-byte in behaviour: send, HTML
+ * template, queue fallback, flushQueue, result/welcome/password-reset/
+ * friend-request/message notifications.
  */
 public class EmailService {
 
@@ -134,7 +152,7 @@ public class EmailService {
             "<div class='container'>" +
             "<div class='header'>" +
             "<h1>KNOWLEDGE LAND COLLEGE</h1>" +
-            "<p>CBT SUITE v6.3 | Secondary School, Igando, Lagos State</p>" +
+            "<p>CBT SUITE v1.0 | Secondary School, Igando, Lagos State</p>" +
             "</div>" +
             "<div class='body'>" +
             body.replace("\n", "<br/>") +
@@ -149,6 +167,7 @@ public class EmailService {
 
     // =========================================================================
     //  QUEUE EMAIL (when SMTP not available)
+    //  FIX Rule 5: id is a UUID column on PostgreSQL - setUuid required.
     // =========================================================================
     public static void queue(String to, String subject, String body) {
         try (Connection c = DatabaseManager.getConnection();
@@ -156,16 +175,19 @@ public class EmailService {
                  "INSERT INTO notification_queue(" +
                  "  id, recipient_email, subject, body, channel, status) " +
                  "VALUES(?,?,?,?,'EMAIL','PENDING')")) {
-            ps.setString(1, UUID.randomUUID().toString());
+            AuthService.setUuid(ps, 1, UUID.randomUUID().toString(), c);
             ps.setString(2, to);
             ps.setString(3, subject);
             ps.setString(4, body);
             ps.executeUpdate();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.err.println("[Email] Queue failed: " + e.getMessage());
+        }
     }
 
     // =========================================================================
     //  FLUSH QUEUE - send all pending emails
+    //  FIX Rule 5: UPDATE ... WHERE id=? now uses setUuid.
     // =========================================================================
     public static int flushQueue() {
         if (!enabled) return 0;
@@ -185,7 +207,7 @@ public class EmailService {
                             "UPDATE notification_queue " +
                             "SET status='SENT', sent_at=CURRENT_TIMESTAMP " +
                             "WHERE id=?")) {
-                        up.setString(1, id);
+                        AuthService.setUuid(up, 1, id, c);
                         up.executeUpdate();
                         sent++;
                     }
@@ -252,6 +274,15 @@ public class EmailService {
             "Best regards,\n" +
             "KNOWLEDGE LAND COLLEGE";
         send(receiverEmail, emailSubject, body);
+    }
+
+    /**
+     * NEW v1.0: exact method name called by FriendsController (G6).
+     * Thin delegate to sendFriendRequestNotification so both names work.
+     */
+    public static void sendFriendRequest(
+            String receiverEmail, String receiverName, String senderName) {
+        sendFriendRequestNotification(receiverEmail, receiverName, senderName);
     }
 
     public static void sendMessageNotification(

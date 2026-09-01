@@ -12,6 +12,20 @@ import javafx.stage.Stage;
 import java.sql.*;
 import java.util.*;
 
+/**
+ * PracticeExamController v1.0
+ *
+ * FIX HISTORY (this revision):
+ * 1. NEW clearPreviousPracticeAttempt(): exam_attempts has
+ *    UNIQUE(exam_id, student_id), so a student could only EVER take a
+ *    given practice exam ONCE - the second click failed with a unique
+ *    constraint error. We now delete the student's previous practice
+ *    attempt (and its attempt_answers) before starting a new one.
+ *    Safe because practice attempts are never in the results table.
+ * 2. Everything else preserved exactly: find-or-create practice exam,
+ *    approved-question pool, 20 random questions, 30-minute duration,
+ *    opens /fxml/exam.fxml and calls ExamController.startExam().
+ */
 public class PracticeExamController {
 
     @FXML private VBox             practiceRoot;
@@ -33,7 +47,7 @@ public class PracticeExamController {
     private void loadSubjects() {
         try (Connection c = DatabaseManager.getConnection();
              PreparedStatement ps = c.prepareStatement(
-                 "SELECT MIN(id) AS id, subject_name " +
+                 "SELECT MIN(CAST(id AS VARCHAR(36))) AS id, subject_name " +
                  "FROM subjects WHERE is_active = TRUE " +
                  "GROUP BY subject_name ORDER BY subject_name");
              ResultSet rs = ps.executeQuery()) {
@@ -58,9 +72,6 @@ public class PracticeExamController {
         }
     }
 
-    // =========================================================================
-    //  START PRACTICE EXAM MODE
-    // =========================================================================
     @FXML
     private void startPractice() {
         String subject    = subjectBox.getValue();
@@ -79,7 +90,8 @@ public class PracticeExamController {
         if (startPracticeBtn != null) startPracticeBtn.setDisable(true);
 
         try {
-            String practiceExamId = findOrCreatePracticeExam(subject, classLevel);
+            String practiceExamId = findOrCreatePracticeExam(
+                subject, classLevel);
 
             if (practiceExamId == null) {
                 setStatus("No approved questions found for " +
@@ -89,6 +101,11 @@ public class PracticeExamController {
                     startPracticeBtn.setDisable(false);
                 return;
             }
+
+            // FIX: allow unlimited practice re-attempts.
+            // exam_attempts UNIQUE(exam_id, student_id) would otherwise
+            // block every attempt after the first.
+            clearPreviousPracticeAttempt(practiceExamId);
 
             FXMLLoader loader = new FXMLLoader(
                 getClass().getResource("/fxml/exam.fxml"));
@@ -102,10 +119,11 @@ public class PracticeExamController {
 
             Scene scene = new Scene(loader.load(), w, h);
             scene.getStylesheets().add(
-                getClass().getResource("/css/klc-premium.css").toExternalForm());
+                getClass().getResource(
+                    "/css/klc-premium.css").toExternalForm());
 
             ExamController ctrl = loader.getController();
-            ctrl.startExam(practiceExamId, "A");
+            ctrl.startExam(practiceExamId, "A");  // practice variant A
 
             currentStage.setScene(scene);
 
@@ -117,10 +135,59 @@ public class PracticeExamController {
         }
     }
 
+    /**
+     * Deletes this student's previous attempt on the given PRACTICE exam
+     * (plus its answers) so a fresh attempt can be created.
+     * Guarded by is_practice = TRUE so an official exam attempt can never
+     * be deleted by this path.
+     */
+    private void clearPreviousPracticeAttempt(String practiceExamId) {
+        try (Connection c = DatabaseManager.getConnection()) {
+
+            // Find the previous attempt id (practice exams only)
+            String oldAttemptId = null;
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT a.id FROM exam_attempts a " +
+                    "JOIN exams e ON e.id = a.exam_id " +
+                    "WHERE a.exam_id = ? AND a.student_id = ? " +
+                    "  AND e.is_practice = TRUE")) {
+                AuthService.setUuid(ps, 1, practiceExamId, c);
+                AuthService.setUuid(ps, 2, AuthService.Session.userId, c);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) oldAttemptId = rs.getString(1);
+            }
+
+            if (oldAttemptId == null) return; // first attempt - nothing to clear
+
+            try (PreparedStatement ps = c.prepareStatement(
+                    "DELETE FROM attempt_answers WHERE attempt_id = ?")) {
+                AuthService.setUuid(ps, 1, oldAttemptId, c);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = c.prepareStatement(
+                    "DELETE FROM exam_attempts WHERE id = ?")) {
+                AuthService.setUuid(ps, 1, oldAttemptId, c);
+                ps.executeUpdate();
+            }
+        } catch (Exception e) {
+            // Non-fatal: if cleanup fails, startExam will surface the error
+            System.err.println(
+                "[Practice] Could not clear previous attempt: "
+                + e.getMessage());
+        }
+    }
+
+    /**
+     * Finds an existing practice exam for this subject+class,
+     * OR creates a temporary one from approved questions.
+     * Returns the exam ID or null if no questions available.
+     */
     private String findOrCreatePracticeExam(
             String subject, String classLevel) throws Exception {
 
         try (Connection c = DatabaseManager.getConnection()) {
+
+            // First: check for an existing practice exam
             try (PreparedStatement ps = c.prepareStatement(
                     "SELECT e.id FROM exams e " +
                     "JOIN subjects s ON s.id = e.subject_id " +
@@ -135,6 +202,7 @@ public class PracticeExamController {
                 if (rs.next()) return rs.getString(1);
             }
 
+            // Check if approved questions exist
             int questionCount;
             try (PreparedStatement ps = c.prepareStatement(
                     "SELECT COUNT(*) FROM questions q " +
@@ -151,9 +219,11 @@ public class PracticeExamController {
 
             if (questionCount == 0) return null;
 
+            // Get subject ID
             String subjectId = subjectIdMap.get(subject);
             if (subjectId == null) return null;
 
+            // Create temporary practice exam
             String examId = UUID.randomUUID().toString();
             String saId   = AuthService.Session.userId;
 
@@ -166,12 +236,14 @@ public class PracticeExamController {
                 AuthService.setUuid(ps, 1, examId, c);
                 AuthService.setUuid(ps, 2, subjectId, c);
                 ps.setString(3, classLevel);
-                ps.setString(4, "Practice: " + subject + " - " + classLevel);
-                ps.setInt(5, 30);
+                ps.setString(4,
+                    "Practice: " + subject + " - " + classLevel);
+                ps.setInt(5, 30); // 30 minutes for practice
                 AuthService.setUuid(ps, 6, saId, c);
                 ps.executeUpdate();
             }
 
+            // Attach up to 20 random approved questions
             try (PreparedStatement ps = c.prepareStatement(
                     "SELECT q.id FROM questions q " +
                     "JOIN subjects s ON s.id = q.subject_id " +
@@ -209,6 +281,7 @@ public class PracticeExamController {
             : "-fx-text-fill:#2ecc71; -fx-font-weight:bold;");
     }
 
+    // Legacy inner model kept for compatibility
     public static class PracticeQuestion {
         public String id, text, imageUrl, type, correctLabel;
         public Map<String, String> opts = new LinkedHashMap<>();

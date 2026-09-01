@@ -13,6 +13,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * SubjectManagerController v1.0
+ *
+ * FIXES:
+ * 1. UUID BINDING (the "column id is of type uuid but expression is of
+ *    type character varying" error): addSubject() and deleteSubject()
+ *    now use AuthService.setUuid() for every UUID parameter (Rule 2).
+ * 2. ROLE ENFORCEMENT (permission matrix): Subject CRUD is SUPER_ADMIN
+ *    and PRINCIPAL_ADMIN only. Teachers/Exam Officers get a clear
+ *    "Access denied" message instead of a half-open gate.
+ * 3. Duplicate subject_code now reported clearly before insert.
+ * ALL existing features preserved: autocomplete, code auto-suggest,
+ * table, delete confirmation.
+ */
 public class SubjectManagerController {
 
     @FXML private TableView<SubjectRow> table;
@@ -38,6 +52,11 @@ public class SubjectManagerController {
     }
 
     ObservableList<SubjectRow> data = FXCollections.observableArrayList();
+
+    private boolean isSubjectAdmin() {
+        String r = AuthService.Session.role;
+        return "SUPER_ADMIN".equals(r) || "PRINCIPAL_ADMIN".equals(r);
+    }
 
     @FXML
     public void initialize() {
@@ -177,8 +196,10 @@ public class SubjectManagerController {
 
     @FXML
     private void addSubject() {
-        if (!AuthService.isTeacherOrAbove()) {
-            status.setText("Access denied");
+        // Permission matrix: Subjects CRUD = SUPER_ADMIN + PRINCIPAL_ADMIN only
+        if (!isSubjectAdmin()) {
+            status.setText(
+                "Access denied - only Super Admin or Principal can manage subjects.");
             return;
         }
         String name = fName.getText().trim().toUpperCase();
@@ -190,16 +211,31 @@ public class SubjectManagerController {
             return;
         }
 
-        try (Connection c = DatabaseManager.getConnection();
-             PreparedStatement ps = c.prepareStatement(
-                 "INSERT INTO subjects(id, subject_name, subject_code, " +
-                 "class_level, is_active, created_by) VALUES(?,?,?,?,TRUE,?)")) {
-            ps.setString(1, UUID.randomUUID().toString());
-            ps.setString(2, name);
-            ps.setString(3, code);
-            ps.setString(4, cls);
-            ps.setString(5, AuthService.Session.userId);
-            ps.executeUpdate();
+        try (Connection c = DatabaseManager.getConnection()) {
+
+            // Friendly duplicate check before insert
+            try (PreparedStatement check = c.prepareStatement(
+                    "SELECT COUNT(*) FROM subjects WHERE subject_code = ?")) {
+                check.setString(1, code);
+                ResultSet rs = check.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    status.setText(
+                        "Code " + code + " already exists. Use a different code.");
+                    return;
+                }
+            }
+
+            // FIX: setUuid for id and created_by (Rule 2 - cross-DB safe)
+            try (PreparedStatement ps = c.prepareStatement(
+                    "INSERT INTO subjects(id, subject_name, subject_code, " +
+                    "class_level, is_active, created_by) VALUES(?,?,?,?,TRUE,?)")) {
+                AuthService.setUuid(ps, 1, UUID.randomUUID().toString(), c);
+                ps.setString(2, name);
+                ps.setString(3, code);
+                ps.setString(4, cls);
+                AuthService.setUuid(ps, 5, AuthService.Session.userId, c);
+                ps.executeUpdate();
+            }
 
             AuthService.logAudit("SUBJECT_ADD", "subjects", null);
             status.setText("Subject added: " + code + " - " + name);
@@ -215,6 +251,11 @@ public class SubjectManagerController {
 
     @FXML
     private void deleteSubject() {
+        if (!isSubjectAdmin()) {
+            status.setText(
+                "Access denied - only Super Admin or Principal can manage subjects.");
+            return;
+        }
         SubjectRow r = table.getSelectionModel().getSelectedItem();
         if (r == null) {
             status.setText("Select a subject to delete");
@@ -230,8 +271,10 @@ public class SubjectManagerController {
             try (Connection c = DatabaseManager.getConnection();
                  PreparedStatement ps = c.prepareStatement(
                      "DELETE FROM subjects WHERE id=?")) {
-                ps.setString(1, r.id);
+                // FIX: setUuid instead of setString (Rule 2)
+                AuthService.setUuid(ps, 1, r.id, c);
                 ps.executeUpdate();
+                AuthService.logAudit("SUBJECT_DELETE", "subjects", r.id);
                 status.setText("Deleted: " + r.name);
                 load();
             } catch (Exception e) {

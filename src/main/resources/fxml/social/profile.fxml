@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.social.ProfileController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Page Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="My Profile"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Manage your photo, personal details and password"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;
+                       -fx-background:transparent;">
+		<VBox spacing="14" style="-fx-padding:16;" alignment="TOP_CENTER">
+
+			<HBox spacing="14" alignment="TOP_CENTER" maxWidth="980">
+
+				<!-- LEFT: Photo + identity -->
+				<VBox styleClass="card" spacing="10" prefWidth="300"
+                      alignment="TOP_CENTER">
+					<StackPane style="-fx-background-color:#eef2f9;
+                                      -fx-background-radius:8;"
+                               prefHeight="180">
+						<ImageView fx:id="photoView"
+                                   fitWidth="140" fitHeight="160"
+                                   preserveRatio="true"/>
+					</StackPane>
+					<Button text="Upload Photo"
+                            onAction="#choosePhoto"
+                            maxWidth="1.7976931348623157E308"
+                            style="-fx-background-color:#3b82f6;
+                                   -fx-text-fill:white; -fx-font-weight:bold;
+                                   -fx-background-radius:8;
+                                   -fx-padding:9 0; -fx-cursor:hand;"/>
+					<Separator/>
+					<Label fx:id="nameLabel" text="-"
+                           style="-fx-font-size:16px; -fx-font-weight:bold;
+                                  -fx-text-fill:#0f1f3c;" wrapText="true"/>
+					<Label fx:id="roleLabel" text="-"
+                           style="-fx-font-size:13px; -fx-text-fill:#d4af37;
+                                  -fx-font-weight:bold;"/>
+					<Label fx:id="emailLabel" text="-"
+                           style="-fx-font-size:12px; -fx-text-fill:#64748b;"
+                           wrapText="true"/>
+					<Label fx:id="ageLabel" text="Age: -"
+                           style="-fx-font-size:12px; -fx-text-fill:#64748b;"/>
+				</VBox>
+
+				<!-- RIGHT: Details + password -->
+				<VBox spacing="14" HBox.hgrow="ALWAYS">
+
+					<VBox styleClass="card" spacing="10">
+						<Label text="Personal Details"
+                               style="-fx-font-size:15px; -fx-font-weight:bold;
+                                      -fx-text-fill:#0f1f3c;"/>
+						<VBox spacing="4">
+							<Label text="Bio / About Me"
+                                   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                          -fx-text-fill:#0f1f3c;"/>
+							<TextArea fx:id="bioArea"
+                                      prefRowCount="3" wrapText="true"
+                                      promptText="Write a short bio about yourself..."
+                                      style="-fx-border-color:#c8d3e8;
+                                             -fx-border-radius:8;
+                                             -fx-background-radius:8;"/>
+						</VBox>
+						<HBox spacing="12">
+							<VBox spacing="4">
+								<Label text="Date of Birth"
+                                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                                              -fx-text-fill:#0f1f3c;"/>
+								<DatePicker fx:id="dobPicker"
+                                            promptText="Select date"
+                                            style="-fx-border-color:#c8d3e8;
+                                                   -fx-border-radius:8;"/>
+							</VBox>
+							<VBox spacing="4" HBox.hgrow="ALWAYS">
+								<Label text="Address"
+                                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                                              -fx-text-fill:#0f1f3c;"/>
+								<TextArea fx:id="addressArea"
+                                          prefRowCount="2" wrapText="true"
+                                          promptText="Home address..."
+                                          style="-fx-border-color:#c8d3e8;
+                                                 -fx-border-radius:8;
+                                                 -fx-background-radius:8;"/>
+							</VBox>
+						</HBox>
+						<HBox spacing="12" alignment="CENTER_LEFT">
+							<Button text="Save Profile"
+                                    onAction="#saveProfile"
+                                    styleClass="btn-primary"
+                                    style="-fx-padding:10 24;"/>
+							<Label fx:id="profileStatusLabel"
+                                   wrapText="true"
+                                   style="-fx-font-size:12px;"/>
+						</HBox>
+					</VBox>
+
+					<VBox styleClass="card" spacing="10">
+						<Label text="Change Password"
+                               style="-fx-font-size:15px; -fx-font-weight:bold;
+                                      -fx-text-fill:#0f1f3c;"/>
+						<Label text="Staff passwords expire every 90 days. Changing your password here resets the timer."
+                               wrapText="true"
+                               style="-fx-text-fill:#64748b; -fx-font-size:12px;"/>
+						<HBox spacing="12">
+							<VBox spacing="4" HBox.hgrow="ALWAYS">
+								<Label text="Current Password"
+                                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                                              -fx-text-fill:#0f1f3c;"/>
+								<PasswordField fx:id="currentPassField"
+                                               promptText="Current password"
+                                               style="-fx-border-color:#c8d3e8;
+                                                      -fx-border-radius:8;
+                                                      -fx-background-radius:8;
+                                                      -fx-padding:9;"/>
+							</VBox>
+							<VBox spacing="4" HBox.hgrow="ALWAYS">
+								<Label text="New Password"
+                                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                                              -fx-text-fill:#0f1f3c;"/>
+								<PasswordField fx:id="newPassField"
+                                               promptText="Minimum 6 characters"
+                                               style="-fx-border-color:#c8d3e8;
+                                                      -fx-border-radius:8;
+                                                      -fx-background-radius:8;
+                                                      -fx-padding:9;"/>
+							</VBox>
+							<VBox spacing="4" HBox.hgrow="ALWAYS">
+								<Label text="Confirm New Password"
+                                       style="-fx-font-weight:bold; -fx-font-size:13px;
+                                              -fx-text-fill:#0f1f3c;"/>
+								<PasswordField fx:id="confirmPassField"
+                                               promptText="Repeat new password"
+                                               style="-fx-border-color:#c8d3e8;
+                                                      -fx-border-radius:8;
+                                                      -fx-background-radius:8;
+                                                      -fx-padding:9;"/>
+							</VBox>
+						</HBox>
+						<HBox spacing="12" alignment="CENTER_LEFT">
+							<Button text="Change Password"
+                                    onAction="#changePassword"
+                                    style="-fx-background-color:#f59e0b;
+                                           -fx-text-fill:#0f1f3c;
+                                           -fx-font-weight:bold;
+                                           -fx-background-radius:8;
+                                           -fx-padding:10 20; -fx-cursor:hand;"/>
+							<Label fx:id="passStatusLabel"
+                                   wrapText="true"
+                                   style="-fx-font-size:12px;"/>
+						</HBox>
+					</VBox>
+
+				</VBox>
+			</HBox>
+		</VBox>
+	</ScrollPane>
+</VBox>

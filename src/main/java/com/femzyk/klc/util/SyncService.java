@@ -43,7 +43,7 @@ public class SyncService {
                     ResultSet rs = ps.executeQuery();
                     while(rs.next()){
                         String qid = rs.getString(1);
-                        // KLC v6.3: data is written via getConnection() with cloud-first fallback,
+                        // KLC v1.0: data is written via getConnection() with cloud-first fallback,
                         // sync_queue is audit trail - mark synced
                         try(PreparedStatement up = local.prepareStatement(
                             "UPDATE sync_queue SET synced=TRUE, synced_at=NOW() WHERE id=?")){

@@ -39,7 +39,7 @@ public class QuestionImporterController {
     private void loadSubjects() {
         try (Connection c = DatabaseManager.getConnection();
              PreparedStatement ps = c.prepareStatement(
-                 "SELECT MIN(id) AS id, subject_name " +
+                 "SELECT MIN(CAST(id AS VARCHAR(36))) AS id, subject_name " +
                  "FROM subjects WHERE is_active = TRUE " +
                  "GROUP BY subject_name ORDER BY subject_name")) {
             ResultSet rs = ps.executeQuery();

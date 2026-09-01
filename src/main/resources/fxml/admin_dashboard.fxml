@@ -22,7 +22,8 @@
 				<Label text="KNOWLEDGE LAND COLLEGE"
                        style="-fx-text-fill:white; -fx-font-size:16px;
                               -fx-font-weight:bold;"/>
-				<Label text="CBT SUITE v6.3 - Admin Portal"
+				<Label fx:id="portalSubtitle"
+                       text="CBT SUITE v1.0 - Admin Portal"
                        style="-fx-text-fill:#d4af37; -fx-font-size:11px;"/>
 			</VBox>
 			<Region HBox.hgrow="ALWAYS"/>
@@ -42,74 +43,84 @@
                            -fx-background:transparent;">
 			<VBox styleClass="sidebar" prefWidth="225" spacing="4">
 
+				<!-- MY ACCOUNT -->
+				<Label text="MY ACCOUNT"
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
+                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+				<Button text="My Profile"
+                        onAction="#showProfile" styleClass="sidebar-btn"/>
+				<Button text="Friends"
+                        onAction="#showFriends" styleClass="sidebar-btn"/>
+				<Button text="Messages"
+                        onAction="#showMessages" styleClass="sidebar-btn"/>
+
+
 				<!-- OVERVIEW -->
-				<Label text="OVERVIEW"
+				<Label fx:id="secOverview" text="OVERVIEW"
                        style="-fx-text-fill:#64748b; -fx-font-size:11px;
                               -fx-font-weight:bold; -fx-padding:8 0 4 14;"/>
-				<Button text="Dashboard"
+				<Button fx:id="btnDashboard" text="Dashboard"
                         onAction="#showDashboard" styleClass="sidebar-btn"/>
-				<Button text="Live Monitor"
+				<Button fx:id="btnLiveMonitor" text="Live Monitor"
                         onAction="#showLiveMonitor" styleClass="sidebar-btn"/>
-				<Button text="Analytics"
+				<Button fx:id="btnAnalytics" text="Analytics"
                         onAction="#showAnalytics" styleClass="sidebar-btn"/>
 
 				<!-- ACADEMIC -->
-				<Label text="ACADEMIC"
+				<Label fx:id="secAcademic" text="ACADEMIC"
                        style="-fx-text-fill:#64748b; -fx-font-size:11px;
                               -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
-				<Button text="Subjects"
+				<Button fx:id="btnSubjects" text="Subjects"
                         onAction="#showSubjects" styleClass="sidebar-btn"/>
-				<Button text="Class Manager"
+				<Button fx:id="btnClassMgr" text="Class Manager"
                         onAction="#showClassManager" styleClass="sidebar-btn"/>
-				<Button text="Grading Scale"
+				<Button fx:id="btnGrading" text="Grading Scale"
                         onAction="#showGradingScale" styleClass="sidebar-btn"/>
 
 				<!-- QUESTION BANK -->
-				<Label text="QUESTION BANK"
+				<Label fx:id="secQuestions" text="QUESTION BANK"
                        style="-fx-text-fill:#64748b; -fx-font-size:11px;
                               -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
-				<Button text="Question Bank"
+				<Button fx:id="btnQBank" text="Question Bank"
                         onAction="#showQuestions" styleClass="sidebar-btn"/>
-				<Button text="Question Editor"
+				<Button fx:id="btnQEditor" text="Question Editor"
                         onAction="#showQuestionEditor" styleClass="sidebar-btn"/>
-				<Button text="Import Questions"
+				<Button fx:id="btnImporter" text="Import Questions"
                         onAction="#showImporter" styleClass="sidebar-btn"/>
-				<Button text="Study Materials"
+				<Button fx:id="btnStudyMat" text="Study Materials"
                         onAction="#showStudyMaterials" styleClass="sidebar-btn"/>
 
 				<!-- EXAMS -->
-				<Label text="EXAMS"
+				<Label fx:id="secExams" text="EXAMS"
                        style="-fx-text-fill:#64748b; -fx-font-size:11px;
                               -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
-				<Button text="Exam Manager"
+				<Button fx:id="btnExamMgr" text="Exam Manager"
                         onAction="#showExams" styleClass="sidebar-btn"/>
-				<Button text="CA Scores"
+				<Button fx:id="btnCaScores" text="CA Scores"
                         onAction="#showCaScores" styleClass="sidebar-btn"/>
 
 				<!-- RESULTS -->
-				<Label text="RESULTS"
+				<Label fx:id="secResults" text="RESULTS"
                        style="-fx-text-fill:#64748b; -fx-font-size:11px;
                               -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
-				<Button text="Results / Reports"
+				<Button fx:id="btnResults" text="Results / Reports"
                         onAction="#showResults" styleClass="sidebar-btn"/>
-				<Button text="Broadsheet"
+				<Button fx:id="btnBroadsheet" text="Broadsheet"
                         onAction="#showBroadsheet" styleClass="sidebar-btn"/>
-				<Button text="Appeals"
+				<Button fx:id="btnAppeals" text="Appeals"
                         onAction="#showAppeals" styleClass="sidebar-btn"/>
 
 				<!-- PEOPLE -->
-				<Label text="PEOPLE"
+				<Label fx:id="secPeople" text="PEOPLE"
                        style="-fx-text-fill:#64748b; -fx-font-size:11px;
                               -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
-				<Button text="Students"
+				<Button fx:id="btnStudents" text="Students"
                         onAction="#showStudents" styleClass="sidebar-btn"/>
-				<Button text="Teachers"
+				<Button fx:id="btnTeachers" text="Teachers"
                         onAction="#showTeachers" styleClass="sidebar-btn"/>
-				<Button text="ID Cards"
+				<Button fx:id="btnIdCards" text="ID Cards"
                         onAction="#showIdCards" styleClass="sidebar-btn"/>
-
-				<!-- NEW: Manual User Creation -->
-				<Button text="Create User (Admin)"
+				<Button fx:id="btnCreateUser" text="Create User (Admin)"
                         onAction="#showManualUserCreation"
                         style="-fx-background-color:transparent;
                                -fx-text-fill:#d4af37;
@@ -121,21 +132,22 @@
                                -fx-max-width:infinity;
                                -fx-font-weight:bold;"/>
 
+				
 				<!-- SYSTEM -->
-				<Label text="SYSTEM"
+				<Label fx:id="secSystem" text="SYSTEM"
                        style="-fx-text-fill:#64748b; -fx-font-size:11px;
                               -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
-				<Button text="Notifications"
+				<Button fx:id="btnNotifications" text="Notifications"
                         onAction="#showNotifications" styleClass="sidebar-btn"/>
-				<Button text="School Settings"
+				<Button fx:id="btnSettings" text="School Settings"
                         onAction="#showSettings" styleClass="sidebar-btn"/>
-				<Button text="Audit Logs"
+				<Button fx:id="btnAuditLogs" text="Audit Logs"
                         onAction="#showAuditLogs" styleClass="sidebar-btn"/>
-				<Button text="Backup"
+				<Button fx:id="btnBackup" text="Backup"
                         onAction="#showBackup" styleClass="sidebar-btn"/>
-				<Button text="Health Monitor"
+				<Button fx:id="btnHealth" text="Health Monitor"
                         onAction="#showHealthMonitor" styleClass="sidebar-btn"/>
-				<Button text="About / FEMZYK"
+				<Button fx:id="btnAbout" text="About / FEMZYK"
                         onAction="#showAbout" styleClass="sidebar-btn"/>
 
 				<Region VBox.vgrow="ALWAYS"/>

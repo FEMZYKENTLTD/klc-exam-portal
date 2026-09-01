@@ -50,7 +50,7 @@
 						<Image url="@../images/klc_logo.png"/>
 					</image>
 				</ImageView>
-				<Label text="CBT SUITE v6.3"
+				<Label text="CBT SUITE v1.0"
                        style="-fx-font-size:20px; -fx-font-weight:bold;
                               -fx-text-fill:#0f1f3c;"/>
 				<Label text="Enterprise Examination Portal"

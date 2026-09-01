@@ -544,6 +544,16 @@
 			</VBox>
 		</Tab>
 
+		<Tab text="Profile">
+			<fx:include source="social/profile.fxml"/>
+		</Tab>
+		<Tab text="Friends and Chat">
+			<VBox spacing="0">
+				<fx:include source="social/friends.fxml"/>
+				<fx:include source="social/messages.fxml"/>
+			</VBox>
+		</Tab>
+
 	</TabPane>
 
 </VBox>

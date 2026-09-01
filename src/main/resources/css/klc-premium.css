@@ -1,4 +1,12 @@
-/* KNOWLEDGE LAND COLLEGE - Navy / Gold Premium Theme v6.3 */
+/* KNOWLEDGE LAND COLLEGE - Navy / Gold Premium Theme v1.0 */
+/* FIXES in this revision:
+   1. PLACEHOLDERS: prompt text was #94a3b8 (too faint) and inline FXML
+      styles overrode it inconsistently. Now a clearly visible #5b6b85
+      is enforced everywhere with higher specificity, including
+      ComboBox prompt text and TextArea inner content, and the prompt
+      stays visible on focus.
+   2. ComboBox: visible prompt + consistent height with text fields.
+   3. No feature/style removed - all v1.0 classes preserved. */
 
 /* ====== ROOT / BASE ====== */
 .root {
@@ -67,7 +75,7 @@
         -fx-background-color: #c9a42e;
     }
 
-/* ====== INPUT FIELDS — Labels above + visible placeholders ====== */
+/* ====== INPUT FIELDS - visible placeholders everywhere ====== */
 .text-field,
 .password-field,
 .text-area {
@@ -79,17 +87,19 @@
     -fx-padding: 9 12 9 12;
     -fx-font-size: 14px;
     -fx-text-fill: #1e293b;
-    /* FIX: Make placeholder (prompt text) clearly visible */
-    -fx-prompt-text-fill: #94a3b8;
+    /* FIX: darker, clearly visible placeholder */
+    -fx-prompt-text-fill: #5b6b85;
 }
 
+    /* FIX: keep the prompt visible when focused (JavaFX clears it to
+       transparent on focus in some themes) */
     .text-field:focused,
     .password-field:focused,
     .text-area:focused {
         -fx-border-color: #0f1f3c;
         -fx-border-width: 2;
         -fx-effect: dropshadow(gaussian, rgba(15,31,60,0.15), 6, 0, 0, 1);
-        -fx-prompt-text-fill: #64748b;
+        -fx-prompt-text-fill: #8194ad;
     }
 
     .text-field:hover,
@@ -97,31 +107,65 @@
         -fx-border-color: #1b2f5a;
     }
 
-/* ====== COMBO BOX ====== */
-.combo-box {
+    /* FIX: TextArea renders prompt/content in an inner .content region -
+   without this, TextArea placeholders were invisible */
+    .text-area .content {
+        -fx-background-color: white;
+        -fx-background-radius: 6;
+    }
+
+    .text-area:focused .content {
+        -fx-background-color: white;
+    }
+
+/* ====== COMBO BOX - visible prompt text ====== */
+.combo-box,
+.combo-box-base {
+    -fx-background-color: white;
     -fx-background-radius: 8;
     -fx-border-color: #c8d3e8;
     -fx-border-radius: 8;
     -fx-border-width: 1.5;
-    -fx-padding: 4 8;
+    -fx-padding: 2 6;
     -fx-font-size: 14px;
+    /* FIX: ComboBox promptText visibility */
+    -fx-prompt-text-fill: #5b6b85;
 }
 
-    .combo-box:focused {
+    .combo-box:focused,
+    .combo-box-base:focused {
         -fx-border-color: #0f1f3c;
         -fx-border-width: 2;
     }
 
+    /* FIX: the button cell shows the prompt when nothing selected -
+       old rule made ALL list cells #94a3b8 (too faint). Prompt cell
+       is now readable and selected values are dark. */
     .combo-box .list-cell {
-        -fx-text-fill: #94a3b8;
+        -fx-text-fill: #5b6b85;
+        -fx-padding: 6 8;
     }
 
         .combo-box .list-cell:filled {
             -fx-text-fill: #1e293b;
         }
 
+/* Dropdown list items */
+.combo-box-popup .list-view .list-cell {
+    -fx-text-fill: #1e293b;
+    -fx-padding: 8 12;
+}
+
+    .combo-box-popup .list-view .list-cell:hover {
+        -fx-background-color: #eaf0fb;
+    }
+
+    .combo-box-popup .list-view .list-cell:filled:selected {
+        -fx-background-color: #0f1f3c;
+        -fx-text-fill: white;
+    }
+
 /* ====== LABELS ABOVE FIELDS ====== */
-/* Bold navy labels that sit above each input box */
 .field-label {
     -fx-font-weight: bold;
     -fx-font-size: 13px;
@@ -338,3 +382,32 @@
 .tab-pane .tab-header-background {
     -fx-background-color: #f5f7fb;
 }
+
+/* ====== DATE PICKER - visible gold arrows (v1.0 A4 fix) ====== */
+.date-picker .arrow-button {
+    -fx-background-color: #d4af37;
+    -fx-background-radius: 0 8 8 0;
+}
+
+    .date-picker .arrow-button .arrow {
+        -fx-background-color: #0f1f3c;
+    }
+
+.date-picker-popup .spinner .button {
+    -fx-background-color: #d4af37;
+    -fx-background-radius: 6;
+}
+
+    .date-picker-popup .spinner .button .left-arrow,
+    .date-picker-popup .spinner .button .right-arrow {
+        -fx-background-color: #0f1f3c;
+    }
+
+.date-picker-popup .month-year-pane {
+    -fx-background-color: #0f1f3c;
+}
+
+    .date-picker-popup .month-year-pane .label {
+        -fx-text-fill: white;
+        -fx-font-weight: bold;
+    }

@@ -13,7 +13,7 @@
 		<Label text="Question Bank"
                style="-fx-text-fill:white; -fx-font-size:20px;
                       -fx-font-weight:bold;"/>
-		<Label text="Questions grouped by subject - click a subject to view its questions"
+		<Label text="Questions grouped by subject - click a question to view its options and correct answer"
                style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
 	</VBox>
 
@@ -29,10 +29,10 @@
                        prefWidth="260"
                        style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
                               -fx-background-radius:8; -fx-padding:8;
-                              -fx-font-size:13px;
-                              -fx-prompt-text-fill:#94a3b8;"/>
+                              -fx-font-size:13px;"/>
 			<ComboBox fx:id="classFilter"
                       prefWidth="130"
+                      promptText="Class filter"
                       style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
 			<Region HBox.hgrow="ALWAYS"/>
 			<Button text="Refresh"
@@ -62,7 +62,7 @@
                wrapText="true"/>
 
 		<!-- Split: Subject Tree (left) + Questions (right) -->
-		<SplitPane dividerPositions="0.28" VBox.vgrow="ALWAYS" prefHeight="540">
+		<SplitPane dividerPositions="0.28" VBox.vgrow="ALWAYS" prefHeight="420">
 
 			<!-- LEFT: Subject Tree -->
 			<VBox style="-fx-background-color:white;
@@ -76,12 +76,7 @@
 				<TreeView fx:id="subjectTree"
                           VBox.vgrow="ALWAYS"
                           style="-fx-background-color:transparent;
-                                 -fx-border-color:transparent;">
-					<placeholder>
-						<Label text="No subjects yet."
-                               style="-fx-text-fill:#94a3b8;"/>
-					</placeholder>
-				</TreeView>
+                                 -fx-border-color:transparent;"/>
 			</VBox>
 
 			<!-- RIGHT: Question Table -->
@@ -90,7 +85,7 @@
                          -fx-border-radius:10;
                          -fx-background-radius:10;
                          -fx-padding:10;">
-				<Label text="Questions (click a subject on the left)"
+				<Label text="Questions (click a subject on the left, then a question below)"
                        style="-fx-font-weight:bold; -fx-font-size:13px;
                               -fx-text-fill:#64748b; -fx-padding:0 0 8 0;"/>
 				<TableView fx:id="questionTable"
@@ -121,7 +116,23 @@
 
 		</SplitPane>
 
-		<Label text="Click a subject to see its questions. Expand a subject to filter by class. Approve: makes question available in exams. Super Admin and Exam Officers can approve."
+		<!-- A2: READ-ONLY QUESTION DETAIL PANEL -->
+		<VBox styleClass="card" spacing="6" prefHeight="200">
+			<Label text="Question Preview (read-only - edit in Question Editor)"
+                   style="-fx-font-size:13px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+			<TextArea fx:id="detailArea"
+                      editable="false"
+                      wrapText="true"
+                      VBox.vgrow="ALWAYS"
+                      promptText="Click a question above to see its full text, options A-E and the correct answer."
+                      style="-fx-font-family:Consolas,monospace;
+                             -fx-font-size:13px;
+                             -fx-border-color:#e2e8f0; -fx-border-radius:8;
+                             -fx-background-radius:8;"/>
+		</VBox>
+
+		<Label text="Approve makes a question available in exams. Super Admin, Principal and Exam Officers can approve; only admins can delete."
                wrapText="true"
                style="-fx-text-fill:#667085; -fx-font-size:12px;"/>
 

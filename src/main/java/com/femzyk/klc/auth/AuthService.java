@@ -9,7 +9,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 /**
- * Authentication Service - KLC CBT Suite v6.3
+ * Authentication Service - KLC CBT Suite v1.0
  * Fixed: UUID type casting for PostgreSQL compatibility
  */
 public class AuthService {

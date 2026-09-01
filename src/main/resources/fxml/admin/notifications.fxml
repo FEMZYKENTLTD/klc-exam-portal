@@ -65,6 +65,11 @@
 							onAction="#sendTest"
 							styleClass="btn-primary"
 							style="-fx-padding:10 18;"/>
+					<Button text="Approve Pending"
+							onAction="#approvePending"
+							style="-fx-background-color:#f59e0b; -fx-text-fill:white;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:10 14; -fx-cursor:hand;"/>
 					<Button text="Flush Email Queue"
 							onAction="#flushQueue"
 							style="-fx-background-color:#3b82f6; -fx-text-fill:white;
@@ -86,6 +91,10 @@
 						   style="-fx-font-size:13px; -fx-font-weight:bold;"
 						   wrapText="true"/>
 				</HBox>
+
+				<Label text="Teacher announcements are saved as PENDING and go live when an admin approves them, or automatically after 3 days."
+					   wrapText="true"
+					   style="-fx-text-fill:#667085; -fx-font-size:12px;"/>
 			</VBox>
 
 			<!-- Notification Queue Table -->

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.social.MessagesController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Page Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Messages"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Chat with your accepted friends - text, PDF, DOCX and image attachments"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<HBox spacing="14" style="-fx-padding:16;" VBox.vgrow="ALWAYS">
+
+		<!-- LEFT: friends -->
+		<VBox styleClass="card" spacing="8" prefWidth="280">
+			<HBox alignment="CENTER_LEFT">
+				<Label text="Friends"
+                       style="-fx-font-size:14px; -fx-font-weight:bold;
+                              -fx-text-fill:#0f1f3c;"/>
+				<Region HBox.hgrow="ALWAYS"/>
+				<Button text="Refresh"
+                        onAction="#refreshChat"
+                        style="-fx-background-color:#eaf0fb;
+                               -fx-border-color:#c8d3e8;
+                               -fx-border-radius:8; -fx-background-radius:8;
+                               -fx-padding:6 12; -fx-cursor:hand;"/>
+			</HBox>
+			<ListView fx:id="chatFriendsList" VBox.vgrow="ALWAYS"
+                      style="-fx-border-color:#e2e8f0; -fx-border-radius:8;">
+				<placeholder>
+					<Label text="No friends yet - add friends in the Friends screen."
+                           style="-fx-text-fill:#94a3b8;" wrapText="true"/>
+				</placeholder>
+			</ListView>
+			<Label text="Unread counts update automatically."
+                   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+		</VBox>
+
+		<!-- RIGHT: chat -->
+		<VBox styleClass="card" spacing="8" HBox.hgrow="ALWAYS">
+			<Label fx:id="chatWithLabel"
+                   text="Select a friend to start chatting"
+                   style="-fx-font-size:14px; -fx-font-weight:bold;
+                          -fx-text-fill:#0f1f3c;"/>
+			<ListView fx:id="messageList" VBox.vgrow="ALWAYS"
+                      style="-fx-border-color:#e2e8f0; -fx-border-radius:8;">
+				<placeholder>
+					<Label text="No messages yet. Say hello!"
+                           style="-fx-text-fill:#94a3b8;"/>
+				</placeholder>
+			</ListView>
+			<HBox spacing="8">
+				<TextField fx:id="messageField"
+                           promptText="Type a message and press Enter..."
+                           HBox.hgrow="ALWAYS"
+                           style="-fx-border-color:#c8d3e8;
+                                  -fx-border-radius:8;
+                                  -fx-background-radius:8;
+                                  -fx-padding:9;"/>
+				<Button text="Send"
+                        onAction="#sendMessage"
+                        styleClass="btn-primary"
+                        style="-fx-padding:9 20;"/>
+				<Button text="Attach File"
+                        onAction="#attachFile"
+                        style="-fx-background-color:#8b5cf6;
+                               -fx-text-fill:white; -fx-font-weight:bold;
+                               -fx-background-radius:8;
+                               -fx-padding:9 14; -fx-cursor:hand;"/>
+			</HBox>
+			<Label fx:id="statusLabel"
+                   wrapText="true"
+                   style="-fx-font-size:12px;"/>
+			<Label text="Attachments: PDF, DOCX, JPG, PNG (max 15 MB). Double-click an attachment message to open it."
+                   wrapText="true"
+                   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+		</VBox>
+
+	</HBox>
+</VBox>

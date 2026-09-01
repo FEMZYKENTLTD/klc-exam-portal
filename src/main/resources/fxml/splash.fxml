@@ -16,7 +16,7 @@
 		<Label text="Secondary School - Lagos, Kwara State"
                style="-fx-text-fill:#cdd6e8; -fx-font-size:13px;"/>
 		<Separator prefWidth="360" maxWidth="360"/>
-		<Label text="CBT SUITE v6.3"
+		<Label text="CBT SUITE v1.0"
                style="-fx-text-fill:#d4af37; -fx-font-size:22px;
                       -fx-font-weight:bold;"/>
 		<Label text="Cloud Online / Auto-Sync - Enterprise Edition"

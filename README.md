@@ -1,4 +1,4 @@
-# KNOWLEDGE LAND COLLEGE CBT SUITE v6.3
+# KNOWLEDGE LAND COLLEGE CBT SUITE v1.0
 **WAEC / NECO-Standard Examination Management for Nigerian Secondary Schools**
 
 Powered by **FEMZYK ENTERPRISES LTD** | Lead Developer: **OLUFEMI BENUA KERIPE**  
@@ -19,7 +19,7 @@ In 2024, **only 68% of WAEC candidates earned credits in 5+ subjects including M
 
 ---
 
-## WHY KNOWLEDGE LAND CBT SUITE v6.3 — THE ENTERPRISE DIFFERENCE
+## WHY KNOWLEDGE LAND CBT SUITE v1.0 — THE ENTERPRISE DIFFERENCE
 
 ### 1. 3-Strike Proctoring
 Automatic focus loss detection blocks Alt+Tab, copy-paste, and screen capture. Three focus loss violations trigger auto-submit and account lockout. Exams you can genuinely trust.

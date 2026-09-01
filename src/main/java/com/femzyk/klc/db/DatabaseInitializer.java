@@ -8,6 +8,23 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.UUID;
 
+/**
+ * DatabaseInitializer v1.0
+ *
+ * CHANGES IN THIS REVISION (everything else preserved exactly):
+ * 1. H2 announcements table now includes status VARCHAR(20) DEFAULT
+ *    'APPROVED' (teacher announcement approval workflow, Priority 3 #13).
+ * 2. H2 users table now includes phone_type VARCHAR(20) and
+ *    phone_contact VARCHAR(20) (Priority 2 #10).
+ * 3. NEW ensureH2Columns(): because all H2 tables are created with
+ *    IF NOT EXISTS, an EXISTING klc_cache database would never receive
+ *    the new columns from CREATE alone. This method runs
+ *    ALTER TABLE ... ADD COLUMN IF NOT EXISTS on every startup so old
+ *    offline caches upgrade themselves in place - no data loss, no need
+ *    to delete klc_cache.
+ * 4. ensurePostgresColumns() now also mirrors the same three columns on
+ *    Supabase (harmless if the SQL migration already added them).
+ */
 public class DatabaseInitializer {
 
     private static final String SA_NAME  = "OLUFEMI BENUA KERIPE";
@@ -25,6 +42,7 @@ public class DatabaseInitializer {
 
             if (h2) {
                 createH2Tables(stmt);
+                ensureH2Columns(stmt);
                 seedSuperAdmin(conn);
                 seedSubjects(conn);
                 seedSchoolProfile(conn);
@@ -61,6 +79,8 @@ public class DatabaseInitializer {
             "  password_hash         VARCHAR(255) NOT NULL," +
             "  role                  VARCHAR(30)  NOT NULL," +
             "  phone                 VARCHAR(30)," +
+            "  phone_type            VARCHAR(20)," +
+            "  phone_contact         VARCHAR(20)," +
             "  is_active             BOOLEAN      DEFAULT TRUE," +
             "  totp_enabled          BOOLEAN      DEFAULT FALSE," +
             "  totp_secret           VARCHAR(100)," +
@@ -298,6 +318,7 @@ public class DatabaseInitializer {
             "  title       VARCHAR(200) NOT NULL," +
             "  body        TEXT         NOT NULL," +
             "  target_role VARCHAR(30)  DEFAULT 'ALL'," +
+            "  status      VARCHAR(20)  DEFAULT 'APPROVED'," +
             "  created_by  VARCHAR(36)," +
             "  created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP," +
             "  expires_at  TIMESTAMP" +
@@ -397,11 +418,35 @@ public class DatabaseInitializer {
         System.out.println("[DB] H2: all 23 tables created/verified");
     }
 
+    /**
+     * Upgrades an EXISTING H2 offline cache in place.
+     * CREATE TABLE IF NOT EXISTS does nothing when the table already
+     * exists, so databases created before v1.0 would be missing the
+     * new columns. These ALTERs are idempotent and safe on every start.
+     */
+    private static void ensureH2Columns(Statement s) {
+        String[] alters = {
+            "ALTER TABLE announcements ADD COLUMN IF NOT EXISTS " +
+                "status VARCHAR(20) DEFAULT 'APPROVED'",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS " +
+                "phone_type VARCHAR(20)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS " +
+                "phone_contact VARCHAR(20)"
+        };
+        for (String sql : alters) {
+            try { s.execute(sql); } catch (Exception ignored) {}
+        }
+        System.out.println("[DB] H2 columns verified (v1.0)");
+    }
+
     private static void ensurePostgresColumns(Statement s) {
         String[] alters = {
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN DEFAULT FALSE",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR(100)",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP DEFAULT now()",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_type VARCHAR(20)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_contact VARCHAR(20)",
+            "ALTER TABLE announcements ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'APPROVED'",
             "ALTER TABLE study_materials ADD COLUMN IF NOT EXISTS title VARCHAR(200)",
             "CREATE TABLE IF NOT EXISTS formula_sheets (" +
                 "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +

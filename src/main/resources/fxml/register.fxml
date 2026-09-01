@@ -102,6 +102,23 @@
                            styleClass="small-muted" wrapText="true"/>
 				</VBox>
 
+				<!-- Phone Contact (Priority 2 no.10 - ALL roles) -->
+				<VBox spacing="4">
+					<Label text="Phone Type"
+                           style="-fx-font-weight:bold;"/>
+					<ComboBox fx:id="phoneTypeBox"
+                              promptText="Personal / Parent / Guardian"
+                              maxWidth="1.7976931348623157E308"/>
+				</VBox>
+
+				<VBox spacing="4">
+					<Label text="Preferred Contact Method"
+                           style="-fx-font-weight:bold;"/>
+					<ComboBox fx:id="contactMethodBox"
+                              promptText="Call / WhatsApp / Both"
+                              maxWidth="1.7976931348623157E308"/>
+				</VBox>
+
 				<Separator/>
 
 				<!-- Student Fields -->
@@ -154,7 +171,7 @@
 
 				<!-- Parent Phone -->
 				<VBox spacing="4">
-					<Label text="Parent / Guardian Phone"
+					<Label text="Phone Number (Parent / Guardian for Students)"
                            style="-fx-font-weight:bold;"/>
 					<TextField fx:id="parentPhoneField"
                                promptText="e.g. 08012345678"/>
@@ -186,7 +203,7 @@
 				<Hyperlink text="Already have an account? Back to Login"
                            onAction="#backLogin"/>
 
-				<!-- FIX: General info only — no secret codes shown -->
+				<!-- FIX: General info only, no secret codes shown -->
 				<VBox spacing="3"
                       style="-fx-background-color:#f8f9fa;
                              -fx-background-radius:8;

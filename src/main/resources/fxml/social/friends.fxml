@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.social.FriendsController"
+      style="-fx-background-color:#f5f7fb;">
+
+	<!-- Page Header -->
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+		<Label text="Friends"
+               style="-fx-text-fill:white; -fx-font-size:20px;
+                      -fx-font-weight:bold;"/>
+		<Label text="Search users, send requests and manage your friends list"
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+	</VBox>
+
+	<ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;
+                       -fx-background:transparent;">
+		<VBox spacing="14" style="-fx-padding:16;">
+
+			<Label fx:id="statusLabel"
+                   wrapText="true"
+                   style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+
+			<HBox spacing="14" alignment="TOP_LEFT">
+
+				<!-- LEFT: Search + send -->
+				<VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+					<Label text="Find People"
+                           style="-fx-font-size:15px; -fx-font-weight:bold;
+                                  -fx-text-fill:#0f1f3c;"/>
+					<HBox spacing="8">
+						<TextField fx:id="searchField"
+                                   promptText="Search by name or admission number..."
+                                   HBox.hgrow="ALWAYS"
+                                   onAction="#searchUsers"
+                                   style="-fx-border-color:#c8d3e8;
+                                          -fx-border-radius:8;
+                                          -fx-background-radius:8;
+                                          -fx-padding:9;"/>
+						<Button text="Search"
+                                onAction="#searchUsers"
+                                styleClass="btn-primary"
+                                style="-fx-padding:9 18;"/>
+					</HBox>
+					<TableView fx:id="searchTable" prefHeight="220"
+                               style="-fx-border-color:#e2e8f0;
+                                      -fx-border-radius:8;">
+						<columns>
+							<TableColumn fx:id="colSrchName" text="Name"
+                                         prefWidth="200"/>
+							<TableColumn fx:id="colSrchRole" text="Role"
+                                         prefWidth="110"/>
+							<TableColumn fx:id="colSrchAdm"  text="Admission No"
+                                         prefWidth="130"/>
+						</columns>
+						<placeholder>
+							<Label text="Search results appear here."
+                                   style="-fx-text-fill:#94a3b8;"/>
+						</placeholder>
+					</TableView>
+					<Button text="Send Friend Request"
+                            onAction="#sendRequest"
+                            style="-fx-background-color:#10b981;
+                                   -fx-text-fill:white; -fx-font-weight:bold;
+                                   -fx-background-radius:8;
+                                   -fx-padding:10 18; -fx-cursor:hand;"/>
+				</VBox>
+
+				<!-- RIGHT: Requests + friends -->
+				<VBox spacing="14" prefWidth="380">
+
+					<VBox styleClass="card" spacing="8">
+						<HBox alignment="CENTER_LEFT">
+							<Label text="Incoming Requests"
+                                   style="-fx-font-size:14px; -fx-font-weight:bold;
+                                          -fx-text-fill:#0f1f3c;"/>
+							<Region HBox.hgrow="ALWAYS"/>
+							<Button text="Refresh"
+                                    onAction="#refreshAll"
+                                    style="-fx-background-color:#eaf0fb;
+                                           -fx-border-color:#c8d3e8;
+                                           -fx-border-radius:8;
+                                           -fx-background-radius:8;
+                                           -fx-padding:6 12; -fx-cursor:hand;"/>
+						</HBox>
+						<ListView fx:id="requestsList" prefHeight="130"
+                                  style="-fx-border-color:#e2e8f0;
+                                         -fx-border-radius:8;">
+							<placeholder>
+								<Label text="No pending requests."
+                                       style="-fx-text-fill:#94a3b8;"/>
+							</placeholder>
+						</ListView>
+						<HBox spacing="8">
+							<Button text="Accept"
+                                    onAction="#acceptRequest"
+                                    style="-fx-background-color:#10b981;
+                                           -fx-text-fill:white;
+                                           -fx-font-weight:bold;
+                                           -fx-background-radius:8;
+                                           -fx-padding:8 16; -fx-cursor:hand;"/>
+							<Button text="Decline"
+                                    onAction="#declineRequest"
+                                    style="-fx-background-color:#ef4444;
+                                           -fx-text-fill:white;
+                                           -fx-font-weight:bold;
+                                           -fx-background-radius:8;
+                                           -fx-padding:8 16; -fx-cursor:hand;"/>
+						</HBox>
+					</VBox>
+
+					<VBox styleClass="card" spacing="8">
+						<Label text="My Friends"
+                               style="-fx-font-size:14px; -fx-font-weight:bold;
+                                      -fx-text-fill:#0f1f3c;"/>
+						<ListView fx:id="friendsList" prefHeight="170"
+                                  style="-fx-border-color:#e2e8f0;
+                                         -fx-border-radius:8;">
+							<placeholder>
+								<Label text="No friends yet - search and send a request!"
+                                       style="-fx-text-fill:#94a3b8;"/>
+							</placeholder>
+						</ListView>
+						<Button text="Unfriend Selected"
+                                onAction="#unfriend"
+                                style="-fx-background-color:#f59e0b;
+                                       -fx-text-fill:#0f1f3c;
+                                       -fx-font-weight:bold;
+                                       -fx-background-radius:8;
+                                       -fx-padding:8 16; -fx-cursor:hand;"/>
+						<Label text="Friends can message each other in the Messages screen."
+                               wrapText="true"
+                               style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+					</VBox>
+
+				</VBox>
+			</HBox>
+		</VBox>
+	</ScrollPane>
+</VBox>

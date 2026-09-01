@@ -1,49 +1,50 @@
 package com.femzyk.klc.admin;
 
+import com.femzyk.klc.auth.AuthService;
 import com.femzyk.klc.db.DatabaseManager;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
 
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
+/**
+ * QuestionBankController - KLC CBT Suite v1.0 (A2 FEATURE ADDED)
+ *
+ * NEW (A2): clicking a question in the table shows the FULL question
+ * READ-ONLY in the detail panel below: text, options A-E with the
+ * correct answer marked [CORRECT], difficulty, topic and explanation.
+ * Editing stays in the Question Editor (by design).
+ *
+ * All v1.0 fixes preserved: no sockets/keys (Rule 3), setUuid (Rule 2),
+ * role enforcement, audit logging, subject tree, search, class filter.
+ */
 public class QuestionBankController {
 
-    // ─── Subject TreeView ─────────────────────────────────────────────────────
     @FXML private TreeView<String>  subjectTree;
 
-    // ─── Question Detail Table (shown when subject selected) ──────────────────
     @FXML private TableView<QuestionRow>           questionTable;
     @FXML private TableColumn<QuestionRow, String> colQuestion, colClass,
-                                                    colDifficulty, colApproved;
+                                                   colDifficulty, colApproved;
 
-    // ─── Toolbar ──────────────────────────────────────────────────────────────
-    @FXML private TextField       searchField;
+    @FXML private TextField        searchField;
     @FXML private ComboBox<String> classFilter;
     @FXML private Label            statusLabel;
+
+    // A2: read-only detail panel
+    @FXML private TextArea detailArea;
 
     private final ObservableList<QuestionRow> data    =
             FXCollections.observableArrayList();
     private final ObservableList<QuestionRow> allData =
             FXCollections.observableArrayList();
 
-    // Map: subject name → list of question rows
     private final Map<String, List<QuestionRow>> subjectQuestionMap =
             new LinkedHashMap<>();
 
     private String selectedSubject = null;
-
-    private final OkHttpClient client = new OkHttpClient.Builder()
-            .readTimeout(30, TimeUnit.SECONDS).build();
-    private WebSocket webSocket;
 
     public static class QuestionRow {
         String id, text, subject, classLevel, difficulty, approved;
@@ -61,9 +62,23 @@ public class QuestionBankController {
         public String getApproved()    { return approved; }
     }
 
+    private boolean canApprove() {
+        String r = AuthService.Session.role;
+        return "SUPER_ADMIN".equals(r) || "PRINCIPAL_ADMIN".equals(r)
+            || "EXAM_OFFICER".equals(r);
+    }
+
+    private boolean canDelete() {
+        String r = AuthService.Session.role;
+        return "SUPER_ADMIN".equals(r) || "PRINCIPAL_ADMIN".equals(r);
+    }
+
+    private boolean isTeacher() {
+        return "TEACHER".equals(AuthService.Session.role);
+    }
+
     @FXML
     public void initialize() {
-        // Table columns
         colQuestion.setCellValueFactory(c ->
             new javafx.beans.property.SimpleStringProperty(
                 c.getValue().getText()));
@@ -84,20 +99,25 @@ public class QuestionBankController {
 
         questionTable.setItems(data);
 
-        // TreeView selection listener
+        // A2: show full question read-only when a row is selected
+        questionTable.getSelectionModel().selectedItemProperty()
+            .addListener((obs, ov, nv) -> {
+                if (nv != null) showQuestionDetail(nv);
+                else if (detailArea != null) detailArea.clear();
+            });
+
         if (subjectTree != null) {
             subjectTree.getSelectionModel()
                 .selectedItemProperty().addListener((obs, ov, nv) -> {
                 if (nv != null && nv.isLeaf()
                         && nv.getParent() != null
                         && nv.getParent().getParent() != null) {
-                    // Leaf = class level node under subject
-                    selectedSubject = nv.getParent().getValue();
+                    selectedSubject = nv.getParent().getValue()
+                        .split(" \\(")[0];
                     showQuestionsForSubjectAndClass(
                         selectedSubject, nv.getValue().split(" ")[0]);
                 } else if (nv != null && !nv.isLeaf()
                         && nv.getParent() != null) {
-                    // Subject node clicked
                     selectedSubject = nv.getValue().split(" \\(")[0];
                     showQuestionsForSubject(selectedSubject);
                 }
@@ -110,25 +130,92 @@ public class QuestionBankController {
             (obs, ov, nv) -> filterQuestions());
 
         refreshQuestions();
-        startRealtimeListener();
     }
 
-    // =========================================================================
+    // =====================================================================
+    //  A2: READ-ONLY QUESTION DETAIL
+    // =====================================================================
+    private void showQuestionDetail(QuestionRow row) {
+        if (detailArea == null) return;
+        StringBuilder sb = new StringBuilder();
+        try (Connection c = DatabaseManager.getConnection()) {
+
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT question_text, topic, difficulty, explanation " +
+                    "FROM questions WHERE id = ?")) {
+                AuthService.setUuid(ps, 1, row.id, c);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    sb.append("QUESTION  [").append(row.subject)
+                      .append(" | ").append(row.classLevel == null ? "-" : row.classLevel)
+                      .append(" | ").append(rs.getString(3) == null ? "-" : rs.getString(3))
+                      .append(" | ").append(row.approved).append("]\n");
+                    String topic = rs.getString(2);
+                    if (topic != null && !topic.isBlank())
+                        sb.append("Topic: ").append(topic).append("\n");
+                    sb.append("\n").append(rs.getString(1)).append("\n\n");
+                    String exp = rs.getString(4);
+                    if (exp != null && !exp.isBlank()) {
+                        sb.append("EXPLANATION:\n").append(exp).append("\n\n");
+                    }
+                }
+            }
+
+            sb.append("OPTIONS:\n");
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT option_label, option_text, is_correct " +
+                    "FROM question_options WHERE question_id = ? " +
+                    "ORDER BY option_label")) {
+                AuthService.setUuid(ps, 1, row.id, c);
+                ResultSet rs = ps.executeQuery();
+                boolean any = false;
+                while (rs.next()) {
+                    any = true;
+                    sb.append("  ").append(rs.getString(1)).append(".  ")
+                      .append(rs.getString(2));
+                    if (rs.getBoolean(3)) sb.append("   [CORRECT]");
+                    sb.append("\n");
+                }
+                if (!any) sb.append("  (no options recorded)\n");
+            }
+
+            sb.append("\nTo edit this question, open the Question Editor.");
+            detailArea.setText(sb.toString());
+
+        } catch (Exception e) {
+            detailArea.setText("Could not load question detail: " + e.getMessage());
+        }
+    }
+
+    // =====================================================================
     //  LOAD ALL QUESTIONS AND BUILD TREE
-    // =========================================================================
+    // =====================================================================
     @FXML
     public void refreshQuestions() {
         data.clear();
         allData.clear();
         subjectQuestionMap.clear();
+        if (detailArea != null) detailArea.clear();
+
+        String sql = isTeacher()
+            ? "SELECT q.id, q.question_text, s.subject_name, " +
+              "q.class_level, q.difficulty, q.is_approved " +
+              "FROM questions q " +
+              "JOIN subjects s ON s.id = q.subject_id " +
+              "JOIN teacher_subjects ts ON ts.subject_id = s.id " +
+              "WHERE ts.teacher_id = ? " +
+              "ORDER BY s.subject_name, q.class_level, q.created_at DESC"
+            : "SELECT q.id, q.question_text, s.subject_name, " +
+              "q.class_level, q.difficulty, q.is_approved " +
+              "FROM questions q " +
+              "JOIN subjects s ON s.id = q.subject_id " +
+              "ORDER BY s.subject_name, q.class_level, q.created_at DESC";
 
         try (Connection c = DatabaseManager.getConnection();
-             PreparedStatement ps = c.prepareStatement(
-                 "SELECT q.id, q.question_text, s.subject_name, " +
-                 "q.class_level, q.difficulty, q.is_approved " +
-                 "FROM questions q " +
-                 "JOIN subjects s ON s.id = q.subject_id " +
-                 "ORDER BY s.subject_name, q.class_level, q.created_at DESC")) {
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
+            if (isTeacher())
+                AuthService.setUuid(ps, 1, AuthService.Session.userId, c);
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -145,7 +232,7 @@ public class QuestionBankController {
             buildSubjectTree();
             setStatus("Loaded " + allData.size() +
                 " questions across " + subjectQuestionMap.size() +
-                " subjects. Click a subject to view questions.", false);
+                " subjects. Click a subject, then a question to view it.", false);
 
         } catch (Exception e) {
             setStatus("Error: " + e.getMessage(), true);
@@ -164,7 +251,6 @@ public class QuestionBankController {
             String subject = entry.getKey();
             List<QuestionRow> rows = entry.getValue();
 
-            // Count per class
             Map<String, Long> classCount = new LinkedHashMap<>();
             for (QuestionRow r : rows) {
                 classCount.merge(
@@ -175,9 +261,11 @@ public class QuestionBankController {
             long total = rows.size();
             long approved = rows.stream()
                 .filter(r -> "Approved".equals(r.approved)).count();
+            long pending = total - approved;
 
             TreeItem<String> subjectItem = new TreeItem<>(
-                subject + " (" + total + " total, " + approved + " approved)");
+                subject + " (" + approved + " approved, " +
+                pending + " pending)");
 
             for (Map.Entry<String, Long> cls : classCount.entrySet()) {
                 TreeItem<String> clsItem = new TreeItem<>(
@@ -198,6 +286,7 @@ public class QuestionBankController {
         data.addAll(rows);
         applyClassFilter();
         questionTable.setItems(data);
+        setStatus("Showing " + data.size() + " questions for " + subject, false);
     }
 
     private void showQuestionsForSubjectAndClass(
@@ -249,24 +338,36 @@ public class QuestionBankController {
         setStatus(filtered.size() + " questions shown", false);
     }
 
-    // =========================================================================
+    // =====================================================================
     //  APPROVE / UNAPPROVE / DELETE
-    // =========================================================================
+    // =====================================================================
     @FXML
     private void approveSelected() {
+        if (!canApprove()) {
+            setStatus("Access denied - approval requires Exam Officer or Admin.", true);
+            return;
+        }
         QuestionRow r = questionTable.getSelectionModel().getSelectedItem();
         if (r == null) { setStatus("Select a question first", true); return; }
         setApproval(r.id, true);
-        setStatus("Approved: " + r.text.substring(0, Math.min(60, r.text.length())), false);
+        AuthService.logAudit("QUESTION_APPROVE", "questions", r.id);
+        setStatus("Approved: " +
+            r.text.substring(0, Math.min(60, r.text.length())), false);
         refreshQuestions();
     }
 
     @FXML
     private void unapproveSelected() {
+        if (!canApprove()) {
+            setStatus("Access denied - approval requires Exam Officer or Admin.", true);
+            return;
+        }
         QuestionRow r = questionTable.getSelectionModel().getSelectedItem();
         if (r == null) { setStatus("Select a question first", true); return; }
         setApproval(r.id, false);
-        setStatus("Unapproved: " + r.text.substring(0, Math.min(60, r.text.length())), false);
+        AuthService.logAudit("QUESTION_UNAPPROVE", "questions", r.id);
+        setStatus("Unapproved: " +
+            r.text.substring(0, Math.min(60, r.text.length())), false);
         refreshQuestions();
     }
 
@@ -275,7 +376,7 @@ public class QuestionBankController {
              PreparedStatement ps = c.prepareStatement(
                  "UPDATE questions SET is_approved=? WHERE id=?")) {
             ps.setBoolean(1, approved);
-            ps.setString(2, id);
+            AuthService.setUuid(ps, 2, id, c);
             ps.executeUpdate();
         } catch (Exception e) {
             setStatus("Error: " + e.getMessage(), true);
@@ -284,6 +385,10 @@ public class QuestionBankController {
 
     @FXML
     private void deleteSelected() {
+        if (!canDelete()) {
+            setStatus("Access denied - only admins can delete questions.", true);
+            return;
+        }
         QuestionRow r = questionTable.getSelectionModel().getSelectedItem();
         if (r == null) { setStatus("Select a question to delete", true); return; }
 
@@ -296,12 +401,15 @@ public class QuestionBankController {
             try (Connection c = DatabaseManager.getConnection()) {
                 try (PreparedStatement ps = c.prepareStatement(
                         "DELETE FROM question_options WHERE question_id=?")) {
-                    ps.setString(1, r.id); ps.executeUpdate();
+                    AuthService.setUuid(ps, 1, r.id, c);
+                    ps.executeUpdate();
                 }
                 try (PreparedStatement ps = c.prepareStatement(
                         "DELETE FROM questions WHERE id=?")) {
-                    ps.setString(1, r.id); ps.executeUpdate();
+                    AuthService.setUuid(ps, 1, r.id, c);
+                    ps.executeUpdate();
                 }
+                AuthService.logAudit("QUESTION_DELETE", "questions", r.id);
                 setStatus("Question deleted", false);
                 refreshQuestions();
             } catch (Exception e) {
@@ -310,35 +418,11 @@ public class QuestionBankController {
         });
     }
 
-    private void startRealtimeListener() {
-        try {
-            String url =
-                "wss://aqircycpctadgvbqsadf.supabase.co/realtime/v1/websocket" +
-                "?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
-                ".eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxaXJjeWNwY3RhZGd2YnFzYWRmIiwi" +
-                "cm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDM0OTMsImV4cCI6MjA5NzcxOTQ5M30" +
-                ".mn9pn4bmx8R860K2KZx-MEe-G0U7o4ZYZxwwO6p7sjg&vsn=1.0.0";
-            webSocket = client.newWebSocket(
-                new Request.Builder().url(url).build(),
-                new WebSocketListener() {
-                    @Override
-                    public void onMessage(WebSocket ws, String text) {
-                        if (text.contains("questions"))
-                            Platform.runLater(() -> refreshQuestions());
-                    }
-                });
-        } catch (Exception ignored) {}
-    }
-
     private void setStatus(String msg, boolean error) {
         if (statusLabel == null) return;
         statusLabel.setText(msg);
         statusLabel.setStyle(error
             ? "-fx-text-fill:#ef4444;"
             : "-fx-text-fill:#0f7a3a;");
-    }
-
-    public void cleanup() {
-        if (webSocket != null) webSocket.close(1000, "Closing");
     }
 }

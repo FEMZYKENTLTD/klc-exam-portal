@@ -12,7 +12,7 @@
 
 	<!-- Page Header -->
 	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
-		<Label text="About KNOWLEDGE LAND COLLEGE CBT Suite v6.3"
+		<Label text="About KNOWLEDGE LAND COLLEGE CBT Suite v1.0"
                style="-fx-text-fill:white; -fx-font-size:20px; -fx-font-weight:bold;"/>
 		<Label text="WAEC / NECO-Standard Examination Management for Nigerian Secondary Schools"
                style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
@@ -29,7 +29,7 @@
 				<Label text="WAEC / NECO-Standard Examination Management for Nigerian Secondary Schools"
                        style="-fx-font-size:13px; -fx-text-fill:#64748b;"/>
 				<Separator maxWidth="550"/>
-				<Label text="VERSION 6.3.0 — ENTERPRISE EDITION"
+				<Label text="VERSION 1.0.0 - ENTERPRISE EDITION"
                        style="-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:#d4af37;"/>
 				<Label text="3-Strike Proctoring | Cloud Auto-Sync | Lifetime Student Tracking | Offline Safe"
                        style="-fx-font-size:13px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
@@ -69,7 +69,7 @@
 
 			<!-- 3-Step Setup Card -->
 			<VBox styleClass="card" maxWidth="750" spacing="10">
-				<Label text="GETTING STARTED — SMOOTHER THAN YOU THINK"
+				<Label text="GETTING STARTED - SMOOTHER THAN YOU THINK"
                        style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
 				<Label fx:id="stepsLabel"
                        wrapText="true"
@@ -94,25 +94,25 @@
                        style="-fx-font-size:13px; -fx-text-fill:#1e293b; -fx-font-style:italic; -fx-line-spacing:4;"/>
 			</VBox>
 
-			<!-- System Architecture & Registration Codes Card -->
+			<!-- System Architecture Card -->
 			<VBox styleClass="card" maxWidth="750" spacing="8">
-				<Label text="TECHNICAL STACK & REGISTRATION CODES"
+				<Label text="TECHNICAL STACK"
                        style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
 				<Label fx:id="versionLabel"
                        wrapText="true"
                        style="-fx-font-family:Consolas,monospace; -fx-font-size:13px; -fx-text-fill:#1e293b; -fx-line-spacing:4;"/>
 			</VBox>
 
-			<!-- References & Research Basis Card -->
+			<!-- References Card -->
 			<VBox styleClass="card" maxWidth="750" spacing="8">
-				<Label text="REFERENCES & RESEARCH BASIS"
+				<Label text="REFERENCES AND RESEARCH BASIS"
                        style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
 				<Label fx:id="referencesLabel"
                        wrapText="true"
                        style="-fx-font-size:12px; -fx-text-fill:#64748b; -fx-line-spacing:4;"/>
 			</VBox>
 
-			<!-- Legal & Attribution Rule Card -->
+			<!-- Legal Card -->
 			<VBox styleClass="card" maxWidth="750" spacing="6">
 				<Label text="LEGAL AND ATTRIBUTION RULE"
                        style="-fx-font-size:14px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
