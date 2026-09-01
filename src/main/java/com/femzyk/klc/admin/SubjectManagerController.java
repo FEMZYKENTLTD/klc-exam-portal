@@ -261,9 +261,28 @@ public class SubjectManagerController {
             status.setText("Select a subject to delete");
             return;
         }
+
+        // KLC v1.0 (spec 3.2): safety check - a subject with exams
+        // attached can never be deleted (protects historical results).
+        try (Connection c = DatabaseManager.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                 "SELECT COUNT(*) FROM exams WHERE subject_id=?")) {
+            AuthService.setUuid(ps, 1, r.id, c);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                status.setText("Cannot delete '" + r.name + "': "
+                    + rs.getInt(1) + " exam(s) exist on this subject. "
+                    + "Deactivate it instead.");
+                status.setStyle("-fx-text-fill:#c0392b; -fx-font-weight:bold;");
+                return;
+            }
+        } catch (Exception ex) {
+            status.setText("Safety check failed: " + ex.getMessage());
+            return;
+        }
+
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-            "Delete subject: " + r.name + " (" + r.code + ")?\n" +
-            "This will fail if exams or questions exist for this subject.",
+            "Delete subject: " + r.name + " (" + r.code + ")?",
             ButtonType.YES, ButtonType.NO);
         confirm.setTitle("Confirm Delete");
         confirm.showAndWait().ifPresent(btn -> {
@@ -271,7 +290,6 @@ public class SubjectManagerController {
             try (Connection c = DatabaseManager.getConnection();
                  PreparedStatement ps = c.prepareStatement(
                      "DELETE FROM subjects WHERE id=?")) {
-                // FIX: setUuid instead of setString (Rule 2)
                 AuthService.setUuid(ps, 1, r.id, c);
                 ps.executeUpdate();
                 AuthService.logAudit("SUBJECT_DELETE", "subjects", r.id);
@@ -279,7 +297,7 @@ public class SubjectManagerController {
                 load();
             } catch (Exception e) {
                 status.setText(
-                    "Cannot delete - exams or questions exist for this subject.");
+                    "Cannot delete - questions may reference this subject.");
             }
         });
     }

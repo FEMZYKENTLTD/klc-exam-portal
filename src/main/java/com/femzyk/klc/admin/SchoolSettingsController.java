@@ -16,7 +16,7 @@ public class SchoolSettingsController {
 
     @FXML private TextField   schoolNameField, principalField,
                                sessionField, logoPathField,
-                               signaturePathField;
+                               signaturePathField, campusField;
     @FXML private ComboBox<String> termBox;
     @FXML private TextArea    mottoArea;
     @FXML private Label       status;
@@ -43,7 +43,8 @@ public class SchoolSettingsController {
              PreparedStatement ps = c.prepareStatement(
                  "SELECT school_name, motto, principal_name, " +
                  "session_current, term_current, logo_url, " +
-                 "principal_signature_url " +
+                 "principal_signature_url, " +
+                 "COALESCE(campus_name,'') " +
                  "FROM school_profile LIMIT 1")) {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -56,6 +57,8 @@ public class SchoolSettingsController {
                     rs.getString(6) == null ? "" : rs.getString(6));
                 signaturePathField.setText(
                     rs.getString(7) == null ? "" : rs.getString(7));
+                if (campusField != null)
+                    campusField.setText(rs.getString(8));
             }
         } catch (Exception e) {
             if (status != null) status.setText("Load error: " + e.getMessage());
@@ -119,6 +122,7 @@ public class SchoolSettingsController {
                  "school_name=?, motto=?, principal_name=?, " +
                  "session_current=?, term_current=?, " +
                  "logo_url=?, principal_signature_url=?, " +
+                 "campus_name=?, " +
                  "updated_at=CURRENT_TIMESTAMP")) {
             ps.setString(1, schoolNameField.getText());
             ps.setString(2, mottoArea != null ? mottoArea.getText() : "");
@@ -129,6 +133,10 @@ public class SchoolSettingsController {
                 ? null : logoPathField.getText());
             ps.setString(7, signaturePathField.getText().isBlank()
                 ? null : signaturePathField.getText());
+            ps.setString(8, campusField == null
+                    || campusField.getText() == null
+                    || campusField.getText().isBlank()
+                ? null : campusField.getText().trim());
             ps.executeUpdate();
             status.setText(
                 "School profile saved. Appears on all Report Cards, " +

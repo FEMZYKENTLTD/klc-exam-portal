@@ -139,6 +139,8 @@
                         onAction="#showNotifications" styleClass="sidebar-btn"/>
 				<Button fx:id="btnSettings" text="School Settings"
                         onAction="#showSettings" styleClass="sidebar-btn"/>
+				<Button fx:id="btnTwoFa" text="2FA Security"
+                        onAction="#showTwoFa" styleClass="sidebar-btn"/>
 				<Button fx:id="btnAuditLogs" text="Audit Logs"
                         onAction="#showAuditLogs" styleClass="sidebar-btn"/>
 				<Button fx:id="btnBackup" text="Backup"

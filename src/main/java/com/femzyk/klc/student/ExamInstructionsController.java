@@ -1,18 +1,22 @@
 package com.femzyk.klc.student;
 
+import com.femzyk.klc.auth.AuthService;
 import com.femzyk.klc.db.DatabaseManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
+import java.io.File;
 import java.sql.*;
-import java.util.UUID;
 
 public class ExamInstructionsController {
     @FXML private Label examTitleLabel, subjectLabel, durationLabel, questionsLabel, rulesLabel;
     @FXML private CheckBox acceptCheck;
     @FXML private Button startBtn;
+    @FXML private ImageView photoView;
 
     private String examId;
     private String variant = "A";
@@ -21,6 +25,28 @@ public class ExamInstructionsController {
         this.examId = examId;
         if(variant != null) this.variant = variant;
         loadExam();
+        loadStudentPhoto();
+    }
+
+    /** KLC v1.0 (spec 5.3): photo verification popup - show the
+     *  registered passport so invigilator/student can confirm identity. */
+    private void loadStudentPhoto(){
+        if (photoView == null) return;
+        try(Connection c = DatabaseManager.getConnection();
+            PreparedStatement ps = c.prepareStatement(
+                "SELECT passport_url FROM student_profiles WHERE user_id=?")){
+            AuthService.setUuid(ps, 1, AuthService.Session.userId, c);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                String p = rs.getString(1);
+                if(p != null && !p.isBlank()){
+                    File f = new File(p);
+                    if(f.exists())
+                        photoView.setImage(new Image(
+                            f.toURI().toString(), 120, 140, true, true));
+                }
+            }
+        }catch(Exception ignored){ /* photo is optional - never block */ }
     }
 
     private void loadExam(){
@@ -30,13 +56,16 @@ public class ExamInstructionsController {
                      (SELECT COUNT(*) FROM exam_questions WHERE exam_id=e.id) AS qcount
               FROM exams e JOIN subjects s ON s.id=e.subject_id WHERE e.id=?
             """)){
-            ps.setObject(1, UUID.fromString(examId));
+            // KLC v1.0 FIX: cross-DB UUID bind (was setObject(UUID) - broke H2)
+            AuthService.setUuid(ps, 1, examId, c);
             ResultSet rs = ps.executeQuery();
             if(rs.next()){
                 examTitleLabel.setText(rs.getString(1) + " - " + rs.getString(2) + "  [Variant "+variant+"]");
                 subjectLabel.setText("Subject: " + rs.getString(1));
                 durationLabel.setText("Duration: " + rs.getInt(3) + " minutes");
-                questionsLabel.setText("Questions: " + rs.getInt(5));
+                // KLC v1.0 FIX: qcount is column 6 (was reading column 5 =
+                // negative_marking, so the screen always showed 0 questions)
+                questionsLabel.setText("Questions: " + rs.getInt(6));
                 String instr = rs.getString(4);
                 if(instr == null || instr.isBlank()) instr = "Answer all questions. No malpractice.";
                 double neg = rs.getDouble(5);

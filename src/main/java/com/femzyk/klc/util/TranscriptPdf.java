@@ -21,7 +21,7 @@ import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 
 /**
- * Enterprise Transcript PDF Generator - KLC CBT Suite v6.0
+ * Enterprise Transcript PDF Generator - KLC CBT Suite v1.0
  */
 public class TranscriptPdf {
 

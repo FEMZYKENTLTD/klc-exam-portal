@@ -118,17 +118,36 @@
                                           style="-fx-border-color:#c8d3e8;
                                                  -fx-border-radius:8;"/>
 							</VBox>
-							<VBox spacing="4" HBox.hgrow="ALWAYS">
-								<Label text="Topic (optional)"
+						<VBox spacing="4">
+							<Label text="Topic (optional)"
                                        style="-fx-font-weight:bold; -fx-font-size:12px;"/>
-								<TextField fx:id="topicField"
+							<TextField fx:id="topicField"
                                            promptText="e.g. Quadratic Equations"
                                            style="-fx-border-color:#c8d3e8;
                                                   -fx-border-radius:8;
                                                   -fx-background-radius:8;
                                                   -fx-padding:8;"/>
-							</VBox>
-						</HBox>
+						</VBox>
+						<!-- KLC v1.0 spec 4.3: WAEC/NECO year + Bloom's taxonomy -->
+						<VBox spacing="4">
+							<Label text="Year"
+                                       style="-fx-font-weight:bold; -fx-font-size:12px;"/>
+							<TextField fx:id="yearField" prefWidth="80"
+                                           promptText="2024"
+                                           style="-fx-border-color:#c8d3e8;
+                                                  -fx-border-radius:8;
+                                                  -fx-background-radius:8;
+                                                  -fx-padding:8;"/>
+						</VBox>
+						<VBox spacing="4">
+							<Label text="Bloom's Level"
+                                       style="-fx-font-weight:bold; -fx-font-size:12px;"/>
+							<ComboBox fx:id="bloomBox" prefWidth="130"
+                                          promptText="(optional)"
+                                          style="-fx-border-color:#c8d3e8;
+                                                 -fx-border-radius:8;"/>
+						</VBox>
+					</HBox>
 
 						<VBox spacing="4">
 							<Label text="Question Text"

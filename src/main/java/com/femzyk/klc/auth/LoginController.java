@@ -307,6 +307,9 @@ public class LoginController {
     private void goToDashboard(String role) throws Exception {
         if ("STUDENT".equals(role)) {
             MainApp.setRoot("student_dashboard.fxml", null);
+        } else if ("PARENT".equals(role)) {
+            // KLC v1.0 Parent Portal - read-only ward results
+            MainApp.setRoot("parent_dashboard.fxml", null);
         } else if ("TEACHER".equals(role)) {
             // Graceful fallback to admin_dashboard if teacher_dashboard is not yet created
             if (getClass().getResource("/fxml/admin/teacher_dashboard.fxml") != null) {

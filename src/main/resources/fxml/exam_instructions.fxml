@@ -30,21 +30,35 @@
 	<VBox spacing="16" style="-fx-padding:24;" alignment="CENTER">
 		<VBox styleClass="card" maxWidth="800" spacing="14">
 
-			<Label text="Exam Rules and Instructions"
-                   style="-fx-font-size:15px; -fx-font-weight:bold;
-                          -fx-text-fill:#0f1f3c;"/>
+			<HBox spacing="20">
+				<!-- KLC v1.0 spec 5.3: registered passport - identity check -->
+				<VBox spacing="4" alignment="TOP_CENTER">
+					<ImageView fx:id="photoView" fitWidth="120" fitHeight="140"
+                               preserveRatio="true"
+                               style="-fx-background-color:#e2e8f0;
+                                      -fx-border-color:#c8d3e8;
+                                      -fx-border-radius:8;"/>
+					<Label text="Registered Photo - verify it is you"
+                           style="-fx-font-size:10px; -fx-text-fill:#64748b;"/>
+				</VBox>
+				<VBox spacing="10">
+					<Label text="Exam Rules and Instructions"
+                           style="-fx-font-size:15px; -fx-font-weight:bold;
+                                  -fx-text-fill:#0f1f3c;"/>
 
-			<ScrollPane fitToWidth="true" prefHeight="320"
-                        style="-fx-background-color:#f8fafc;
+					<ScrollPane fitToWidth="true" prefHeight="300"
+                            style="-fx-background-color:#f8fafc;
                                -fx-background-radius:8;
                                -fx-border-color:#e2e8f0;
                                -fx-border-radius:8;">
-				<Label fx:id="rulesLabel"
-                       wrapText="true"
-                       maxWidth="740"
-                       style="-fx-padding:16; -fx-font-size:13px;
+						<Label fx:id="rulesLabel"
+                               wrapText="true"
+                               maxWidth="600"
+                               style="-fx-padding:16; -fx-font-size:13px;
                               -fx-text-fill:#1e293b; -fx-line-spacing:4;"/>
-			</ScrollPane>
+					</ScrollPane>
+				</VBox>
+			</HBox>
 
 			<CheckBox fx:id="acceptCheck"
                       text="I have read and accept all KNOWLEDGE LAND COLLEGE examination rules. I understand that malpractice results in automatic submission and account lockout."

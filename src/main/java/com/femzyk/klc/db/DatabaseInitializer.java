@@ -30,8 +30,28 @@ public class DatabaseInitializer {
     private static final String SA_NAME  = "OLUFEMI BENUA KERIPE";
     private static final String SA_EMAIL = "femzykenterprisesltd@gmail.com";
     private static final String SA_PHONE = "+2349049903679";
-    private static final String SA_HASH  =
-        "$2a$12$uZdNfYsZR2iqiPTCTH3jke3CHOZzv6n45T44AWyredh4DmAksah8m";
+
+    // KLC v1.0 SECURITY FIX: the super-admin seed password is NO LONGER
+    // hardcoded in source (the historical value + hash were published in
+    // this repo and must be considered compromised). The seed password now
+    // comes from config.properties (app.superadmin.password); when absent a
+    // RANDOM password is generated and printed ONCE to the local console -
+    // standard first-boot bootstrap. Rotate immediately after first login.
+    private static String saPassword = null;
+
+    private static synchronized String seedPassword() {
+        if (saPassword != null) return saPassword;
+        java.util.Properties p = new java.util.Properties();
+        try (java.io.InputStream in = DatabaseInitializer.class
+                .getResourceAsStream("/config.properties")) {
+            if (in != null) p.load(in);
+        } catch (Exception ignored) {}
+        String fromCfg = p.getProperty("app.superadmin.password", "");
+        saPassword = fromCfg.isBlank()
+            ? "KLC-" + UUID.randomUUID().toString().substring(0, 13)
+            : fromCfg.trim();
+        return saPassword;
+    }
 
     public static void initialize() {
         try (Connection conn = DatabaseManager.getConnection();
@@ -165,6 +185,9 @@ public class DatabaseInitializer {
             "  question_type      VARCHAR(20)  DEFAULT 'MCQ'," +
             "  explanation        TEXT," +
             "  source             VARCHAR(80)," +
+            "  exam_year          INT," +
+            "  bloom              VARCHAR(20)," +
+            "  question_audio_url TEXT," +
             "  marks              INT          DEFAULT 1," +
             "  is_approved        BOOLEAN      DEFAULT FALSE," +
             "  created_by         VARCHAR(36)," +
@@ -308,6 +331,7 @@ public class DatabaseInitializer {
             "  grading_scale           CLOB," +
             "  session_current         VARCHAR(15)  DEFAULT '2024/2025'," +
             "  term_current            VARCHAR(10)  DEFAULT '1st'," +
+            "  campus_name             VARCHAR(120)," +
             "  updated_at              TIMESTAMP    DEFAULT CURRENT_TIMESTAMP" +
             ")"
         );
@@ -415,7 +439,71 @@ public class DatabaseInitializer {
             ")"
         );
 
-        System.out.println("[DB] H2: all 23 tables created/verified");
+        // KLC v1.0: social module tables (Profile / Friends / Messages).
+        // These mirror the Supabase migration in
+        // supabase/klc_supabase_schema_v1_0_social.sql so that offline
+        // (H2) and cloud (PostgreSQL) stay schema-compatible.
+        s.execute(
+            "CREATE TABLE IF NOT EXISTS user_profiles (" +
+            "  id            VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+            "  user_id       VARCHAR(36) UNIQUE," +
+            "  photo_url     TEXT," +
+            "  bio           TEXT," +
+            "  date_of_birth DATE," +
+            "  address       TEXT," +
+            "  updated_at    TIMESTAMP   DEFAULT CURRENT_TIMESTAMP" +
+            ")"
+        );
+
+        s.execute(
+            "CREATE TABLE IF NOT EXISTS friendships (" +
+            "  id           VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+            "  requester_id VARCHAR(36)," +
+            "  receiver_id  VARCHAR(36)," +
+            "  status       VARCHAR(20) DEFAULT 'PENDING'," +
+            "  created_at   TIMESTAMP   DEFAULT CURRENT_TIMESTAMP" +
+            ")"
+        );
+
+        s.execute(
+            "CREATE TABLE IF NOT EXISTS messages (" +
+            "  id          VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+            "  sender_id   VARCHAR(36)," +
+            "  receiver_id VARCHAR(36)," +
+            "  content     TEXT," +
+            "  is_read     BOOLEAN     DEFAULT FALSE," +
+            "  created_at  TIMESTAMP   DEFAULT CURRENT_TIMESTAMP" +
+            ")"
+        );
+
+        // KLC v1.0: Parent Portal - links a parent account to a ward by
+        // admission number (read-only access to the ward's results).
+        s.execute(
+            "CREATE TABLE IF NOT EXISTS parent_profiles (" +
+            "  id                VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+            "  user_id           VARCHAR(36) UNIQUE," +
+            "  ward_admission_no VARCHAR(40)," +
+            "  relationship      VARCHAR(30) DEFAULT 'GUARDIAN'" +
+            ")"
+        );
+
+        // KLC v1.0 FIX: backup_logs was referenced by BackupService /
+        // BackupController but never created in any schema - the Backup
+        // screen's history failed silently. Now created on H2 (and in the
+        // Supabase migration for cloud deployments).
+        s.execute(
+            "CREATE TABLE IF NOT EXISTS backup_logs (" +
+            "  id          VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+            "  backup_type VARCHAR(30)," +
+            "  file_path   TEXT," +
+            "  file_size   BIGINT," +
+            "  checksum    VARCHAR(80)," +
+            "  created_by  VARCHAR(36)," +
+            "  created_at  TIMESTAMP   DEFAULT CURRENT_TIMESTAMP" +
+            ")"
+        );
+
+        System.out.println("[DB] H2: all 31 tables created/verified");
     }
 
     /**
@@ -431,11 +519,32 @@ public class DatabaseInitializer {
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS " +
                 "phone_type VARCHAR(20)",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS " +
-                "phone_contact VARCHAR(20)"
+                "phone_contact VARCHAR(20)",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS " +
+                "topic VARCHAR(150)",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS " +
+                "exam_year INT",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS " +
+                "bloom VARCHAR(20)",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS " +
+                "question_audio_url TEXT",
+            "ALTER TABLE school_profile ADD COLUMN IF NOT EXISTS " +
+                "campus_name VARCHAR(120)"
         };
         for (String sql : alters) {
             try { s.execute(sql); } catch (Exception ignored) {}
         }
+        // KLC v1.0: parent portal table for offline caches created before
+        // the social/parent release.
+        try {
+            s.execute(
+                "CREATE TABLE IF NOT EXISTS parent_profiles (" +
+                "  id                VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+                "  user_id           VARCHAR(36) UNIQUE," +
+                "  ward_admission_no VARCHAR(40)," +
+                "  relationship      VARCHAR(30) DEFAULT 'GUARDIAN'" +
+                ")");
+        } catch (Exception ignored) {}
         System.out.println("[DB] H2 columns verified (v1.0)");
     }
 
@@ -464,7 +573,44 @@ public class DatabaseInitializer {
                 "channel VARCHAR(10) DEFAULT 'EMAIL'," +
                 "status VARCHAR(20) DEFAULT 'PENDING'," +
                 "sent_at TIMESTAMP," +
-                "created_at TIMESTAMP DEFAULT now())"
+                "created_at TIMESTAMP DEFAULT now())",
+            // KLC v1.0: social module tables - receiver_id matches the
+            // live cloud schema (NOT addressee_id - see FriendsController).
+            "CREATE TABLE IF NOT EXISTS user_profiles (" +
+                "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +
+                "user_id UUID UNIQUE REFERENCES users(id)," +
+                "photo_url TEXT," +
+                "bio TEXT," +
+                "date_of_birth DATE," +
+                "address TEXT," +
+                "updated_at TIMESTAMP DEFAULT now())",
+            "CREATE TABLE IF NOT EXISTS friendships (" +
+                "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +
+                "requester_id UUID REFERENCES users(id)," +
+                "receiver_id UUID REFERENCES users(id)," +
+                "status VARCHAR(20) DEFAULT 'PENDING'," +
+                "created_at TIMESTAMP DEFAULT now())",
+            "CREATE TABLE IF NOT EXISTS messages (" +
+                "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +
+                "sender_id UUID REFERENCES users(id)," +
+                "receiver_id UUID REFERENCES users(id)," +
+                "content TEXT," +
+                "is_read BOOLEAN DEFAULT FALSE," +
+                "created_at TIMESTAMP DEFAULT now())",
+            // KLC v1.0: topics power the topic-by-topic analytics breakdown
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS topic VARCHAR(150)",
+            // KLC v1.0: WAEC/NECO metadata + audio question support
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS exam_year INT",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS bloom VARCHAR(20)",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS question_audio_url TEXT",
+            // KLC v1.0: multi-campus profile field
+            "ALTER TABLE school_profile ADD COLUMN IF NOT EXISTS campus_name VARCHAR(120)",
+            // KLC v1.0: parent portal
+            "CREATE TABLE IF NOT EXISTS parent_profiles (" +
+                "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +
+                "user_id UUID UNIQUE REFERENCES users(id)," +
+                "ward_admission_no VARCHAR(40)," +
+                "relationship VARCHAR(30) DEFAULT 'GUARDIAN')"
         };
         for (String sql : alters) {
             try { s.execute(sql); } catch (Exception ignored) {}
@@ -484,6 +630,9 @@ public class DatabaseInitializer {
             }
 
             String uid = UUID.randomUUID().toString();
+            String plainPw = seedPassword();
+            String hash = at.favre.lib.crypto.bcrypt.BCrypt.withDefaults()
+                .hashToString(12, plainPw.toCharArray());
 
             try (PreparedStatement ps = conn.prepareStatement(
                     "INSERT INTO users(" +
@@ -495,14 +644,16 @@ public class DatabaseInitializer {
                 ps.setString(1, uid);
                 ps.setString(2, SA_NAME);
                 ps.setString(3, SA_EMAIL);
-                ps.setString(4, SA_HASH);
+                ps.setString(4, hash);
                 ps.setString(5, SA_PHONE);
                 ps.executeUpdate();
             }
 
             System.out.println("[DB] H2 SuperAdmin seeded");
             System.out.println("[DB] Email:    " + SA_EMAIL);
-            System.out.println("[DB] Password: Femi2022-");
+            System.out.println("[DB] Password: " + plainPw
+                + "   <- shown ONCE; change it after first login"
+                + " (or set app.superadmin.password in config.properties)");
 
         } catch (Exception e) {
             System.err.println("[DB] SuperAdmin seed error: " + e.getMessage());

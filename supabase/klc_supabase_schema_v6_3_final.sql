@@ -1,14 +1,15 @@
 -- KNOWLEDGE LAND COLLEGE CBT SUITE v6.3 FINAL
 -- Phase 2.3 – Completion Pack
 -- Run AFTER klc_supabase_schema.sql + klc_supabase_schema_v6_2.sql
--- Supabase Project: aqircycpctadgvbqsadf
+-- Supabase Project: <YOUR_PROJECT_REF>
 -- Powered by FEMZYK | OLUFEMI BENUA KERIPE
 
--- 1. Super Admin password rotate → Femi2022-
--- BCrypt hash for "Femi2022-"
-UPDATE users SET password_hash = '$2a$12$HAzNUHHOpylPi702s4pAiOwXxxbCOeNQ2wR22pP2Op/.OPrtAxgwG',
-  email = 'superadmin@knowledgeland.edu.ng'
-WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+-- 1. Super Admin password rotation - REMOVED from the repo (the historical
+--    password + hash were published and are treated as compromised).
+--    Set the hash manually per SECURITY_CREDENTIALS.md section 2a:
+-- UPDATE users SET password_hash = '<your new bcrypt-12 hash>',
+--   email = 'superadmin@knowledgeland.edu.ng'
+-- WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 
 -- 2. 2FA TOTP for Admins
 ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR(100);
@@ -98,7 +99,7 @@ ALTER TABLE questions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE exams DISABLE ROW LEVEL SECURITY;
 
 -- Done – KLC CBT v6.3 FINAL
--- Super Admin: superadmin@knowledgeland.edu.ng / Femi2022-
+-- Super Admin: ROTATED - see SECURITY_CREDENTIALS.md
 -- Teacher Code: FEMZYK
 -- Super Admin Code: FEMZYK ENTERPRISES LTD
 -- Result PIN: SURNAME+CLASS e.g. KERIPESS2

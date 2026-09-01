@@ -1,8 +1,10 @@
 # KNOWLEDGE LAND COLLEGE CBT SUITE v1.0
 **WAEC / NECO-Standard Examination Management for Nigerian Secondary Schools**
 
+[![Build KLC CBT Suite](https://github.com/FEMZYKENTLTD/klc-exam-portal/actions/workflows/build.yml/badge.svg)](../../actions)
+
 Powered by **FEMZYK ENTERPRISES LTD** | Lead Developer: **OLUFEMI BENUA KERIPE**  
-Windows 7 / 8 / 10 / 11 – x86 + x64 native `.exe` – **Zero Java/JDK/IDE required on Lab PCs**
+Windows 7 / 8 / 10 / 11 – Runnable JAR + zero-JDK Windows bundle – **Zero Java/JDK/IDE required on Lab PCs**
 
 ---
 
@@ -22,13 +24,13 @@ In 2024, **only 68% of WAEC candidates earned credits in 5+ subjects including M
 ## WHY KNOWLEDGE LAND CBT SUITE v1.0 — THE ENTERPRISE DIFFERENCE
 
 ### 1. 3-Strike Proctoring
-Automatic focus loss detection blocks Alt+Tab, copy-paste, and screen capture. Three focus loss violations trigger auto-submit and account lockout. Exams you can genuinely trust.
+Automatic focus-loss detection flags every minimize / Alt-Tab attempt; copy-paste and right-click context menus are blocked inside the exam screen. Three violations trigger auto-submit **and a 15-minute account lockout**. Exams you can genuinely trust.
 
 ### 2. Cloud + Offline Safe
-All data syncs to the cloud (`Supabase PostgreSQL`) + offline fallback (`H2 Cache`). Internet drops mid-exam? Students continue uninterrupted — answers save locally every 30 seconds and auto-sync when the network returns. **Built for Nigerian infrastructure realities.**
+All data syncs to the cloud (`Supabase PostgreSQL`) with an offline fallback (`H2 Cache`). Internet drops mid-exam? Students continue uninterrupted — answers save locally **every 30 seconds** and are **replayed to the cloud automatically** the moment the network returns. **Built for Nigerian infrastructure realities.**
 
 ### 3. WAEC / NECO Ready
-Question Bank supports MCQ A–E, True/False, Image-based items, and LaTeX formulas. Auto-marking delivers instant, accurate results with topic-by-topic performance breakdown.
+Question Bank supports MCQ A–E, True/False, Image-based items, and **LaTeX formulas** (rendered via MathJax; falls back to plain text on offline lab PCs). Auto-marking delivers instant, accurate results with **topic-by-topic performance breakdown** — on every student's result dialog and in the Analytics dashboard.
 
 ### 4. What KLC CBT Suite Means for Your School
 * **3× Faster** Result Processing — report cards ready the same day.
@@ -36,25 +38,32 @@ Question Bank supports MCQ A–E, True/False, Image-based items, and LaTeX formu
 * **10+ Years** Student Record Archive — permanent cumulative transcripts & CGPA tracking.
 * **92%** Teacher Satisfaction — eliminating weekend manual grading (WAEC, 2024).
 
+### 5. School Community Tools (new in v1.0)
+* **Student Social Suite** — profile, friends and in-app chat with school-safe defaults: chat locks school-wide while any exam window is active, students cannot message staff accounts or send attachments unless the school explicitly enables it, and every message is audit-trailed (metadata).
+* **Parent Portal** — parents register free with the family code, link to a ward by admission number, and get a read-only view of every published result.
+* **Cloud chat attachments** — PDFs, DOCX and images upload to Supabase Storage so they open on any lab PC, with automatic local fallback when offline.
+
 ---
 
 ## GETTING STARTED — SMOOTHER THAN YOU THINK
 [ STEP 1: Install & Configure ]
-Deploy the JavaFX desktop app in your lab computers and set up the web admin portal. Works on Windows 7-11, no internet required for exams.
+Deploy the JavaFX desktop app in your lab computers and set up the web admin portal. Works on Windows 7-11, no internet required for exams. Copy `config.properties.example` → `config.properties` and fill in your Supabase + SMTP credentials and registration codes (see `SECURITY_CREDENTIALS.md`).
 
-[ STEP 2: Onboard Staff & Students ]
-Register teachers, assign subjects to classes, and import student records via CSV. Auto-generate Admission Numbers and Result PINs for every student.
+[ STEP 2: Onboard Staff, Students & Parents ]
+Register teachers, assign subjects to classes, and import student records via CSV. Auto-generate Admission Numbers and Result PINs for every student. Parents register with the family code and their ward's admission number.
 
 [ STEP 3: Upload Questions & Go Live ]
-Teachers upload questions by subject. Exam Officer schedules exams, activates proctoring settings, and your first fully digital exam is ready to run.
+Teachers upload questions by subject (tag topics for the analytics breakdown). Exam Officer schedules exams, activates proctoring settings, and your first fully digital exam is ready to run.
 
+### Build from source (or let CI do it)
+Every push to GitHub runs the **Build** workflow automatically (compile + fat JAR; pushes to `main` publish a rolling `latest-build` pre-release; version tags also produce a zero-JDK Windows bundle via `jpackage`). Locally: `mvn clean package`.
 
 ---
 
 ## EDITIONS & TIERS — AN INVESTMENT IN YOUR SCHOOL'S REPUTATION
 * **ESSENTIALS:** JSS 1–3 & SSS 1–3 Core Subjects, Offline-Ready CBT, Auto-Grading, Report Cards & Broadsheets, Parent Portal, Email Support.
-* **PROFESSIONAL:** Everything in Essentials + 3-Strike Proctoring, Question Bank Upload, PDF/DOCX Parsing, CA Score Integration, Full Analytics Dashboard, Bulk Student Import, Priority Support.
-* **ENTERPRISE:** Everything in Professional + Multi-Campus Support, Custom School Branding, Full Audit Trail (WORM), API Access, Dedicated Account Manager, On-Site Training, 24/7 Phone Support.
+* **PROFESSIONAL:** Everything in Essentials + 3-Strike Proctoring, Question Bank Upload, PDF/DOCX Parsing, LaTeX question rendering, CA Score Integration, Full Topic Analytics, Bulk Student Import, Priority Support.
+* **ENTERPRISE:** Everything in Professional + Multi-Campus profiles (shared cloud, per-campus branding), Custom School Branding, Full Audit Trail (WORM, enforced in the database), API Access (Supabase REST — see `API.md`), Dedicated Account Manager, On-Site Training, 24/7 Phone Support.
 
 ---
 
@@ -67,24 +76,18 @@ Teachers upload questions by subject. Exam Officer schedules exams, activates pr
 
 ---
 
-## Super Admin Login
+## SUPER ADMIN & REGISTRATION CODES
+For security, **no credentials are published in this repository.**
 
-Email: superadmin@knowledgeland.edu.ng
-Password: Femi2022-
-Code: FEMZYK ENTERPRISES LTD
-
-
-### Registration Codes
-* **Super Admin:** `FEMZYK ENTERPRISES LTD`
-* **Teacher / Admin / Exam Officer:** `FEMZYK`
-* **Students:** **FREE – MANDATORY** (`FEMZYKENTLTD`) – No exam without registration
-* **Result PIN Format:** `SURNAME+CLASS` (e.g. `KERIPESS2`)
+* Deployments configure the super-admin account and the registration codes (`code.super_admin`, `code.admin`, `code.student`) in `config.properties` — the app reads them from there; nothing is hardcoded per school.
+* The historical values published in earlier README/SQL files were **retired** — see **`SECURITY_CREDENTIALS.md`** for the full inventory and the 10-minute rotation runbook.
+* Students and parents register **FREE** (mandatory, family code set by the school). Result PIN format: `SURNAME+CLASS` (e.g. `KERIPESS2`).
 
 ---
 
 ## BRANDING & ATTRIBUTION RULE
-* **FEMZYK credit appears ONLY on Splash Screen and About Page.**
-* **NO FEMZYK watermark on any official school document** (Report Cards, Transcripts, Broadsheets, Attendance Sheets, ID Cards).
+* **FEMZYK credit appears on the Splash Screen and About Page.**
+* Per owner policy, official school documents (Report Cards, Transcripts, Broadsheets, Attendance Sheets, ID Cards) may carry a discreet "Powered by FEMZYK" credit line.
 
 ---
 

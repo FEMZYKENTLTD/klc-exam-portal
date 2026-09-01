@@ -46,6 +46,18 @@
                                       -fx-font-size:14px;"/>
 					</VBox>
 
+					<!-- Campus (KLC v1.0 multi-campus) -->
+					<VBox spacing="4">
+						<Label text="Campus / Branch"
+							   style="-fx-font-weight:bold; -fx-font-size:13px;
+                                  -fx-text-fill:#0f1f3c;"/>
+						<TextField fx:id="campusField"
+								   promptText="e.g. Main Campus, Ikeja Annex"
+								   style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
+                                      -fx-background-radius:8; -fx-padding:9;
+                                      -fx-font-size:14px;"/>
+					</VBox>
+
 					<!-- Motto -->
 					<VBox spacing="4">
 						<Label text="School Motto"

@@ -433,12 +433,22 @@ public class ExamManagerController {
 
     private void startRealtimeListener() {
         try {
-            String url =
-                "wss://aqircycpctadgvbqsadf.supabase.co/realtime/v1/websocket" +
-                "?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
-                ".eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxaXJjeWNwY3RhZGd2YnFzYWRmIiwi" +
-                "cm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDM0OTMsImV4cCI6MjA5NzcxOTQ5M30" +
-                ".mn9pn4bmx8R860K2KZx-MEe-G0U7o4ZYZxwwO6p7sjg&vsn=1.0.0";
+            // KLC v1.0 SECURITY FIX: project ref + anon key are no longer
+            // hardcoded in source. Configure supabase.url + supabase.key in
+            // config.properties; realtime is skipped when absent (the
+            // polling auto-refresh still works).
+            String supaUrl = com.femzyk.klc.util.ConfigService
+                .get("supabase.url", "");
+            String supaKey = com.femzyk.klc.util.ConfigService
+                .get("supabase.key", "");
+            if (supaUrl.isBlank() || supaKey.isBlank()
+                    || !supaUrl.startsWith("http")) {
+                System.out.println("[Realtime] supabase.url/key not "
+                    + "configured - realtime listener skipped");
+                return;
+            }
+            String url = supaUrl.replaceFirst("^https?://", "wss://")
+                + "/realtime/v1/websocket?apikey=" + supaKey + "&vsn=1.0.0";
             webSocket = client.newWebSocket(
                 new Request.Builder().url(url).build(),
                 new WebSocketListener() {
