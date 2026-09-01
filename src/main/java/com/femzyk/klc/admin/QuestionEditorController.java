@@ -48,6 +48,9 @@ public class QuestionEditorController {
     @FXML private TextArea questionText, explanationText;
     @FXML private TextArea optA, optB, optC, optD, optE;
     @FXML private TextField topicField, imagePathField;
+    // KLC v1.0 spec 4.3: WAEC/NECO year + Bloom's taxonomy metadata
+    @FXML private TextField yearField;
+    @FXML private ComboBox<String> bloomBox;
     @FXML private Label status;
 
     private final Map<String, String> subjectMap = new HashMap<>();
@@ -61,6 +64,7 @@ public class QuestionEditorController {
         String id;                 // null = new question not yet saved
         String text = "", topic = "", difficulty = "Medium",
                explanation = "", imageUrl = "", correct = "A";
+        String year = "", bloom = "", audioUrl = "";
         Map<String, String> opts = new LinkedHashMap<>();
         boolean dirty = false;
         boolean isNew = false;
@@ -77,6 +81,10 @@ public class QuestionEditorController {
         classBox.getItems().addAll(
             "JSS1","JSS2","JSS3","SS1","SS2","SS3");
         diffBox.getItems().addAll("Easy","Medium","Hard");
+        // KLC v1.0 spec 4.3: Bloom's taxonomy
+        if (bloomBox != null) bloomBox.getItems().addAll(
+            "Remembering","Understanding","Applying","Analysing",
+            "Evaluating","Creating");
         diffBox.setValue("Medium");
         correctBox.getItems().addAll("A","B","C","D","E");
         correctBox.setValue("A");
@@ -183,7 +191,8 @@ public class QuestionEditorController {
              PreparedStatement ps = c.prepareStatement(
                  "SELECT q.id, q.question_text, q.topic, q.difficulty, " +
                  "       q.explanation, q.question_image_url, " +
-                 "       o.option_label, o.option_text, o.is_correct " +
+                 "       o.option_label, o.option_text, o.is_correct, " +
+                 "       q.exam_year, q.bloom, q.question_audio_url " +
                  "FROM questions q " +
                  "JOIN subjects s ON s.id = q.subject_id " +
                  "LEFT JOIN question_options o ON o.question_id = q.id " +
@@ -207,6 +216,9 @@ public class QuestionEditorController {
                         n.difficulty  = rs.getString(4) == null ? "Medium" : rs.getString(4);
                         n.explanation = rs.getString(5) == null ? "" : rs.getString(5);
                         n.imageUrl    = rs.getString(6) == null ? "" : rs.getString(6);
+                        n.year        = rs.getString(10) == null ? "" : rs.getString(10);
+                        n.bloom       = rs.getString(11) == null ? "" : rs.getString(11);
+                        n.audioUrl    = rs.getString(12) == null ? "" : rs.getString(12);
                     } catch (SQLException ignored) {}
                     return n;
                 });
@@ -246,6 +258,9 @@ public class QuestionEditorController {
         questionText.setText(d.text);
         topicField.setText(d.topic);
         diffBox.setValue(d.difficulty == null ? "Medium" : d.difficulty);
+        if (yearField != null) yearField.setText(d.year);
+        if (bloomBox  != null) bloomBox.setValue(
+            d.bloom == null || d.bloom.isBlank() ? null : d.bloom);
         explanationText.setText(d.explanation);
         imagePathField.setText(d.imageUrl);
         correctBox.setValue(d.correct == null ? "A" : d.correct);
@@ -265,6 +280,10 @@ public class QuestionEditorController {
         String newExp = explanationText.getText() == null ? "" : explanationText.getText();
         String newImg = imagePathField.getText() == null ? "" : imagePathField.getText();
         String newCor = correctBox.getValue() == null ? "A" : correctBox.getValue();
+        String newYear = yearField == null || yearField.getText() == null
+            ? "" : yearField.getText().trim();
+        String newBloom = bloomBox == null || bloomBox.getValue() == null
+            ? "" : bloomBox.getValue();
 
         Map<String, String> newOpts = new LinkedHashMap<>();
         putIfNotBlank(newOpts, "A", optA.getText());
@@ -277,11 +296,13 @@ public class QuestionEditorController {
             !newText.equals(d.text) || !newTopic.equals(d.topic)
             || !newDiff.equals(d.difficulty) || !newExp.equals(d.explanation)
             || !newImg.equals(d.imageUrl) || !newCor.equals(d.correct)
+            || !newYear.equals(d.year) || !newBloom.equals(d.bloom)
             || !newOpts.equals(d.opts);
 
         if (changed) {
             d.text = newText; d.topic = newTopic; d.difficulty = newDiff;
             d.explanation = newExp; d.imageUrl = newImg; d.correct = newCor;
+            d.year = newYear; d.bloom = newBloom;
             d.opts = newOpts;
             d.dirty = true;
             questionList.refresh();
@@ -290,6 +311,15 @@ public class QuestionEditorController {
 
     private void putIfNotBlank(Map<String, String> m, String k, String v) {
         if (v != null && !v.trim().isEmpty()) m.put(k, v.trim());
+    }
+
+    /** KLC v1.0: tolerant year parse - blank/invalid stores 0 (unknown). */
+    private static int parseYear(String y) {
+        try {
+            return y == null || y.isBlank() ? 0 : Integer.parseInt(y.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     // =====================================================================
@@ -364,8 +394,8 @@ public class QuestionEditorController {
                                 "INSERT INTO questions(" +
                                 "  id, subject_id, class_level, topic, difficulty, " +
                                 "  question_text, explanation, question_image_url, " +
-                                "  created_by, is_approved) " +
-                                "VALUES(?,?,?,?,?,?,?,?,?,FALSE)")) {
+                                "  exam_year, bloom, created_by, is_approved) " +
+                                "VALUES(?,?,?,?,?,?,?,?,?,?,?,FALSE)")) {
                             AuthService.setUuid(ps, 1, d.id, c);
                             AuthService.setUuid(ps, 2, subjectId, c);
                             ps.setString(3, cls);
@@ -374,7 +404,9 @@ public class QuestionEditorController {
                             ps.setString(6, d.text.trim());
                             ps.setString(7, d.explanation);
                             ps.setString(8, d.imageUrl.isBlank() ? null : d.imageUrl);
-                            AuthService.setUuid(ps, 9,
+                            ps.setInt   (9, parseYear(d.year));
+                            ps.setString(10, d.bloom.isBlank() ? null : d.bloom);
+                            AuthService.setUuid(ps, 11,
                                 AuthService.Session.userId, c);
                             ps.executeUpdate();
                         }
@@ -383,14 +415,17 @@ public class QuestionEditorController {
                         try (PreparedStatement ps = c.prepareStatement(
                                 "UPDATE questions SET " +
                                 "  question_text=?, explanation=?, topic=?, " +
-                                "  difficulty=?, question_image_url=? " +
+                                "  difficulty=?, question_image_url=?, " +
+                                "  exam_year=?, bloom=? " +
                                 "WHERE id=?")) {
                             ps.setString(1, d.text.trim());
                             ps.setString(2, d.explanation);
                             ps.setString(3, d.topic);
                             ps.setString(4, d.difficulty);
                             ps.setString(5, d.imageUrl.isBlank() ? null : d.imageUrl);
-                            AuthService.setUuid(ps, 6, d.id, c);
+                            ps.setInt   (6, parseYear(d.year));
+                            ps.setString(7, d.bloom.isBlank() ? null : d.bloom);
+                            AuthService.setUuid(ps, 8, d.id, c);
                             ps.executeUpdate();
                         }
                         try (PreparedStatement ps = c.prepareStatement(

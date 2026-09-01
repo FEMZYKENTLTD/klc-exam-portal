@@ -20,6 +20,17 @@ code.super_admin=YOUR_NEW_SUPER_ADMIN_CODE
 code.admin=YOUR_NEW_STAFF_CODE
 code.student=YOUR_NEW_FAMILY_CODE
 
+# ── Proctoring / backup options ─────────────────────────────────────────────
+# Webcam evidence capture during official exams (default true)
+proctor.webcam=true
+# Restrict exams to lab PCs: CIDR/IP list, blank = any PC
+proctor.allowed_ips=
+# AES-256-GCM key for encrypted .klcbackup files (blank = plain ZIP)
+backup.key=
+# Optional: fixed super-admin seed password at first boot (else random,
+# printed once to console)
+app.superadmin.password=
+
 # ── Safeguarding switches (social module) ───────────────────────────────────
 # Students messaging staff accounts (default false = blocked)
 social.allow_student_staff_dm=false

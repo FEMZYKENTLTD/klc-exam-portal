@@ -33,6 +33,7 @@ public class ExamController {
     @FXML private ToggleGroup optionsGroup;
     @FXML private FlowPane navPane;
     @FXML private Button prevBtn, nextBtn, flagBtn, submitBtn, calcBtn, formulaBtn;
+    @FXML private Button audioBtn;
     @FXML private Label progressLabel;
     @FXML private ImageView questionImageView, webcamThumb;
     @FXML private VBox examRoot;
@@ -63,7 +64,7 @@ public class ExamController {
 
     // ─── Inner Model ──────────────────────────────────────────────────────────
     static class Question {
-        String id, text, imageUrl, type, topic;
+        String id, text, imageUrl, type, topic, audioUrl;
         Map<String, String> opts = new LinkedHashMap<>();
     }
 
@@ -79,6 +80,22 @@ public class ExamController {
         MainApp.examInProgress = true;
 
         try (Connection c = DatabaseManager.getConnection()) {
+            // KLC v1.0 (spec 6.6): IP whitelisting - when
+            // proctor.allowed_ips is set in config.properties, exams can
+            // only be taken from lab PCs on the allowed networks/CIDRs.
+            String allowedIps = com.femzyk.klc.util.ConfigService
+                .get("proctor.allowed_ips", "");
+            if (!allowedIps.isBlank()) {
+                String ip = com.femzyk.klc.util.IpWhitelist.getLocalIp();
+                if (!com.femzyk.klc.util.IpWhitelist.isAllowed(
+                        allowedIps, ip)) {
+                    MainApp.examInProgress = false;
+                    alert("This computer (IP: " + ip + ") is not an "
+                        + "approved exam terminal.\nExams are restricted "
+                        + "to the school's whitelisted lab PCs.");
+                    return;
+                }
+            }
             admissionNo = checkFeeAndSchedule(c);
             if (admissionNo == null) {
                 MainApp.examInProgress = false;
@@ -116,6 +133,11 @@ public class ExamController {
                 st,
                 strikes -> {
                     strikeLabel.setText("Malpractice Strikes: " + strikes + "/3");
+                    // KLC v1.0 (spec 6.4): malpractice incident logger -
+                    // every strike audit-trailed with timestamp + PC/IP.
+                    AuthService.logAudit("PROCTOR_STRIKE_" + strikes,
+                        "exam_attempts", attemptId,
+                        "auto-submit at 3");
                     if (strikes == 1)
                         alert("WARNING: Do not minimize or switch apps! Strike " + strikes + "/3");
                     if (strikes == 2)
@@ -239,7 +261,8 @@ public class ExamController {
     private void loadQuestions(Connection c) throws SQLException {
         String sql = """
             SELECT q.id, q.question_text, q.question_image_url, q.question_type,
-                   o.option_label, o.option_text, o.is_correct, q.topic
+                   o.option_label, o.option_text, o.is_correct, q.topic,
+                   q.question_audio_url
             FROM exam_questions eq
             JOIN questions q ON q.id = eq.question_id
             LEFT JOIN question_options o ON o.question_id = q.id
@@ -265,6 +288,7 @@ public class ExamController {
                 final String qType     = rs.getString(4) == null
                                        ? "MCQ" : rs.getString(4);
                 final String qTopic    = rs.getString(8);
+                final String qAudio    = rs.getString(9);
 
                 Question qq = map.computeIfAbsent(qid, k -> {
                     Question n  = new Question();
@@ -273,6 +297,7 @@ public class ExamController {
                     n.imageUrl  = qImageUrl;
                     n.type      = qType;
                     n.topic     = qTopic;
+                    n.audioUrl  = qAudio;
                     return n;
                 });
 
@@ -411,6 +436,13 @@ public class ExamController {
         Question q = questions.get(index);
         renderQuestionText(i + 1, q.text);
         applyFontStyle();
+        // KLC v1.0 (spec 4.2): audio clip question support
+        if (audioBtn != null) {
+            boolean hasAudio = q.audioUrl != null && !q.audioUrl.isBlank();
+            audioBtn.setVisible(hasAudio);
+            audioBtn.setManaged(hasAudio);
+            stopAudio();
+        }
 
         if (questionImageView != null) {
             questionImageView.setVisible(false);
@@ -588,6 +620,40 @@ public class ExamController {
     }
 
     // =========================================================================
+    //  AUDIO QUESTION SUPPORT (KLC v1.0 spec 4.2)
+    //  Plays the question's attached audio clip (wav/mp3) via JavaFX media.
+    //  Failures never block the exam - the button simply reports the error.
+    // =========================================================================
+    private javafx.scene.media.MediaPlayer audioPlayer;
+
+    @FXML
+    private void playQuestionAudio() {
+        try {
+            Question q = questions.get(index);
+            if (q.audioUrl == null || q.audioUrl.isBlank()) return;
+            stopAudio();
+            java.net.URI uri = q.audioUrl.startsWith("http")
+                ? java.net.URI.create(q.audioUrl)
+                : new java.io.File(q.audioUrl).toURI();
+            javafx.scene.media.Media media =
+                new javafx.scene.media.Media(uri.toString());
+            audioPlayer = new javafx.scene.media.MediaPlayer(media);
+            audioPlayer.play();
+        } catch (Exception e) {
+            alert("Cannot play audio: " + e.getMessage()
+                + "\nAsk the invigilator for help.");
+        }
+    }
+
+    private void stopAudio() {
+        if (audioPlayer != null) {
+            try { audioPlayer.stop(); audioPlayer.dispose(); }
+            catch (Exception ignored) {}
+            audioPlayer = null;
+        }
+    }
+
+    // =========================================================================
     //  SAVE CURRENT
     // =========================================================================
     private void saveCurrent() {
@@ -649,13 +715,17 @@ public class ExamController {
     }
 
     // =========================================================================
-    //  CALCULATOR
+    //  CALCULATOR (KLC v1.0 spec 5.4: Basic + Scientific toggle)
+    //  KLC v1.0 FIX: the previous version evaluated via the Nashorn
+    //  JavaScript engine, which was REMOVED in JDK 15 - on Java 17 every
+    //  "=" produced Err/0. Replaced with a dependency-free evaluator.
     // =========================================================================
     @FXML private void openCalculator() {
         Stage calc = new Stage();
         calc.initModality(Modality.NONE);
         calc.initOwner(timerLabel.getScene().getWindow());
         calc.setTitle("CBT Calculator");
+        calc.setAlwaysOnTop(true);
 
         TextField display = new TextField("0");
         display.setEditable(false);
@@ -664,21 +734,15 @@ public class ExamController {
         StringBuilder expr = new StringBuilder();
         VBox root = new VBox(6, display);
         root.setPadding(new Insets(10));
+        final java.util.List<javafx.scene.Node> sciRows = new java.util.ArrayList<>();
 
-        String[][] buttons = {
-            {"7","8","9","/"},
-            {"4","5","6","*"},
-            {"1","2","3","-"},
-            {"0",".","C","+"},
-            {"=","","",""}
-        };
-
-        for (String[] row : buttons) {
+        java.util.function.BiConsumer<String[], Boolean> buildRow =
+            (row, isSci) -> {
             javafx.scene.layout.HBox hb = new javafx.scene.layout.HBox(5);
             for (String b : row) {
-                if (b.isEmpty()) continue;
+                if (b.isEmpty() || b.equals(" ")) continue;
                 Button btn = new Button(b);
-                btn.setPrefWidth(55);
+                btn.setPrefWidth(b.length() > 2 ? 68 : 55);
                 btn.setOnAction(e -> {
                     String t = btn.getText();
                     if ("C".equals(t)) {
@@ -686,7 +750,8 @@ public class ExamController {
                         display.setText("0");
                     } else if ("=".equals(t)) {
                         try {
-                            double r = evalSimple(expr.toString());
+                            double r = ExprEval.eval(
+                                normalizeExpr(expr.toString()));
                             display.setText(String.valueOf(r));
                             expr.setLength(0);
                             expr.append(r);
@@ -702,19 +767,135 @@ public class ExamController {
                 hb.getChildren().add(btn);
             }
             root.getChildren().add(hb);
-        }
+            if (isSci) sciRows.add(hb);
+        };
+
+        buildRow.accept(new String[]{"7","8","9","/"}, false);
+        buildRow.accept(new String[]{"4","5","6","*"}, false);
+        buildRow.accept(new String[]{"1","2","3","-"}, false);
+        buildRow.accept(new String[]{"0",".","C","+"}, false);
+        buildRow.accept(new String[]{"="}, false);
+
+        javafx.scene.control.ToggleButton sciToggle =
+            new javafx.scene.control.ToggleButton("Scientific mode");
+        sciToggle.setOnAction(e -> {
+            if (sciToggle.isSelected()) {
+                buildRow.accept(new String[]{"sin(","cos(","tan(","log("}, true);
+                buildRow.accept(new String[]{"ln(","sqrt(","^","("}, true);
+                buildRow.accept(new String[]{")","π"}, true);
+            } else {
+                root.getChildren().removeAll(sciRows);
+                sciRows.clear();
+            }
+            calc.sizeToScene();
+        });
+        root.getChildren().add(1, sciToggle);
 
         calc.setScene(new Scene(root));
-        calc.setAlwaysOnTop(true);
         calc.show();
     }
 
-    private double evalSimple(String s) {
-        try {
-            return ((Number) new javax.script.ScriptEngineManager()
-                .getEngineByName("JavaScript").eval(s)).doubleValue();
-        } catch (Exception e) {
-            return 0;
+    /** Translate calculator syntax to evaluator functions. */
+    private static String normalizeExpr(String s) {
+        return s.replace("π", "PI");
+    }
+
+    /**
+     * Dependency-free arithmetic evaluator (Java 17 safe - no Nashorn).
+     * Supports + - * / ^ parentheses, unary minus, PI/E, sin cos tan
+     * log10 log sqrt (radians).
+     */
+    static final class ExprEval {
+        private final String s;
+        private int i = -1;
+
+        static double eval(String expr) {
+            return new ExprEval(expr.replaceAll("\\s+", "")).parse();
+        }
+        private ExprEval(String s) { this.s = s; }
+
+        private double parse() {
+            double v = parseExpr();
+            // 'i' points at the LAST consumed character
+            if (s.isEmpty() || i != s.length() - 1)
+                throw new IllegalArgumentException("at " + i);
+            return v;
+        }
+        private double parseExpr() {          // + -
+            double v = parseTerm();
+            while (i + 1 < s.length() && (s.charAt(i + 1) == '+'
+                    || s.charAt(i + 1) == '-')) {
+                char op = s.charAt(++i);
+                v = (op == '+') ? v + parseTerm() : v - parseTerm();
+            }
+            return v;
+        }
+        private double parseTerm() {          // * /
+            double v = parsePower();
+            while (i + 1 < s.length() && (s.charAt(i + 1) == '*'
+                    || s.charAt(i + 1) == '/')) {
+                char op = s.charAt(++i);
+                v = (op == '*') ? v * parsePower() : v / parsePower();
+            }
+            return v;
+        }
+        private double parsePower() {         // ^ (right-assoc)
+            double base = parseUnary();
+            if (i + 1 < s.length() && s.charAt(i + 1) == '^') {
+                i++;
+                return Math.pow(base, parsePower());
+            }
+            return base;
+        }
+        private double parseUnary() {         // unary minus + functions
+            if (i + 1 < s.length() && s.charAt(i + 1) == '-') {
+                i++;
+                return -parseUnary();
+            }
+            if (i + 1 < s.length() && Character.isLetter(s.charAt(i + 1))) {
+                int start = ++i;
+                while (i + 1 < s.length()
+                        && (Character.isLetter(s.charAt(i + 1))
+                            || s.charAt(i + 1) == '.' == false
+                               && Character.isLetterOrDigit(s.charAt(i + 1))))
+                    i++;
+                String fn = s.substring(start, i + 1);
+                if ("PI".equals(fn)) return Math.PI;
+                if ("E".equals(fn))  return Math.E;
+                if (i + 1 < s.length() && s.charAt(i + 1) == '(') {
+                    i++;
+                    double arg = parseExpr();
+                    if (i + 1 < s.length() && s.charAt(i + 1) == ')') i++;
+                    else throw new IllegalArgumentException("missing )");
+                    switch (fn) {
+                        case "sin":  return Math.sin(arg);
+                        case "cos":  return Math.cos(arg);
+                        case "tan":  return Math.tan(arg);
+                        case "log":  return Math.log10(arg);
+                        case "ln":   return Math.log(arg);
+                        case "sqrt":
+                            if (arg < 0)
+                                throw new IllegalArgumentException("neg");
+                            return Math.sqrt(arg);
+                        default:
+                            throw new IllegalArgumentException(fn);
+                    }
+                }
+                throw new IllegalArgumentException(fn);
+            }
+            if (i + 1 < s.length() && s.charAt(i + 1) == '(') {
+                i++;
+                double v = parseExpr();
+                if (i + 1 < s.length() && s.charAt(i + 1) == ')') i++;
+                else throw new IllegalArgumentException("missing )");
+                return v;
+            }
+            int start = ++i;
+            while (i + 1 < s.length()
+                    && (Character.isDigit(s.charAt(i + 1))
+                        || s.charAt(i + 1) == '.')) i++;
+            if (i < start) throw new IllegalArgumentException("num");
+            return Double.parseDouble(s.substring(start, i + 1));
         }
     }
 
@@ -759,9 +940,18 @@ public class ExamController {
                                     "-fx-font-size:22px;" +
                                     "-fx-font-weight:bold;");
             }
-            if (timeLeft == 900) alert("15 minutes remaining!");
-            if (timeLeft == 300) alert("5 minutes remaining!");
-            if (timeLeft <= 0)   submitExam(false);
+            if (timeLeft == 900) {
+                java.awt.Toolkit.getDefaultToolkit().beep();
+                alert("15 minutes remaining!");
+            }
+            if (timeLeft == 300) {
+                java.awt.Toolkit.getDefaultToolkit().beep();
+                alert("5 minutes remaining!");
+            }
+            if (timeLeft <= 0) {
+                java.awt.Toolkit.getDefaultToolkit().beep();
+                submitExam(false);
+            }
         }));
         timer.setCycleCount(Timeline.INDEFINITE);
         timer.play();
@@ -788,6 +978,7 @@ public class ExamController {
     private void submitExam(boolean malpractice) {
         if (timer != null)         timer.stop();
         stopAutosave();
+        stopAudio();
         if (webcamProctor != null) webcamProctor.stop();
         com.femzyk.klc.util.SyncService.stop();
         saveCurrent();

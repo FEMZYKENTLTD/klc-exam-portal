@@ -22,6 +22,7 @@
       <Separator/>
       <Button fx:id="calcBtn" text="🧮 Calculator" onAction="#openCalculator"/>
       <Button fx:id="formulaBtn" text="📐 Formula Sheet" onAction="#openFormulaSheet"/>
+      <Button fx:id="audioBtn" text="🔊 Play Audio" onAction="#playQuestionAudio" visible="false" managed="false"/>
       <Pane HBox.hgrow="ALWAYS"/>
       <Label text="Keys: N=Next P=Prev F=Flag 1-5=A-E" styleClass="small-muted"/>
     </ToolBar>

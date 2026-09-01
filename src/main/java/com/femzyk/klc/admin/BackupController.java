@@ -64,7 +64,10 @@ public class BackupController {
             status.setText("Backing up… users, students, questions, exams, results, ca_scores…");
             var r = BackupService.createBackup(AuthService.Session.userId);
             status.setText("✅ Backup complete: "+r.file+" - "+String.format("%.2f MB", r.size/1024.0/1024.0)+" - SHA256: "+r.sha256.substring(0,16)+"…");
-            new Alert(Alert.AlertType.INFORMATION, "Backup saved: "+r.file+"\nSHA256: "+r.sha256+"\n\nStore safely - restorable on any PC.").showAndWait();
+            new Alert(Alert.AlertType.INFORMATION, "Backup saved: "+r.file
+                +(r.encrypted ? "\n🔒 AES-256-GCM ENCRYPTED (backup.key)"
+                              : "\n(plain ZIP - set backup.key in config to encrypt)")
+                +"\nSHA256: "+r.sha256+"\n\nStore safely - restorable on any PC.").showAndWait();
             load();
         }catch(Exception e){ status.setText("Backup failed: "+e.getMessage()); e.printStackTrace(); }
     }
@@ -86,7 +89,10 @@ public class BackupController {
     @FXML private void restoreInfo(){
         new Alert(Alert.AlertType.INFORMATION,
             "RESTORE - KNOWLEDGE LAND COLLEGE\n\n" +
-            "1. Unzip .klcbackup file (it's a ZIP)\n" +
+            "1. If the file starts with KLCENC1 it is AES-encrypted - "
+            + "decrypt with the same backup.key (BackupService.decryptToZip) "
+            + "or contact FEMZYK support\n"
+            + "2. Unzip .klcbackup file (it's a ZIP)\n" +
             "2. Import CSV files into Supabase via Table Editor → Insert\n" +
             "3. Or use psql \\copy\n\n" +
             "Supabase Cloud Pro ($25/mo): Dashboard → Database → Backups → Point-in-time Restore\n" +

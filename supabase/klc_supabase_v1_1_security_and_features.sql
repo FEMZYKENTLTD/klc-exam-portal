@@ -157,3 +157,141 @@ CREATE INDEX IF NOT EXISTS idx_exams_window
 --      config.properties (overrides the compiled defaults) and redeploy.
 --   3. Store the new values as GitHub Secrets - see SECURITY_CREDENTIALS.md.
 -- ============================================================================
+
+-- ── 5. Question metadata (spec 4.3): year, Bloom's taxonomy, audio ──────────
+ALTER TABLE questions      ADD COLUMN IF NOT EXISTS exam_year INT;
+ALTER TABLE questions      ADD COLUMN IF NOT EXISTS bloom VARCHAR(20);
+ALTER TABLE questions      ADD COLUMN IF NOT EXISTS question_audio_url TEXT;
+
+-- ============================================================================
+-- 6. WEB ADMIN PORTAL + PARENT RESULT CHECKER (klc-web-admin/)
+--    Server-side RPCs used by the static Netlify/GitHub-Pages portal.
+--    SECURITY DEFINER: the anon key can ONLY reach data through these
+--    functions - admission/PIN and staff credentials are verified inside.
+--    Requires the pgcrypto extension for bcrypt verification (Supabase
+--    enables it by default; otherwise: create extension if not exists pgcrypto;)
+-- ============================================================================
+create extension if not exists pgcrypto;
+
+-- Public parent checker: Admission No + Result PIN -> published results
+CREATE OR REPLACE FUNCTION parent_lookup_results(
+  p_admission TEXT, p_pin TEXT)
+RETURNS TABLE(subject_code VARCHAR, class_level VARCHAR, term VARCHAR,
+              session VARCHAR, score NUMERIC, total_questions INT,
+              percentage NUMERIC, result_date TIMESTAMP)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM student_profiles
+    WHERE admission_no = p_admission
+      AND result_pin   = upper(trim(p_pin))
+  ) THEN
+    RAISE EXCEPTION 'Invalid admission number or result PIN';
+  END IF;
+  RETURN QUERY
+  SELECT s.subject_code, e.class_level, COALESCE(e.term,'-'),
+         COALESCE(e.session,'-'), r.score, r.total_questions,
+         r.percentage, r.created_at
+  FROM results r
+  JOIN exams e     ON e.id = r.exam_id
+  JOIN subjects s  ON s.id = e.subject_id
+  JOIN student_profiles sp ON sp.user_id = r.student_id
+  WHERE sp.admission_no = p_admission
+    AND sp.result_pin   = upper(trim(p_pin))
+    AND COALESCE(r.published, TRUE);
+END $$;
+GRANT EXECUTE ON FUNCTION parent_lookup_results(TEXT, TEXT) TO anon;
+
+-- Staff identity check reused by every staff RPC (bcrypt verify)
+CREATE OR REPLACE FUNCTION staff_check(p_email TEXT, p_password TEXT)
+RETURNS VARCHAR  -- role when valid
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_role VARCHAR; v_hash TEXT;
+BEGIN
+  SELECT role, password_hash INTO v_role, v_hash
+  FROM users WHERE lower(email) = lower(trim(p_email)) AND is_active;
+  IF v_hash IS NULL THEN
+    RAISE EXCEPTION 'Invalid credentials';
+  END IF;
+  IF NOT (crypt(p_password, v_hash) = v_hash) THEN
+    RAISE EXCEPTION 'Invalid credentials';
+  END IF;
+  IF v_role NOT IN ('SUPER_ADMIN','PRINCIPAL_ADMIN','EXAM_OFFICER','TEACHER') THEN
+    RAISE EXCEPTION 'Staff accounts only';
+  END IF;
+  RETURN v_role;
+END $$;
+
+-- Recent published results (staff)
+CREATE OR REPLACE FUNCTION staff_recent_results(
+  p_email TEXT, p_password TEXT, p_limit INT DEFAULT 100)
+RETURNS TABLE(admission_no VARCHAR, student VARCHAR, subject_code VARCHAR,
+              class_level VARCHAR, term VARCHAR, session VARCHAR,
+              score NUMERIC, percentage NUMERIC, result_date TIMESTAMP)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  PERFORM staff_check(p_email, p_password);
+  RETURN QUERY
+  SELECT sp.admission_no,
+         sp.surname || ' ' || COALESCE(sp.other_names,''),
+         s.subject_code, e.class_level, COALESCE(e.term,'-'),
+         COALESCE(e.session,'-'), r.score, r.percentage, r.created_at
+  FROM results r
+  JOIN exams e    ON e.id = r.exam_id
+  JOIN subjects s ON s.id = e.subject_id
+  JOIN student_profiles sp ON sp.user_id = r.student_id
+  WHERE COALESCE(r.published, TRUE)
+  ORDER BY r.created_at DESC
+  LIMIT LEAST(COALESCE(p_limit,100), 500);
+END $$;
+GRANT EXECUTE ON FUNCTION staff_recent_results(TEXT, TEXT, INT) TO anon;
+
+-- Broadsheet rows for one class+session+term (staff) - CA + exam merged
+CREATE OR REPLACE FUNCTION staff_broadsheet(
+  p_email TEXT, p_password TEXT, p_class TEXT,
+  p_session TEXT, p_term TEXT)
+RETURNS TABLE(admission_no VARCHAR, student VARCHAR, subject_code VARCHAR,
+              ca_total NUMERIC, exam_score NUMERIC, grand_total NUMERIC)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  PERFORM staff_check(p_email, p_password);
+  RETURN QUERY
+  SELECT sp.admission_no,
+         sp.surname || ' ' || COALESCE(sp.other_names,''),
+         s.subject_code,
+         COALESCE((SELECT SUM(cs.ca1_score + cs.ca2_score)
+                   FROM ca_scores cs
+                   WHERE cs.student_id = sp.user_id
+                     AND cs.subject_id = s.id
+                     AND cs.term = p_term), 0),
+         r.score,
+         COALESCE((SELECT SUM(cs.ca1_score + cs.ca2_score)
+                   FROM ca_scores cs
+                   WHERE cs.student_id = sp.user_id
+                     AND cs.subject_id = s.id
+                     AND cs.term = p_term), 0) + COALESCE(r.score, 0)
+  FROM student_profiles sp
+  JOIN exams e    ON e.class_level = sp.class_level
+  JOIN subjects s ON s.id = e.subject_id
+  LEFT JOIN results r ON r.exam_id = e.id AND r.student_id = sp.user_id
+  WHERE sp.class_level = p_class
+    AND COALESCE(e.session,'-') = p_session
+    AND COALESCE(e.term,'-')    = p_term
+    AND COALESCE(e.is_practice, FALSE) = FALSE
+  ORDER BY sp.surname, s.subject_code;
+END $$;
+GRANT EXECUTE ON FUNCTION staff_broadsheet(TEXT, TEXT, TEXT, TEXT, TEXT) TO anon;
+
+-- Subject directory (staff)
+CREATE OR REPLACE FUNCTION staff_subjects(
+  p_email TEXT, p_password TEXT)
+RETURNS TABLE(subject_code VARCHAR, subject_name VARCHAR,
+              class_level VARCHAR, is_active BOOLEAN)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  PERFORM staff_check(p_email, p_password);
+  RETURN QUERY SELECT s.subject_code, s.subject_name,
+                      s.class_level, s.is_active
+               FROM subjects s ORDER BY s.subject_code;
+END $$;
+GRANT EXECUTE ON FUNCTION staff_subjects(TEXT, TEXT) TO anon;

@@ -185,6 +185,9 @@ public class DatabaseInitializer {
             "  question_type      VARCHAR(20)  DEFAULT 'MCQ'," +
             "  explanation        TEXT," +
             "  source             VARCHAR(80)," +
+            "  exam_year          INT," +
+            "  bloom              VARCHAR(20)," +
+            "  question_audio_url TEXT," +
             "  marks              INT          DEFAULT 1," +
             "  is_approved        BOOLEAN      DEFAULT FALSE," +
             "  created_by         VARCHAR(36)," +
@@ -519,6 +522,12 @@ public class DatabaseInitializer {
                 "phone_contact VARCHAR(20)",
             "ALTER TABLE questions ADD COLUMN IF NOT EXISTS " +
                 "topic VARCHAR(150)",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS " +
+                "exam_year INT",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS " +
+                "bloom VARCHAR(20)",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS " +
+                "question_audio_url TEXT",
             "ALTER TABLE school_profile ADD COLUMN IF NOT EXISTS " +
                 "campus_name VARCHAR(120)"
         };
@@ -590,6 +599,10 @@ public class DatabaseInitializer {
                 "created_at TIMESTAMP DEFAULT now())",
             // KLC v1.0: topics power the topic-by-topic analytics breakdown
             "ALTER TABLE questions ADD COLUMN IF NOT EXISTS topic VARCHAR(150)",
+            // KLC v1.0: WAEC/NECO metadata + audio question support
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS exam_year INT",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS bloom VARCHAR(20)",
+            "ALTER TABLE questions ADD COLUMN IF NOT EXISTS question_audio_url TEXT",
             // KLC v1.0: multi-campus profile field
             "ALTER TABLE school_profile ADD COLUMN IF NOT EXISTS campus_name VARCHAR(120)",
             // KLC v1.0: parent portal

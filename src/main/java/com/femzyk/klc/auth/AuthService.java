@@ -157,6 +157,21 @@ public class AuthService {
         if (password == null || password.length() < 6)
             return "Password must be at least 6 characters.";
 
+        // KLC v1.0 (spec 1 Auth Security): password complexity policy for
+        // STAFF accounts - min 8 chars with upper, lower and digit.
+        if ("TEACHER".equals(role) || "EXAM_OFFICER".equals(role)
+                || "PRINCIPAL_ADMIN".equals(role)
+                || "SUPER_ADMIN".equals(role)) {
+            if (password.length() < 8
+                    || !password.matches(".*[A-Z].*")
+                    || !password.matches(".*[a-z].*")
+                    || !password.matches(".*[0-9].*")) {
+                return "Staff password must be at least 8 characters "
+                     + "and contain an UPPERCASE letter, a lowercase "
+                     + "letter and a number.";
+            }
+        }
+
         try (Connection c = DatabaseManager.getConnection()) {
             c.setAutoCommit(false);
 
@@ -196,6 +211,25 @@ public class AuthService {
                     ? "" : classLevel.trim();
                 String pin = safeSurname.toUpperCase()
                                         .replaceAll("\\s+", "") + safeClass;
+
+                // KLC v1.0 (spec 1.3): Result PIN collision handling -
+                // if SURNAME+CLASS already exists, append the last 3
+                // digits of the admission number: KERIPESS2 -> KERIPESS2045
+                try (PreparedStatement chk = c.prepareStatement(
+                        "SELECT COUNT(*) FROM student_profiles " +
+                        "WHERE result_pin = ?")) {
+                    chk.setString(1, pin);
+                    ResultSet crs = chk.executeQuery();
+                    if (crs.next() && crs.getInt(1) > 0
+                            && admissionNo != null
+                            && admissionNo.length() >= 3) {
+                        String digits = admissionNo.replaceAll("[^0-9]", "");
+                        if (digits.length() >= 3) {
+                            pin = pin + digits.substring(
+                                digits.length() - 3);
+                        }
+                    }
+                }
 
                 try (PreparedStatement ps = c.prepareStatement(
                         "INSERT INTO student_profiles(" +
@@ -274,11 +308,22 @@ public class AuthService {
     // =========================================================================
     public static void logAudit(String action, String entityType,
                                 String entityId) {
+        logAudit(action, entityType, entityId, null);
+    }
+
+    /**
+     * KLC v1.0 (spec 6.4): audit with evidence details - PC name and LAN
+     * IP are appended automatically; extra context (e.g. strike reason)
+     * rides in {@code details}. The audit_logs.details column exists in
+     * every schema; failures never interrupt the caller.
+     */
+    public static void logAudit(String action, String entityType,
+                                String entityId, String details) {
         try (Connection c = DatabaseManager.getConnection();
              PreparedStatement ps = c.prepareStatement(
                  "INSERT INTO audit_logs(" +
-                 "  id, user_id, action, entity_type, entity_id) " +
-                 "VALUES(?, ?, ?, ?, ?)")) {
+                 "  id, user_id, action, entity_type, entity_id, details) " +
+                 "VALUES(?, ?, ?, ?, ?, ?)")) {
             setUuid(ps, 1, UUID.randomUUID().toString(), c);
             if (Session.userId != null)
                 setUuid(ps, 2, Session.userId, c);
@@ -290,6 +335,13 @@ public class AuthService {
                 setUuid(ps, 5, entityId, c);
             else
                 ps.setNull(5, Types.OTHER);
+            String pc;
+            try {
+                pc = java.net.InetAddress.getLocalHost().getHostName()
+                     + " / "
+                     + com.femzyk.klc.util.IpWhitelist.getLocalIp();
+            } catch (Exception e) { pc = "unknown-PC"; }
+            ps.setString(6, (details == null ? "" : details + " | ") + "PC: " + pc);
             ps.executeUpdate();
         } catch (Exception ignored) {}
     }
