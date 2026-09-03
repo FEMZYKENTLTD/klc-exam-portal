@@ -2,6 +2,7 @@ package com.femzyk.klc.admin;
 
 import com.femzyk.klc.auth.AuthService;
 import com.femzyk.klc.db.DatabaseManager;
+import com.femzyk.klc.util.PasswordGen;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -220,12 +221,16 @@ public class TeacherManagerController {
              PreparedStatement ps = c.prepareStatement(
                  "UPDATE users SET password_hash=?, " +
                  "failed_login_attempts=0, locked_until=NULL WHERE id=?")) {
+            // KLC v1.0 security fix: issue a random one-time password
+            // (shown once here) instead of the published fixed default.
+            String oneTimePw = PasswordGen.strong(12);
             String hash = BCrypt.withDefaults()
-                .hashToString(12, "Teacher123".toCharArray());
+                .hashToString(12, oneTimePw.toCharArray());
             ps.setString(1, hash);
             ps.setString(2, r.id);
             ps.executeUpdate();
-            status.setText("Password reset to Teacher123 for " + r.name);
+            status.setText("One-time password for " + r.name + ": " + oneTimePw
+                + " - tell the teacher to change it at first login.");
             AuthService.logAudit("PASSWORD_RESET", "users", r.id);
         } catch (Exception e) {
             status.setText("Error: " + e.getMessage());

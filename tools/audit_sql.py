@@ -32,11 +32,13 @@ for m in re.finditer(
     cols = set()
     for line in body.split(','):
         line = line.strip()
-        cm = re.match(r'(\w+)\s+(VARCHAR|TEXT|INT|BOOLEAN|TIMESTAMP|DATE|'
-                      r'NUMERIC|CLOB|DOUBLE|BIGINT|CHAR)', line, re.I)
+        cm = re.match(r'(\w+)\s+(VARCHAR|TEXT|INT|INTEGER|BOOLEAN|TIMESTAMP|'
+                      r'DATE|NUMERIC|CLOB|DOUBLE|BIGINT|CHAR|UUID)', line, re.I)
         if cm:
             cols.add(cm.group(1).lower())
-    schema[t] = cols
+    # The same table can be defined twice (H2 DDL + Postgres startup DDL in
+    # ensurePostgresColumns) - union the column sets instead of overwriting.
+    schema.setdefault(t, set()).update(cols)
 
 # ALTER TABLE x ADD COLUMN IF NOT EXISTS col
 for m in re.finditer(
@@ -87,8 +89,12 @@ for jf in glob.glob(os.path.join(JAVA, "**", "*.java"), recursive=True):
                 problems.append(f"[COL-MISSING] {rel}: INSERT INTO {t}({c}) "
                                 f"- column not in DDL")
     # UPDATE t SET col=?, col2=?
+    # Stop at the first WHERE or at the closing quote of the Java string
+    # literal - without the quote boundary, statements without WHERE run
+    # on to EOF and swallow trailing Java code (e.g. "campusField = ..."
+    # looked like a SET column).
     for m in re.finditer(
-            r'UPDATE (\w+)\s+SET\s+(.*?)(?:\bWHERE\b|$)', merged_java, re.I | re.S):
+            r'UPDATE (\w+)\s+SET\s+(.*?)(?:\bWHERE\b|")', merged_java, re.I | re.S):
         t, sets = m.group(1).lower(), m.group(2)
         if t not in schema:
             problems.append(f"[TABLE-MISSING] {rel}: UPDATE {t}")

@@ -20,11 +20,15 @@ files_for_review.txt
 klc_error_log.txt
 sample_*.csv
 src/main/resources/config.properties
-src/main/resources/config.properties
+config.properties.bak
+
+# Maven shade plugin build artifact - never commit
+dependency-reduced-pom.xml
 
 # KLC v1.0: runtime user assets (photos, chat attachments) - never commit
 klc_assets/
 
-# NEVER commit the prefilled secret-setup scripts
+# NEVER commit the prefilled secret-setup scripts (the value-free template
+# tools/setup_github_secrets.template.ps1 IS committed and safe)
 tools/setup_github_secrets.ps1
 tools/setup_github_secrets.sh

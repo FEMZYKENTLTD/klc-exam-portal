@@ -120,3 +120,46 @@ Owner directives: *maintain all features · do it the best way · "Powered by FE
 
 **Follow-ups left for owner (needs real credentials/machines):** rotate keys in Supabase (§2 of SECURITY_CREDENTIALS), decide on git-history rewrite, run first CI build, optionally restrict social module further per school policy.
 
+---
+
+## 8. OWNER VERIFICATION PASS (2026-09-02)
+
+Full re-verification of the merged v1.0 tree (`b46f395`) against the
+README, the CI pipeline, the SQL migration chain, and the launch runbook.
+All §7 "shipped" claims were re-checked in code (MathJax WebView, 30 s
+autosave, copy/paste block, 15-min malpractice lockout, `SyncService`
+replay + `flushOnCloudReturn`, topic analytics + per-question `topic`,
+PARENT login routing, social safeguard gates, `StorageService`, WORM
+trigger, RLS, web-portal RPCs, `regeneratePin`, AES-GCM backup, `jpackage`
+release job — **all present**).
+
+| # | Finding | Severity | Resolution |
+|---|---|---|---|
+| 1 | **`users.role` CHECK constraint omits `PARENT`** in `klc_supabase_schema.sql`; no migration repaired it. H2 has no such constraint, so the Parent Portal (a headline README feature) failed on **every cloud project** with a constraint violation. The app's startup `ensurePostgresColumns` self-heals missing *columns* but cannot fix a CHECK constraint. | **P0** | PARENT added to the base schema CHECK; idempotent DO block in `klc_supabase_v1_1_security_and_features.sql` drops the old check and re-adds it with PARENT (CI runs it on every push to main; SUPABASE_SETUP order covered) |
+| 2 | **CI was not actually enabled**: `.github/workflows/` did not exist in the repo — only a `docs/*.install-me` template plus a README badge pointing at a workflow that was never committed (dead badge). The documented Step 2 also used `&&`, which Windows PowerShell 5.1 rejects. | **P0** | `.github/workflows/build.yml` **committed** (activation step deleted, `install-me` file removed). `build` job now runs even when `migrate` fails (`always() && !cancelled()`), since the JAR doesn't depend on the cloud; a red migrate step still signals the DB problem |
+| 3 | **`tools/setup_github_secrets.ps1` referenced by the launch steps does not exist in the repo** (it is gitignored by design — a local-only script with live values). Step 1 was therefore unrunnable. | **P0** | New committed **template** `tools/setup_github_secrets.template.ps1` (no values — safe in git): reads the local `config.properties`, maps to the **exact** secret names `build.yml` consumes, pushes via `gh` CLI or GitHub API (secure token prompt), PS 5.1-compatible, `-DryRun` supported |
+| 4 | **Secret-name mismatch:** `SECURITY_CREDENTIALS.md` §3 documented `KLC_SUPABASE_DB_POOLER/USER/PASS` (+6 names missing) — the workflow consumes `KLC_DB_HOST/PORT/USER/PASS` + `KLC_SMTP_HOST/PORT/FROM_NAME/FROM_EMAIL`. Following the doc would have left CI's migrate job blind. | **P1** | §3 rewritten as a 15-name table mapped to the config keys, matching the workflow header exactly |
+| 5 | **`SECURITY_CREDENTIALS.md` re-published the compromised values** (super-admin password, BCrypt hash, registration codes, project ref, `Teacher123`, seed UUID) while the README promises "no credentials are published in this repository". | **P1** | All values redacted; inventory kept (what/where/why) without the secrets |
+| 6 | **`Teacher123` still hardcoded** in `TeacherBulkImportController` (bulk import), `TeacherManagerController` (reset) and `teacher_import.fxml` (UI label) — the exact item their own runbook flagged as "change before next customer deploy". | **P1** | New `util/PasswordGen` (SecureRandom, unambiguous alphabet): bulk import uses `import.default_password` from config or a random password **shown once** after import; Teacher Manager reset issues a one-time random password shown once; FXML label updated |
+| 7 | **Runbook SQL referenced a non-existent column** — `UPDATE users SET must_change_password = TRUE` (no such column in any schema; the command errors). | **P1** | Runbook reworded to the real flow (Teacher Manager reset → one-time password); checklist item updated |
+| 8 | **README claims Windows 7/8 support** — the build targets Java 17 (`maven.compiler.release=17`, JavaFX 17.0.9), which Microsoft does not support on Win7/8; the `jpackage` bundle ships a JRE 17. False claim for a product sold to school labs. | **P1** | README + INSTALLER_GUIDE rescoped to **Windows 10/11** with an explicit OS note. If Win7/8 labs are a hard requirement, that requires a separate Java 8 build track (owner decision, out of scope for v1.0) |
+| 9 | **UI displayed the retired registration codes** (`SchoolSettingsController.rotateCodes()` + `school_settings.fxml`) and said "then rebuild" (config is read at startup — no rebuild). | **P2** | `AuthService.getCode*()` getters added; UI now prints the **effective** codes and the correct restart (not rebuild) guidance |
+| 10 | CI-injected `config.properties` wrote 5 keys the app **never reads** (`school.name/motto/principal`, `proctor.max_strikes`, `proctor.fullscreen` — school identity and strikes live in `school_profile` / `exam_attempts.strike_count`). | **P2** | Dead keys removed from the generated config (documented in the workflow) |
+| 11 | `dependency-reduced-pom.xml` (Maven shade artifact) was committed at the repo root. | **P2** | Removed from git tracking; gitignored |
+| 12 | `tools/audit_sql.py` reported 3 **false positives** (multi-def DDL: the Postgres variant's `id UUID PRIMARY KEY` lost its column because `UUID` wasn't in the parser's type list, and last-`CREATE`-wins overwrote the H2 variant; UPDATE-without-WHERE ran to EOF and captured Java code). | **P2** | Parser fixed (UUID type, column-set union, quote-boundary for SET lists); clean run: **0 problems** |
+
+**Verification gates (this pass):** `tools/audit_fxml.py` → 42 FXML / 71 Java,
+0 problems (8 documented guarded-fallback warnings); `tools/audit_sql.py` →
+19 tables, 0 problems; `tools/audit_deep.py` run; JavaFX `MathJax`/WebView
+usage checked against the `javafx-web` pom dependency; migration chain
+checked for idempotency (every statement in the two always-run files is
+`IF NOT EXISTS` / `CREATE OR REPLACE` / `DROP IF EXISTS` guarded); the WORM
+trigger verified safe against the app (no `UPDATE/DELETE audit_logs` in
+code). Full `mvn package` remains sandbox-network-blocked — the first CI
+run is the authoritative compile check.
+
+**Still open (owner actions, not code):** rotate Supabase anon key + DB
+password + Brevo key; set the 15 repo secrets (template script); first
+CI run; decide on git-history rewrite for the old values; decide the
+Win7/8 story if any target lab has pre-Win10 machines.
+

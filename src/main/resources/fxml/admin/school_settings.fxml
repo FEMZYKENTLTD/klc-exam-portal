@@ -229,9 +229,9 @@
                                    -fx-border-radius:8; -fx-background-radius:8;
                                    -fx-padding:10 0; -fx-cursor:hand;"/>
 
-						<Label text="Codes: Super Admin = FEMZYK ENTERPRISES LTD | Teacher = FEMZYK | Student = FEMZYKENTLTD"
-							   wrapText="true"
-							   style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
+					<Label text="Codes: the app accepts the code.* values from config.properties (they override the compiled defaults). Click 'Rotate codes' above to see which set is currently in effect."
+					           wrapText="true"
+					           style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
 					</VBox>
 
 				</VBox>

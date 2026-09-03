@@ -247,8 +247,10 @@ public class SchoolSettingsController {
             return;
         }
         status.setText(
-            "Codes: SUPER_ADMIN = FEMZYK ENTERPRISES LTD | " +
-            "TEACHER = FEMZYK | STUDENT = FEMZYKENTLTD. " +
-            "Edit config.properties to change, then rebuild.");
+            "Codes in effect: SUPER_ADMIN = " + AuthService.getCodeSuperAdmin() + " | " +
+            "TEACHER = " + AuthService.getCodeAdmin() + " | " +
+            "STUDENT = " + AuthService.getCodeStudent() + ". " +
+            "Set code.* in config.properties to change - takes effect at next " +
+            "app start (no rebuild). See SECURITY_CREDENTIALS.md for rotation.");
     }
 }

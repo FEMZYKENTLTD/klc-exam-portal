@@ -4,7 +4,12 @@
 [![Build KLC CBT Suite](https://github.com/FEMZYKENTLTD/klc-exam-portal/actions/workflows/build.yml/badge.svg)](../../actions)
 
 Powered by **FEMZYK ENTERPRISES LTD** | Lead Developer: **OLUFEMI BENUA KERIPE**  
-Windows 7 / 8 / 10 / 11 – Runnable JAR + zero-JDK Windows bundle – **Zero Java/JDK/IDE required on Lab PCs**
+Windows 10 / 11 – Runnable JAR (Java 17) + zero-JDK Windows bundle – **Zero Java/JDK/IDE required on Lab PCs with the bundle**
+
+> **OS note:** the app is built on Java 17 / JavaFX 17, which Microsoft
+> supports only on **Windows 10/11** — Windows 7/8 machines cannot run the
+> JAR or the zero-JDK bundle. Labs still on Win7/8 need an OS upgrade
+> (or individual Win10/11 machines for the exam suite).
 
 ---
 
@@ -47,7 +52,7 @@ Question Bank supports MCQ A–E, True/False, Image-based items, and **LaTeX for
 
 ## GETTING STARTED — SMOOTHER THAN YOU THINK
 [ STEP 1: Install & Configure ]
-Deploy the JavaFX desktop app in your lab computers and set up the web admin portal. Works on Windows 7-11, no internet required for exams. Copy `config.properties.example` → `config.properties` and fill in your Supabase + SMTP credentials and registration codes (see `SECURITY_CREDENTIALS.md`).
+Deploy the JavaFX desktop app in your lab computers and set up the web admin portal. Works on Windows 10-11, no internet required for exams. Copy `config.properties.example` → `config.properties` and fill in your Supabase + SMTP credentials and registration codes (see `SECURITY_CREDENTIALS.md`).
 
 [ STEP 2: Onboard Staff, Students & Parents ]
 Register teachers, assign subjects to classes, and import student records via CSV. Auto-generate Admission Numbers and Result PINs for every student. Parents register with the family code and their ward's admission number.
@@ -56,7 +61,15 @@ Register teachers, assign subjects to classes, and import student records via CS
 Teachers upload questions by subject (tag topics for the analytics breakdown). Exam Officer schedules exams, activates proctoring settings, and your first fully digital exam is ready to run.
 
 ### Build from source (or let CI do it)
-Every push to GitHub runs the **Build** workflow automatically (compile + fat JAR; pushes to `main` publish a rolling `latest-build` pre-release; version tags also produce a zero-JDK Windows bundle via `jpackage`). Locally: `mvn clean package`.
+The **Build** workflow is committed (`.github/workflows/build.yml`) and runs
+on every push: it migrates the Supabase schema (idempotent, bootstraps fresh
+projects automatically), compiles the fat JAR with your config injected from
+repo secrets, and publishes a rolling `latest-build` pre-release on `main`.
+Version tags (`git tag v1.0.0 && git push origin v1.0.0`) additionally
+produce the zero-JDK Windows bundle via `jpackage`.
+To wire the 15 repo secrets from your local `config.properties` in one
+command: `powershell -ExecutionPolicy Bypass -File tools\setup_github_secrets.template.ps1`.
+Locally: `mvn clean package` (JDK 17).
 
 ---
 

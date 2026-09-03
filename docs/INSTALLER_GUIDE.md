@@ -1,4 +1,8 @@
-# Installer Guide — KLC CBT Suite v1.0 (Windows 7–11)
+# Installer Guide — KLC CBT Suite v1.0 (Windows 10/11)
+
+> **OS support:** Java 17 / JavaFX 17 runs on Windows 10/11 only.
+> Windows 7/8 machines cannot run the JAR or the zero-JDK bundle —
+> upgrade those machines before deployment.
 
 ## What CI produces
 | Artifact | File | Needs Java installed? |
