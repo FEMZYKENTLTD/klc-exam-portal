@@ -7,7 +7,8 @@
    → `supabase/klc_supabase_schema_v6_3_final.sql`
    → `supabase/klc_supabase_schema_v1_0_social.sql`
    → `supabase/klc_supabase_v1_1_security_and_features.sql`
-   (Or just let CI migrate automatically — see `docs/github-actions-*.install-me`.)
+   (Or just let CI migrate automatically — `.github/workflows/build.yml`
+   runs this chain on every push to `main`, and bootstraps fresh projects.)
 3. Settings → API → copy **URL**, **anon key**, **service key**.
 4. Settings → Database → connection pooling → copy the **pooler** host
    (port 6543) + reset the DB password.

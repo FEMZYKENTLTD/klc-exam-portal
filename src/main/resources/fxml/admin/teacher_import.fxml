@@ -9,5 +9,5 @@
     <Label fx:id="status"/>
   </HBox>
   <TextArea fx:id="logArea" promptText="Import log…" VBox.vgrow="ALWAYS"/>
-  <Label text="CSV columns: full_name, email, subjects  | subjects = semicolon list e.g. DTP-SS1;DTP-SS2;DTP-SS3 | Default password: Teacher123 | Teachers must use Registration Code FEMZYK for self-signup – Bulk Import bypasses code (Super Admin only)." wrapText="true" styleClass="small-muted"/>
+  <Label text="CSV columns: full_name, email, subjects  | subjects = semicolon list e.g. DTP-SS1;DTP-SS2;DTP-SS3 | Default password: generated per import (shown once after import; fix with import.default_password in config.properties) | Bulk Import bypasses the registration code (Super Admin only)." wrapText="true" styleClass="small-muted"/>
 </VBox>

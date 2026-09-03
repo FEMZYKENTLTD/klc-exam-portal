@@ -1,32 +1,38 @@
 # SECURITY_CREDENTIALS — Full Inventory & Rotation Runbook
 
-**Purpose:** every credential that was published in this repository, where it
-lives, how to rotate it, and how to wire secrets locally + into GitHub.
+**Purpose:** every credential that was ever published in this repository,
+where it lived, how to rotate it, and how to wire secrets locally + into
+GitHub. **This file intentionally re-publishes NO values** — the inventory
+below names each item and where it leaked, so you know exactly what to
+rotate; the actual values are redacted (they are still in git *history*,
+which is why rotation is mandatory).
+
 **Repo history note:** `config.properties` (Supabase keys, DB password, SMTP
 credentials) was **never committed** — those never leaked. The items below
-**were** published in README/SQL and MUST be treated as compromised.
+**were** published in the README/SQL files and MUST be treated as
+compromised until rotated.
 
 ---
 
 ## 1. PUBLISHED (COMPROMISED) CREDENTIALS — INVENTORY
 
-| # | Credential | Old published value | Was published in | Used by |
+| # | Credential | Old value | Was published in | Used by |
 |---|---|---|---|---|
 | 1 | Super Admin email | `superadmin@knowledgeland.edu.ng` | README, supabase schema SQL | login identity |
-| 2 | Super Admin password | `Femi2022-` | README, `klc_supabase_schema.sql`, `klc_supabase_schema_v6_3_final.sql` | Supabase `users` table (BCrypt) |
-| 3 | Super Admin BCrypt hash | `$2a$12$HAzNUHHOpylPi702s4pAiOwXxxbCOeNQ2wR22pP2Op/.OPrtAxgwG` | both SQL files | offline verification of #2 |
-| 4 | Super Admin registration code | `FEMZYK ENTERPRISES LTD` | README | `AuthService` (default) |
-| 5 | Staff registration code | `FEMZYK` | README | `AuthService` (default) |
-| 6 | Student registration code | `FEMZYKENTLTD` | README | `AuthService` (default) |
-| 7 | Result PIN format | `SURNAME+CLASS` | README | derivable for every student |
-| 8 | Supabase project ref | `aqircycpctadgvbqsadf` | `klc_supabase_schema_v6_3_final.sql` header | endpoint `aqircycpctadgvbqsadf.supabase.co` |
-| 9 | Teacher bulk-import default password | `Teacher123` | `TeacherBulkImportController` status text | new teacher accounts |
-| 10 | Super Admin fixed UUID | `aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa` | SQL seeds | predictable target id |
-| 11 | **Supabase `anon` key (JWT)** | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxaXJjeWNwY3RhZGd2YnFzYWRmIi…` (full value in git history) | hardcoded in `ExamManagerController`, `LiveMonitorController`, `ResultsViewController` WebSocket URLs | Supabase REST/Realtime access — **with RLS disabled by `v6_3_final.sql`, the whole cloud DB was effectively public** |
+| 2 | Super Admin password | **REDACTED** (rotated 2026-09) | README, `klc_supabase_schema.sql`, `klc_supabase_schema_v6_3_final.sql` | Supabase `users` table (BCrypt) |
+| 3 | Super Admin BCrypt hash | **REDACTED** (bcrypt-12) | both SQL files | offline verification of #2 |
+| 4 | Super Admin registration code | **REDACTED** (company-name-based) | README | `AuthService` (compiled default) |
+| 5 | Staff registration code | **REDACTED** (company abbreviation) | README | `AuthService` (compiled default) |
+| 6 | Student registration code | **REDACTED** (company name) | README | `AuthService` (compiled default) |
+| 7 | Result PIN format | `SURNAME+CLASS` | README | derivable for every student — this is BY DESIGN (parents use it with the admission number); keep per-term regeneration |
+| 8 | Supabase project ref | **REDACTED** (endpoint = `<ref>.supabase.co`) | `klc_supabase_schema_v6_3_final.sql` header | project URL |
+| 9 | Teacher bulk-import default password | **REDACTED** (fixed weak default) | `TeacherBulkImportController` status text | new teacher accounts — **fixed in code 2026-09**: now config-driven (`import.default_password`) or a random one-time password shown once after import |
+| 10 | Super Admin fixed UUID | **REDACTED** (predictable all-`a` seed) | SQL seeds | predictable target id |
+| 11 | **Supabase `anon` key (JWT)** | **REDACTED** (full value in git history) | hardcoded in `ExamManagerController`, `LiveMonitorController`, `ResultsViewController` WebSocket URLs | Supabase REST/Realtime access — **with RLS disabled by `v6_3_final.sql`, the whole cloud DB was effectively public** |
 
 **Never leaked (still rotate on your own schedule):** Supabase anon key,
-service_role key, DB pooler password, Brevo SMTP key — all only ever lived in
-your local `src/main/resources/config.properties`, which is gitignored.
+service_role key, DB pooler password, Brevo SMTP key — all only ever lived
+in your local `src/main/resources/config.properties`, which is gitignored.
 
 ---
 
@@ -40,30 +46,33 @@ python3 -c "import secrets; print(secrets.token_urlsafe(18))"
 # hash it with bcrypt cost 12, then in the Supabase SQL editor run:
 #   UPDATE users SET password_hash = '<bcrypt hash>'
 #     WHERE email = 'superadmin@knowledgeland.edu.ng';
-# (any bcrypt-12 generator works, e.g. https://bcrypt-generator.com —
-#  run it locally, not on random websites, if you prefer)
+# (any bcrypt-12 generator works; run it locally if you prefer)
 ```
 Also change the email if you want the login less guessable.
 
 ### 2b. Registration codes (items 4–6)
-The app reads overrides from `config.properties` — **no recompile needed**:
+The app reads overrides from `config.properties` — **no rebuild needed**:
 ```properties
 code.super_admin=YOUR-NEW-LONG-SUPER-ADMIN-CODE
 code.admin=YOUR-NEW-STAFF-CODE
 code.student=YOUR-NEW-FAMILY-CODE
 ```
 Put the same file on every lab PC (or just in the lab PC's packaged
-`config.properties`). Old code values stop working the moment the file is in
-place, because `AuthService` prefers config over compiled defaults.
+`config.properties`). Old code values stop working the moment the file is
+in place, because `AuthService` prefers config over compiled defaults.
 **Recommendation per school customer:** unique codes per school, not global.
+The admin screen (**School Settings → Rotate codes**) now prints the codes
+actually in effect, so you can verify which set is live.
 
 ### 2c. Bulk-import default password (item 9)
-Change in `TeacherBulkImportController` before next customer deploy (todo in
-report) and force `must_change_password=TRUE` on imported teachers in
-Supabase:
-```sql
-UPDATE users SET must_change_password = TRUE WHERE role <> 'STUDENT';
-```
+**Fixed in code (2026-09-02):** `TeacherBulkImportController` no longer
+ships a fixed default. It now uses `import.default_password` from
+`config.properties` when set, otherwise generates a strong random password
+and shows it **once** in the import status line. Teacher Manager's
+"Reset password" likewise issues a one-time random password instead of a
+fixed value. Action: tell any teacher already created with the old default
+to log in and change it (or reset them from Teacher Manager — the new
+one-time password is shown there).
 
 ### 2d. Supabase project ref + anon key (items 8, 11) — **DO THIS FIRST**
 The anon key was published while RLS was disabled, so treat the cloud data
@@ -73,7 +82,7 @@ as exposed.
 2. Put the new `supabase.key` into every lab PC's `config.properties`.
 3. Run `supabase/klc_supabase_v1_1_security_and_features.sql` — it re-enables
    RLS with service-role policies so a future key leak can never read the
-   school data again.
+   school data again. (CI runs it automatically on every push to `main`.)
 4. Project ref: if you want it unlisted entirely, create a new Supabase
    project and migrate (pg_dump/restore), then update `config.properties`
    on lab PCs.
@@ -82,23 +91,47 @@ as exposed.
 
 ## 3. STORE AS SECRETS
 
-### GitHub repo secrets (Settings → Secrets and variables → Actions, or CLI)
-The CI build itself needs **no** secrets (plain `mvn package`). Set these so
-future release/packaging workflows can inject a config automatically:
-```bash
-gh secret set KLC_SUPABASE_URL        --body "https://YOUR_PROJECT.supabase.co"
-gh secret set KLC_SUPABASE_ANON_KEY   --body "<anon key from local config.properties>"
-gh secret set KLC_SUPABASE_DB_POOLER  --body "jdbc:postgresql://YOUR_POOLER_HOST:6543/postgres"
-gh secret set KLC_SUPABASE_DB_USER    --body "postgres.YOUR_PROJECT_REF"
-gh secret set KLC_SUPABASE_DB_PASS    --body "<pooler password from local config.properties>"
-gh secret set KLC_SMTP_HOST           --body "smtp-relay.brevo.com"
-gh secret set KLC_SMTP_USER           --body "<brevo login>"
-gh secret set KLC_SMTP_PASS           --body "<brevo smtp key>"
-gh secret set KLC_SMTP_FROM_EMAIL     --body "<verified sender>"
-gh secret set KLC_CODE_SUPER_ADMIN    --body "<new super admin code>"
-gh secret set KLC_CODE_ADMIN          --body "<new staff code>"
-gh secret set KLC_CODE_STUDENT        --body "<new student/family code>"
+### GitHub repo secrets — the exact names `.github/workflows/build.yml` consumes
+
+| Secret | Value source (your local `config.properties`) |
+|---|---|
+| `KLC_SUPABASE_URL` | `supabase.url` |
+| `KLC_SUPABASE_ANON_KEY` | `supabase.key` |
+| `KLC_DB_HOST` | host from `supabase.db.pooler.url` |
+| `KLC_DB_PORT` | port from `supabase.db.pooler.url` (usually `6543`) |
+| `KLC_DB_USER` | `supabase.db.pooler.user` |
+| `KLC_DB_PASS` | `supabase.db.pooler.password` |
+| `KLC_CODE_SUPER_ADMIN` | `code.super_admin` |
+| `KLC_CODE_ADMIN` | `code.admin` |
+| `KLC_CODE_STUDENT` | `code.student` |
+| `KLC_SMTP_HOST` | `smtp.host` |
+| `KLC_SMTP_PORT` | `smtp.port` |
+| `KLC_SMTP_USER` | `smtp.user` |
+| `KLC_SMTP_PASS` | `smtp.pass` |
+| `KLC_SMTP_FROM_NAME` | `smtp.from.name` |
+| `KLC_SMTP_FROM_EMAIL` | `smtp.from.email` |
+
+**Optional shortcut:** instead of `KLC_DB_HOST` + `KLC_DB_PORT`, a single
+`KLC_DB_POOLER_URL` set to your full `supabase.db.pooler.url` value works —
+CI parses the host/port from it (individual secrets take priority when
+both are present).
+
+> Note on names: GitHub secrets are case-sensitive and there is no rename
+> in the UI — a mistyped name (e.g. `SMTP_FROM_EMAIL` instead of
+> `KLC_SMTP_FROM_EMAIL`) is simply invisible to the workflow. Copy the
+> names above exactly.
+
+**One-command setup (reads your local config, prints nothing):**
+```powershell
+# Windows PowerShell 5.1 compatible; uses the gh CLI if logged in,
+# otherwise asks for a GitHub token (classic 'repo' scope or fine-grained
+# 'Actions: write'). No values are ever shown on screen.
+powershell -ExecutionPolicy Bypass -File tools\setup_github_secrets.template.ps1
+# preview without pushing:
+powershell -ExecutionPolicy Bypass -File tools\setup_github_secrets.template.ps1 -DryRun
 ```
+Manual alternative: GitHub → Settings → Secrets and variables → Actions →
+"New repository secret", enter each of the 15 names above.
 
 ### Local `src/main/resources/config.properties` (the file the app actually reads)
 Copy `config.properties.example` → `config.properties` and fill every value.
@@ -126,7 +159,7 @@ smtp.from.name=KNOWLEDGE LAND COLLEGE CBT
 smtp.from.email=YOUR_SENDER_EMAIL
 ```
 
-### One-command local generator
+### One-command local config generator
 Run **on your machine** (never paste output into chat):
 ```powershell
 # Windows PowerShell
@@ -136,24 +169,28 @@ powershell -ExecutionPolicy Bypass -File tools\generate_secrets.ps1
 # macOS / Linux
 bash tools/generate_secrets.sh
 ```
-They create/refresh `config.properties`, print `gh secret set ...` lines, and
-generate the Supabase `UPDATE users ...` statement with a fresh BCrypt-12
-hash.
+They create/refresh `config.properties` with fresh random registration
+codes, print the new codes once, and print matching `gh secret set` lines.
 
 ---
 
 ## 4. PROFESSIONAL SWEEP CHECKLIST
 
 - [x] Password, hash, codes, project ref removed from repo working tree
-      (README + both SQL files scrubbed in this release)
-- [ ] **History still contains them** — rotation above is what actually
-      protects you. Optional extra: `git filter-repo --replace-text` and
-      force-push (coordinate with all clones), or accept + rotate + document.
+      (README + both SQL files scrubbed in the v1.0 release)
+- [x] `SECURITY_CREDENTIALS.md` itself no longer re-publishes the values
+      (redacted 2026-09-02)
+- [ ] **History still contains the old values** — rotation above is what
+      actually protects you. Optional extra: `git filter-repo
+      --replace-text` and force-push (coordinate with all clones), or
+      accept + rotate + document.
 - [ ] Rotate super admin password in Supabase
 - [ ] Set new registration codes in every lab PC `config.properties`
-- [ ] Force `must_change_password` for all staff
-- [ ] Add the `gh secret set` values (section 3)
+- [ ] Reset staff accounts created with the old bulk-import default
+      (Teacher Manager → Reset password now shows a one-time password)
+- [ ] Set the 15 GitHub repo secrets (section 3 — template script)
 - [ ] Enable Supabase Auth rate limits + MFA on the dashboard account
-- [ ] Run `supabase/klc_supabase_v1_1_security_and_features.sql`
-      (WORM audit, RLS, storage bucket)
+- [x] `supabase/klc_supabase_v1_1_security_and_features.sql` shipped
+      (WORM audit trigger, RLS, storage bucket, **PARENT role fix**,
+      web-portal RPCs) — CI runs it on every push to main
 - [ ] Verify: old password rejected, old codes rejected on registration

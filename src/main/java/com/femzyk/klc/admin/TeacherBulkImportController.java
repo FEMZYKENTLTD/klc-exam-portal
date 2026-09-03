@@ -2,6 +2,7 @@ package com.femzyk.klc.admin;
 
 import com.femzyk.klc.auth.AuthService;
 import com.femzyk.klc.db.DatabaseManager;
+import com.femzyk.klc.util.PasswordGen;
 import com.opencsv.CSVReader;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -23,6 +24,11 @@ public class TeacherBulkImportController {
         if(file==null) return;
         int imported=0;
         StringBuilder log = new StringBuilder();
+        // KLC v1.0 security fix: no fixed default password (the old one was
+        // published in the repo). Uses import.default_password from
+        // config.properties when set, else a random one-time password shown
+        // once in the status line after the import.
+        String defaultPw = PasswordGen.defaultImportPassword();
         try(Connection c=DatabaseManager.getConnection(); CSVReader r=new CSVReader(new FileReader(file, StandardCharsets.UTF_8))){
             String[] header = r.readNext();
             String[] row;
@@ -36,7 +42,7 @@ public class TeacherBulkImportController {
                     ps.setString(1, email.toLowerCase()); if(ps.executeQuery().next()){ log.append("Skip exists: ").append(email).append("\n"); continue; }
                 }
                 String userId = UUID.randomUUID().toString();
-                String hash = BCrypt.withDefaults().hashToString(12, "Teacher123".toCharArray());
+                String hash = BCrypt.withDefaults().hashToString(12, defaultPw.toCharArray());
                 try(PreparedStatement ps=c.prepareStatement("INSERT INTO users(id, full_name, email, password_hash, role) VALUES(?,?,?,?,?)")){
                     ps.setObject(1, UUID.fromString(userId)); ps.setString(2, fullName); ps.setString(3, email.toLowerCase());
                     ps.setString(4, hash); ps.setString(5, "TEACHER"); ps.executeUpdate();
@@ -59,7 +65,9 @@ public class TeacherBulkImportController {
                 }
                 imported++; log.append("Imported: ").append(fullName).append(" - ").append(email).append("\n");
             }
-            status.setText("Imported "+imported+" teachers. Default password: Teacher123 - Registration code FEMZYK still required for self-registration.");
+            status.setText("Imported "+imported+" teachers. One-time default password: "+defaultPw
+                +" - tell each teacher to change it at first login."
+                +" (Set import.default_password in config.properties to fix this value.)");
             logArea.setText(log.toString());
         }catch(Exception e){ status.setText(e.getMessage()); e.printStackTrace(); }
     }

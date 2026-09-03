@@ -16,6 +16,38 @@
 ALTER TABLE questions      ADD COLUMN IF NOT EXISTS topic VARCHAR(150);
 ALTER TABLE school_profile ADD COLUMN IF NOT EXISTS campus_name VARCHAR(120);
 
+-- v1.0 parent portal: the original schema's role CHECK constraint does NOT
+-- include 'PARENT', so parent registration failed on cloud projects
+-- (offline/H2 has no such constraint - which is why it worked locally).
+-- Drop the old role check and re-add it with PARENT. Idempotent.
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN
+    SELECT con.conname
+    FROM pg_constraint con
+    JOIN pg_class rel ON rel.oid = con.conrelid
+    WHERE rel.relname = 'users'
+      AND con.contype = 'c'
+      AND con.consrc::text ILIKE '%role in (%)%'
+      AND con.consrc::text NOT ILIKE '%parent%'
+  LOOP
+    EXECUTE format('ALTER TABLE users DROP CONSTRAINT %I', r.conname);
+  END LOOP;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint con
+    JOIN pg_class rel ON rel.oid = con.conrelid
+    WHERE rel.relname = 'users'
+      AND con.contype = 'c'
+      AND con.consrc::text ILIKE '%role in (%)%'
+      AND con.consrc::text ILIKE '%parent%'
+  ) THEN
+    ALTER TABLE users ADD CONSTRAINT users_role_v2
+      CHECK (role IN ('SUPER_ADMIN','PRINCIPAL_ADMIN','EXAM_OFFICER',
+                      'TEACHER','STUDENT','PARENT'));
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS parent_profiles (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id           UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,

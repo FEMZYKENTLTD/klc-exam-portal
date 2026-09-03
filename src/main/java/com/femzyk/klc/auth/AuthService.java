@@ -32,6 +32,15 @@ public class AuthService {
     private static String codeAdmin;
     private static String codeStudent;
 
+    /**
+     * Effective registration codes (config.properties overrides win over
+     * the compiled defaults). Exposed so the admin UI can display the codes
+     * the app ACTUALLY accepts - never hardcoded screen text.
+     */
+    public static String getCodeSuperAdmin() { return codeSuperAdmin; }
+    public static String getCodeAdmin()      { return codeAdmin; }
+    public static String getCodeStudent()    { return codeStudent; }
+
     static {
         try {
             Properties p = new Properties();
