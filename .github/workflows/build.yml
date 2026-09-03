@@ -1,0 +1,276 @@
+name: Build KLC CBT Suite
+
+# HOW THIS PIPELINE WORKS (no activation step needed - it is committed):
+#   push to main  ->  migrate (Supabase schema, idempotent) + build (fat JAR
+#                     with config.properties injected from repo secrets) +
+#                     rolling 'latest-build' pre-release
+#   tag v*        ->  also builds the zero-JDK Windows bundle (jpackage)
+#   pull request  ->  compile check only
+#
+# REQUIRED REPO SECRETS (Settings > Secrets and variables > Actions):
+#   KLC_SUPABASE_URL, KLC_SUPABASE_ANON_KEY,
+#   KLC_DB_HOST, KLC_DB_PORT, KLC_DB_USER, KLC_DB_PASS,
+#   KLC_CODE_SUPER_ADMIN, KLC_CODE_ADMIN, KLC_CODE_STUDENT,
+#   KLC_SMTP_HOST, KLC_SMTP_PORT, KLC_SMTP_USER, KLC_SMTP_PASS,
+#   KLC_SMTP_FROM_NAME, KLC_SMTP_FROM_EMAIL
+# Optional alternative for KLC_DB_HOST/KLC_DB_PORT:
+#   KLC_DB_POOLER_URL  (the full jdbc:postgresql://host:port/postgres value -
+#   the workflow parses host/port from it when the individual secrets are
+#   absent)
+# One-command setup (reads your local config.properties, no values are
+# printed):  tools/setup_github_secrets.template.ps1
+#
+# WHAT THIS PIPELINE DOES AUTOMATICALLY:
+#   1. migrate - applies the idempotent Supabase migrations
+#                (klc_supabase_schema_v1_0_social.sql +
+#                 klc_supabase_v1_1_security_and_features.sql) on every push
+#                to main; bootstraps a fresh project with the full schema on
+#                first run.
+#   2. build   - injects config.properties FROM THE SECRETS into the JAR,
+#                so a freshly-built app connects to Supabase out of the box.
+#   3. release - on v* tags: also builds the zero-JDK Windows bundle
+#                (jpackage) and attaches it to a GitHub Release.
+#   4. The desktop app ALSO self-updates the schema on every startup
+#      (DatabaseInitializer), so even a JAR built without secrets migrates
+#      the cloud on first connect.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    name: Apply schema updates to Supabase
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve DB connection
+        id: db
+        # KLC_DB_HOST/KLC_DB_PORT are the canonical names; KLC_DB_POOLER_URL
+        # (full jdbc:postgresql://host:port/db) is accepted as a fallback so
+        # a single pooler-URL secret is enough.
+        env:
+          HOST: ${{ secrets.KLC_DB_HOST }}
+          PORT: ${{ secrets.KLC_DB_PORT }}
+          POOLER_URL: ${{ secrets.KLC_DB_POOLER_URL }}
+        run: |
+          host="${HOST}"; port="${PORT}"
+          if { [ -z "$host" ] || [ -z "$port" ]; } && [ -n "$POOLER_URL" ]; then
+            case "$POOLER_URL" in
+              jdbc:postgresql://*)
+                rest="${POOLER_URL#jdbc:postgresql://}"
+                [ -n "$host" ] || host="${rest%%:*}"
+                if [ -z "$port" ]; then
+                  port="${rest#*:}"
+                  port="${port%%/*}"
+                fi
+                ;;
+            esac
+          fi
+          if [ -z "$host" ] || [ -z "$port" ]; then
+            echo "::error::Cannot resolve the Supabase DB target. Set repo secrets KLC_DB_HOST + KLC_DB_PORT, or KLC_DB_POOLER_URL (jdbc:postgresql://host:port/postgres)."
+            exit 1
+          fi
+          echo "host=$host" >> "$GITHUB_OUTPUT"
+          echo "port=$port" >> "$GITHUB_OUTPUT"
+          echo "DB target resolved (values not printed)."
+
+      - name: Install psql client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Check connectivity
+        env:
+          PGHOST: ${{ steps.db.outputs.host }}
+          PGPORT: ${{ steps.db.outputs.port }}
+          PGUSER: ${{ secrets.KLC_DB_USER }}
+          PGPASSWORD: ${{ secrets.KLC_DB_PASS }}
+          PGDATABASE: postgres
+        run: |
+          psql --set ON_ERROR_STOP=1 -tA -c "SELECT version();" | head -1
+
+      - name: Bootstrap fresh project (only when users table is absent)
+        env:
+          PGHOST: ${{ steps.db.outputs.host }}
+          PGPORT: ${{ steps.db.outputs.port }}
+          PGUSER: ${{ secrets.KLC_DB_USER }}
+          PGPASSWORD: ${{ secrets.KLC_DB_PASS }}
+          PGDATABASE: postgres
+        run: |
+          EXISTS=$(psql --set ON_ERROR_STOP=1 -tA \
+            -c "SELECT to_regclass('public.users') IS NOT NULL;")
+          echo "users table present: $EXISTS"
+          if [ "$EXISTS" != "t" ]; then
+            echo "Fresh Supabase project - bootstrapping full schema..."
+            psql --set ON_ERROR_STOP=1 -f supabase/klc_supabase_schema.sql
+            psql --set ON_ERROR_STOP=1 -f supabase/klc_supabase_schema_v6_2.sql
+            psql --set ON_ERROR_STOP=1 -f supabase/klc_supabase_schema_v6_3_final.sql
+          else
+            echo "Existing project - skipping bootstrap."
+          fi
+
+      - name: Apply idempotent update migrations
+        env:
+          PGHOST: ${{ steps.db.outputs.host }}
+          PGPORT: ${{ steps.db.outputs.port }}
+          PGUSER: ${{ secrets.KLC_DB_USER }}
+          PGPASSWORD: ${{ secrets.KLC_DB_PASS }}
+          PGDATABASE: postgres
+        run: |
+          psql --set ON_ERROR_STOP=1 -f supabase/klc_supabase_schema_v1_0_social.sql
+          psql --set ON_ERROR_STOP=1 -f supabase/klc_supabase_v1_1_security_and_features.sql
+          echo "Supabase schema is up to date."
+
+  build:
+    name: Compile & package (Java 17)
+    runs-on: ubuntu-latest
+    needs: migrate
+    # A failed migration (e.g. expired DB password) must NOT stop the JAR
+    # from being published - the JAR does not depend on the cloud. The
+    # migrate job failure still shows as red on the workflow run.
+    if: always() && !cancelled()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+
+      # Fresh builds ship FULLY CONFIGURED: config.properties is generated
+      # from repo secrets at build time (never committed to git).
+      # NOTE: only keys the app actually reads are written (see
+      # ConfigService / AuthService / ExamController). School name & proctor
+      # settings live in the database (school_profile / exam_attempts), not
+      # in config.properties.
+      - name: Inject config.properties from repo secrets
+        env:
+          KLC_SUPABASE_URL: ${{ secrets.KLC_SUPABASE_URL }}
+          KLC_SUPABASE_ANON_KEY: ${{ secrets.KLC_SUPABASE_ANON_KEY }}
+          KLC_DB_HOST: ${{ secrets.KLC_DB_HOST }}
+          KLC_DB_PORT: ${{ secrets.KLC_DB_PORT }}
+          KLC_DB_POOLER_URL: ${{ secrets.KLC_DB_POOLER_URL }}
+          KLC_DB_USER: ${{ secrets.KLC_DB_USER }}
+          KLC_DB_PASS: ${{ secrets.KLC_DB_PASS }}
+          KLC_CODE_SUPER_ADMIN: ${{ secrets.KLC_CODE_SUPER_ADMIN }}
+          KLC_CODE_ADMIN: ${{ secrets.KLC_CODE_ADMIN }}
+          KLC_CODE_STUDENT: ${{ secrets.KLC_CODE_STUDENT }}
+          KLC_SMTP_HOST: ${{ secrets.KLC_SMTP_HOST }}
+          KLC_SMTP_PORT: ${{ secrets.KLC_SMTP_PORT }}
+          KLC_SMTP_USER: ${{ secrets.KLC_SMTP_USER }}
+          KLC_SMTP_PASS: ${{ secrets.KLC_SMTP_PASS }}
+          KLC_SMTP_FROM_NAME: ${{ secrets.KLC_SMTP_FROM_NAME }}
+          KLC_SMTP_FROM_EMAIL: ${{ secrets.KLC_SMTP_FROM_EMAIL }}
+        run: |
+          if [ -z "$KLC_SUPABASE_URL" ]; then
+            echo "::notice::Secrets not set - building WITHOUT embedded config (lab PCs use local config.properties)."
+            exit 0
+          fi
+          # Pooler JDBC URL: use KLC_DB_POOLER_URL verbatim when provided,
+          # otherwise assemble it from KLC_DB_HOST + KLC_DB_PORT.
+          if [ -n "$KLC_DB_POOLER_URL" ]; then
+            POOLER_URL="$KLC_DB_POOLER_URL"
+          else
+            POOLER_URL="jdbc:postgresql://$KLC_DB_HOST:$KLC_DB_PORT/postgres"
+          fi
+          cat > src/main/resources/config.properties <<EOF
+          # Generated by CI from repo secrets - do not edit here.
+          supabase.url=$KLC_SUPABASE_URL
+          supabase.key=$KLC_SUPABASE_ANON_KEY
+          supabase.storage.bucket=klc-attachments
+          supabase.db.pooler.url=$POOLER_URL
+          supabase.db.pooler.user=$KLC_DB_USER
+          supabase.db.pooler.password=$KLC_DB_PASS
+          h2.url=jdbc:h2:file:./klc_cache/klc_local;AUTO_SERVER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;MODE=PostgreSQL
+          h2.user=sa
+          h2.password=
+          code.super_admin=$KLC_CODE_SUPER_ADMIN
+          code.admin=$KLC_CODE_ADMIN
+          code.student=$KLC_CODE_STUDENT
+          social.allow_student_staff_dm=false
+          social.allow_student_attachments=false
+          smtp.host=$KLC_SMTP_HOST
+          smtp.port=$KLC_SMTP_PORT
+          smtp.user=$KLC_SMTP_USER
+          smtp.pass=$KLC_SMTP_PASS
+          smtp.from.name=$KLC_SMTP_FROM_NAME
+          smtp.from.email=$KLC_SMTP_FROM_EMAIL
+          EOF
+          echo "config.properties generated from secrets (values hidden)."
+
+      - name: Build fat JAR
+        run: mvn -B -ntp clean package
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: knowledge-land-cbt-${{ github.sha }}
+          path: target/knowledge-land-cbt-*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish rolling pre-release on main
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-build
+          name: "Latest build (main)"
+          prerelease: true
+          files: target/knowledge-land-cbt-*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    name: Versioned release (JAR + zero-JDK Windows bundle)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+
+      - name: Build fat JAR
+        shell: pwsh
+        run: mvn -B -ntp clean package
+
+      - name: Bundle zero-JDK Windows app image (jpackage)
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem "target/knowledge-land-cbt-*.jar" | Select-Object -First 1
+          jpackage --type app-image --name KLC-CBT-Suite --input target --dest dist `
+            --main-jar $jar.Name --java-options "-Xmx1g"
+          Compress-Archive -Path dist/KLC-CBT-Suite -DestinationPath KLC-CBT-Suite-win.zip
+
+      - name: Attach to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/knowledge-land-cbt-*.jar
+            KLC-CBT-Suite-win.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
