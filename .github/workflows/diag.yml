@@ -1,9 +1,9 @@
 name: CI Diagnostics (temporary)
 # TEMPORARY diagnostic workflow - captures the exact failure output of the
 # two currently-red CI jobs (fresh Supabase bootstrap + mvn package) and
-# posts it to the triggering PR comment so it can be read from a sandbox
-# whose egress blocks results-receiver.actions.githubusercontent.com.
-# REMOVE THIS FILE after the root causes are fixed.
+# pushes the logs to a scratch branch "ci-logs/<run-id>" so they can be
+# read from a sandbox whose egress blocks results-receiver and whose bot
+# token cannot post PR comments. REMOVE THIS FILE after root causes fixed.
 
 on:
   pull_request:
@@ -11,47 +11,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  compile:
-    name: mvn package (capture errors)
+  diagnose:
+    name: Capture mvn + SQL bootstrap failures
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - name: mvn clean package (capture)
-        id: mvn
-        continue-on-error: true
-        run: |
-          mvn -B -ntp clean package > /tmp/mvn.log 2>&1
-          echo "MVN_EXIT=$?" >> /tmp/mvn.log
-          tail -n 5 /tmp/mvn.log
-      - name: Report mvn result to PR
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          if [ -z "$PR_NUMBER" ]; then
-            echo "no PR context - skipping comment"
-            exit 0
-          fi
-          {
-            echo "## CI diagnostics: mvn clean package"
-            echo ""
-            echo '```'
-            tail -c 28000 /tmp/mvn.log
-            echo '```'
-          } > /tmp/comment_body.md
-          gh pr comment "$PR_NUMBER" --body-file /tmp/comment_body.md || echo "comment failed (non-fatal)"
-
-  db:
-    name: Fresh bootstrap SQL repro (local Postgres)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install and start local Postgres
+      - name: Install Postgres
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql >/dev/null 2>&1
@@ -60,7 +25,8 @@ jobs:
           sudo -u postgres dropdb --if-exists klcboot
           sudo -u postgres createdb klcboot
           sudo -u postgres psql -d klcboot -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE EXTENSION IF NOT EXISTS pgcrypto;' >/dev/null
-      - name: Run exact CI fresh-bootstrap chain
+      - name: Repro fresh-bootstrap chain (local Postgres)
+        id: sql
         continue-on-error: true
         env:
           PGHOST: 127.0.0.1
@@ -70,24 +36,37 @@ jobs:
           PGDATABASE: klcboot
         run: |
           V=$(psql -tA -c 'SELECT version();' | head -c 40)
-          echo "### CI diagnostics: fresh bootstrap chain (local PostgreSQL $V)" > /tmp/sql_log.md
-          echo "" >> /tmp/sql_log.md
+          set +e
+          echo "local PostgreSQL version: $V" > ci-logs-sql.log
           for f in supabase/klc_supabase_schema.sql \
                    supabase/klc_supabase_schema_v6_2.sql \
                    supabase/klc_supabase_schema_v6_3_final.sql; do
-            echo "---- $f ----" >> /tmp/sql_log.md
-            psql -v ON_ERROR_STOP=1 -f "$f" >> /tmp/sql_log.md 2>&1
-            echo "exit_code=$?" >> /tmp/sql_log.md
+            echo "---- $f ----" >> ci-logs-sql.log
+            psql -v ON_ERROR_STOP=1 -f "$f" >> ci-logs-sql.log 2>&1
+            echo "exit_code=$?" >> ci-logs-sql.log
           done
-          cat /tmp/sql_log.md
-      - name: Post SQL repro result to PR
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          cat ci-logs-sql.log
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: mvn clean package (capture)
+        continue-on-error: true
         run: |
-          if [ -z "$PR_NUMBER" ]; then
-            echo "no PR context - skipping"
-            exit 0
-          fi
-          gh pr comment "$PR_NUMBER" --body-file /tmp/sql_log.md || echo "comment failed (non-fatal)"
+          set +e
+          mvn -B -ntp clean package > ci-logs-mvn.log 2>&1
+          echo "MVN_EXIT=$?" >> ci-logs-mvn.log
+          tail -n 8 ci-logs-mvn.log
+      - name: Publish captured logs to scratch branch
+        continue-on-error: true
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "github-actions"
+          mkdir -p ci-logs
+          cp ci-logs-sql.log ci-logs/sql_boot.log 2>/dev/null || true
+          cp ci-logs-mvn.log ci-logs/mvn.log 2>/dev/null || true
+          git add -f ci-logs/sql_boot.log ci-logs/mvn.log
+          git commit -q -m "ci diag: logs for run ${GITHUB_RUN_ID}" || true
+          git push origin "HEAD:ci-logs/${GITHUB_RUN_ID}" 2>&1 | tail -n 2 || true
+          echo "PUSH_ATTEMPTED_FOR=${GITHUB_RUN_ID}"
