@@ -93,7 +93,8 @@ jobs:
         run: |
           echo "::error::MVN_EXIT=$(grep MVN_EXIT mvn.log)"
           grep -E "^\[ERROR\]" mvn.log | head -n 8 | sed 's/^/::error::/' || true
-          tail -n 15 mvn.log | sed 's/^/::warning::/' || true
+          grep -E "Tests run:|BUILD SUCCESS|BUILD FAILURE|No tests" mvn.log | sed 's/^/::warning::/' || true
+          tail -n 12 mvn.log | sed 's/^/::warning::/' || true
 
   remotedb:
     name: Probe + repro remote Supabase bootstrap
