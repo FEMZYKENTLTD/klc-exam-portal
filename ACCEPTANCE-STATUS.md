@@ -32,7 +32,7 @@
 | OFFLINE CACHE | **PASS** | In-memory H2 offline bootstrap + seeded data verified. |
 | SYNCHRONIZATION | PARTIAL | Replay/queue logic present (`SyncService`); not yet covered by automated tests. |
 | PROCTORING | NOT VERIFIED | Focus-loss/3-strike logic is JavaFX-coupled and needs a live desktop run. |
-| SECURITY (auth/audit) | PARTIAL | Lockout & code gates tested; WORM audit + RLS exist in SQL; **open issue:** `AuthService` still ships compiled fallback registration codes — see `docs/VERIFICATION-REPORT-2026-09-05.md`. |
+| SECURITY (auth/audit) | PARTIAL | Lockout & code gates tested; WORM audit + RLS exist in SQL; compromised registration-code defaults **removed** — registration fails closed until codes are configured (`AuthService`). Remaining untested: proctoring paths (desktop-only). |
 | BACKUP / RESTORE | NOT VERIFIED | `BackupService` present; AES-GCM paths need a runtime test. |
 | PACKAGING (fat JAR) | **PASS** | Shaded JAR produced by CI. Zero-JDK `jpackage` Windows bundle is a tagged-release (`v*`) job — requires a Windows runner; not run this session. |
 | DOCUMENTATION | UPDATED | This file + `docs/VERIFICATION-REPORT-2026-09-05.md`; README/guides describe the implemented system. |
@@ -42,9 +42,12 @@
 - **CI (compile + tests):** GREEN on the PR head for the first time since the
   repository received its workflow. Two P0 compile blockers and one P0 SQL
   blocker fixed and re-verified.
-- **Automated tests:** 27 test methods added (see `src/test/java`), all
-  green in CI.
-- **External blocker:** the remote Supabase database used by the `migrate`
-  CI job is not reachable from GitHub runners (`psql` exit 2 on connect).
-  SQL content itself is fully validated locally. See the BLOCKED section in
-  `docs/VERIFICATION-REPORT-2026-09-05.md`.
+- **Automated tests:** 30 test methods (see `src/test/java`), all green in
+  CI (`Tests run: 30, Failures: 0, Errors: 0`).
+- **Schema gate:** a permanent "Schema migration check (local PostgreSQL)"
+  CI job now executes the full 5-file Supabase migration chain on every
+  PR/push.
+- **External blocker:** the repo's Supabase DB secrets hold a host name that
+  does not resolve in DNS (`could not translate host name`), which is why
+  the `migrate` job is red. Schema content is fully validated by the new CI
+  gate. See the BLOCKED section in `docs/VERIFICATION-REPORT-2026-09-05.md`.

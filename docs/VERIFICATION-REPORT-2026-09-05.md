@@ -100,57 +100,53 @@ the bot token cannot write PR comments/branches.
 | P0 (blocked every CI build) | Missing `KeyEvent` import, `ExamController` | import added |
 | P0 (blocked every CI build) | Missing `Map` import, `AnalyticsController` | import added |
 | P0 (blocked every PG≥12 migrate) | `pg_constraint.consrc` in v1.1 role-check migration | rewritten via `pg_attribute`; executed & verified |
+| P1 (security) | Compromised historical codes survived as compiled fallback defaults in `AuthService` | registration now **fails closed** when codes are not configured; no codes shipped in source |
 | P2 (testability) | Exam scoring arithmetic only inside a 1,160-line JavaFX controller | extracted to `util.ExamScoring` (identical behaviour) |
 
 ## 5. Residual findings (owner visibility)
 
-1. **AuthService compiled fallback registration codes.** The historical
-   codes are gone from README/SQL but still exist as compiled *defaults*
-   when `config.properties` is absent
-   (`code.super_admin=FEMZYK ENTERPRISES LTD` etc.). Any deployment without
-   a config file runs on the publicly-known codes. RECOMMENDED FIX
-   (follow-up): ship empty defaults and refuse registration with a console
-   instruction to configure codes; or keep as-is when the sponsor accepts
-   that defaults are placeholders. This was left unchanged to avoid a
-   behaviour break before the sponsor confirms.
-2. **H2 offline cache has no FK constraints** (plain id columns). Intended
+1. **H2 offline cache has no FK constraints** (plain id columns). Intended
    for a light offline cache, but rows created offline are validated only
    when replayed to the cloud. Documented in acceptance file; not changed.
-3. **Position calculation / CA aggregation / exam eligibility** remain
+2. **Position calculation / CA aggregation / exam eligibility** remain
    inside JavaFX controllers — targeted for future extraction so they get
    the same unit coverage as scoring.
+3. **CI secret placeholders.** The repo secrets for the Supabase DB host
+   currently hold a value that does not resolve in DNS
+   (`could not translate host name "***" ... Name or service not known`) —
+   this is the entire cause of the red `migrate` job (see §6).
 
 ## 6. BLOCKED ITEM (external service)
 
 ```
 BLOCKER — CI migrate job against the remote Supabase project
-WHAT IS REQUIRED:   The Supabase project used by repo secrets KLC_DB_* must
-                    be reachable from GitHub Actions runners and the secret
-                    values must still be valid.
-WHY:                The 'migrate' job only runs on push to main. The
-                    sandbox cannot reach the Supabase host (egress allow-
-                    list), and the runner-side probe (`psql` connectivity)
-                    fails with exit code 2 - i.e. the connection is refused/
-                    times out from GitHub's network today. The 2026-09-03
-                    main-push failure was the same symptom (bootstrap step,
-                    psql exit 2, after a successful connectivity check).
-WHAT WAS TESTED:    psql probe from a GitHub runner using the repo secrets;
-                    full SQL migration chain executed on local PostgreSQL
-                    15/16 (PASS).
-WHAT WAS FIXED:     All SQL content issues found by that local execution
-                    (the pg_constraint.consrc P0). The compile/test pipeline
-                    is green.
-WHAT REMAINS:       Someone with Supabase access must verify the project is
-                    awake, the DB password/host/port secrets are current,
-                    and re-run the workflow (a push/merge to main triggers
-                    migrate automatically).
-EXACT HUMAN ACTION: 1) Log in to supabase.com → confirm the project the
-                    secrets point to exists and is not paused.
-                    2) Reset/confirm the DB password; update repo secrets
-                    KLC_DB_HOST / KLC_DB_PORT / KLC_DB_USER / KLC_DB_PASS
-                    (or KLC_DB_POOLER_URL) if they changed.
-                    3) Merge this PR (or push to main) - the migrate job
-                    then applies the fixed, idempotent schema chain.
+WHAT IS REQUIRED:   Valid repo secrets for the Supabase DB host/port/user/
+                    password (KLC_DB_HOST, KLC_DB_PORT, KLC_DB_USER,
+                    KLC_DB_PASS, or KLC_DB_POOLER_URL).
+WHY:                The migrate job only runs on push to main. A runner-
+                    side probe using the current secrets fails with:
+                    psql: error: could not translate host name "***" to
+                    address: Name or service not known  (exit code 2).
+                    The stored host name does not resolve - the secrets are
+                    placeholders/stale. This is the single cause of the red
+                    migrate job; it is NOT a schema problem.
+WHAT WAS TESTED:    psql probes from GitHub runners using the repo secrets
+                    (exact DNS error captured above); full 5-file migration
+                    chain executed on local PostgreSQL 15/16 (PASS); new
+                    permanent "Schema migration check" CI job runs the same
+                    chain on every PR/push (PASS on this PR).
+WHAT WAS FIXED:     All SQL content issues found by local execution
+                    (the pg_constraint.consrc P0). Compile + test pipeline
+                    green (30/30 tests). Registration codes fail closed.
+WHAT REMAINS:       Someone with Supabase access updates the DB secrets.
+EXACT HUMAN ACTION: 1) Open the repo Settings → Secrets and variables →
+                    Actions and confirm KLC_DB_HOST / KLC_DB_PORT (or
+                    KLC_DB_POOLER_URL), KLC_DB_USER and KLC_DB_PASS hold the
+                    real pooler/direct host of the project (not a
+                    placeholder like db.YOUR_PROJECT.supabase.co).
+                    2) Save the corrected secrets, then merge this PR (or
+                    push to main) - the migrate job applies the fixed,
+                    idempotent schema chain and the run should go green.
 ```
 
 ## 7. Release gate (measured, not inflated)
@@ -158,9 +154,9 @@ EXACT HUMAN ACTION: 1) Log in to supabase.com → confirm the project the
 | Gate | State |
 |---|---|
 | Source compiles | ✅ (CI green) |
-| Automated tests | ✅ 27 test methods green in CI |
-| SQL migration chain executable | ✅ on PostgreSQL 15/16 (local repro) |
-| Cloud migrate job | ⛔ externally blocked (see §6) |
+| Automated tests | ✅ 30 test methods green in CI (`Tests run: 30, Failures: 0`) |
+| SQL migration chain executable | ✅ on PostgreSQL 15/16 + permanent CI gate |
+| Cloud migrate job | ⛔ externally blocked (stale DB secrets, see §6) |
 | FXML/wiring audit | ✅ 0 problems |
 | Docs | updated (ACCEPTANCE-STATUS.md, this report) |
 | Known critical defects | 0 remaining in-repo |
