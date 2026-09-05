@@ -33,9 +33,19 @@ public class AuthService {
     private static String codeStudent;
 
     /**
-     * Effective registration codes (config.properties overrides win over
-     * the compiled defaults). Exposed so the admin UI can display the codes
-     * the app ACTUALLY accepts - never hardcoded screen text.
+     * Effective registration codes (read from config.properties ONLY).
+     * Exposed so the admin UI can display the codes the app ACTUALLY
+     * accepts - never hardcoded screen text.
+     *
+     * KLC v1.0 SECURITY FIX (2026-09-05): the historical codes
+     * ("FEMZYK ENTERPRISES LTD" / "FEMZYK" / "FEMZYKENTLTD") were published
+     * in this repository and are treated as COMPROMISED. They previously
+     * survived here as compiled fallback defaults, so any deployment
+     * running without a config.properties accepted the known-compromised
+     * codes (anyone could self-register a SUPER_ADMIN). Registration now
+     * FAILS CLOSED: when no code is configured the corresponding role
+     * cannot be registered until the school sets fresh codes in
+     * config.properties (see SECURITY_CREDENTIALS.md).
      */
     public static String getCodeSuperAdmin() { return codeSuperAdmin; }
     public static String getCodeAdmin()      { return codeAdmin; }
@@ -48,15 +58,47 @@ public class AuthService {
                     .getResourceAsStream("/config.properties")) {
                 if (in != null) p.load(in);
             }
-            codeSuperAdmin = p.getProperty("code.super_admin",
-                "FEMZYK ENTERPRISES LTD");
-            codeAdmin      = p.getProperty("code.admin",   "FEMZYK");
-            codeStudent    = p.getProperty("code.student",  "FEMZYKENTLTD");
+            codeSuperAdmin = trimToNull(p.getProperty("code.super_admin"));
+            codeAdmin      = trimToNull(p.getProperty("code.admin"));
+            codeStudent    = trimToNull(p.getProperty("code.student"));
         } catch (Exception e) {
-            codeSuperAdmin = "FEMZYK ENTERPRISES LTD";
-            codeAdmin      = "FEMZYK";
-            codeStudent    = "FEMZYKENTLTD";
+            codeSuperAdmin = null;
+            codeAdmin      = null;
+            codeStudent    = null;
         }
+        if (codeSuperAdmin == null && codeAdmin == null
+                && codeStudent == null) {
+            System.err.println("[Auth] WARNING: no registration codes are "
+                + "configured (config.properties missing/incomplete). "
+                + "Self-registration is DISABLED until the school sets "
+                + "code.super_admin / code.admin / code.student. See "
+                + "SECURITY_CREDENTIALS.md and config.properties.example.");
+        }
+    }
+
+    private static String trimToNull(String v) {
+        return (v == null || v.isBlank()) ? null : v.trim();
+    }
+
+    private static boolean codesConfigured(String role) {
+        if ("SUPER_ADMIN".equals(role))
+            return codeSuperAdmin != null;
+        if ("TEACHER".equals(role) || "EXAM_OFFICER".equals(role)
+                || "PRINCIPAL_ADMIN".equals(role))
+            return codeAdmin != null;
+        if ("STUDENT".equals(role) || "PARENT".equals(role))
+            return codeStudent != null;
+        return false;
+    }
+
+    private static String codesDisabledMessage(String role) {
+        return ("SUPER_ADMIN".equals(role) || "TEACHER".equals(role)
+                || "EXAM_OFFICER".equals(role)
+                || "PRINCIPAL_ADMIN".equals(role))
+            ? "Staff / Super Admin registration is disabled: set "
+              + "code.super_admin and code.admin in config.properties."
+            : "Student/Parent registration is disabled: set "
+              + "code.student in config.properties.";
     }
 
     // =========================================================================
@@ -141,7 +183,10 @@ public class AuthService {
             String surname, String[] subjectIds,
             String securityQuestion, String securityAnswer) {
 
-        // Code gate
+        // Code gate - FAIL CLOSED when the school has not configured codes
+        if (!codesConfigured(role))
+            return "Registration is disabled: " + codesDisabledMessage(role);
+
         if ("SUPER_ADMIN".equals(role)) {
             if (!codeSuperAdmin.equals(regCode))
                 return "Invalid Super Admin code.";
