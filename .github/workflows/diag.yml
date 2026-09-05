@@ -39,6 +39,19 @@ jobs:
         run: |
           set +e
           : > sql_boot.log
+          # v1_0_social / v1_1 target Supabase-only objects (storage.*,
+          # service_role policies); scaffold minimal stand-ins so the whole
+          # migrate chain can be executed and validated on plain PostgreSQL.
+          psql -v ON_ERROR_STOP=1 <<'EOF' >/dev/null 2>&1
+          CREATE ROLE service_role NOLOGIN;
+          CREATE SCHEMA IF NOT EXISTS storage;
+          CREATE TABLE IF NOT EXISTS storage.buckets (
+            id text PRIMARY KEY, name text, public boolean);
+          CREATE TABLE IF NOT EXISTS storage.objects (
+            id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+            bucket_id text, name text, owner uuid);
+          EOF
+          echo "scaffold_exit=$?" >> sql_boot.log
           for f in supabase/klc_supabase_schema.sql \
                    supabase/klc_supabase_schema_v6_2.sql \
                    supabase/klc_supabase_schema_v6_3_final.sql \
@@ -48,13 +61,19 @@ jobs:
             psql -v ON_ERROR_STOP=1 -f "$f" >> sql_boot.log 2>&1
             echo "psql_exit=$?" >> sql_boot.log
           done
-          tail -n 30 sql_boot.log
+          # v1.1 role-CONSTRAINT replacement must accept PARENT and reject junk
+          psql -v ON_ERROR_STOP=1 -c "INSERT INTO users(id, full_name, email, password_hash, role) VALUES (uuid_generate_v4(), 'P Tester', 'parent@check.klc', 'x', 'PARENT');" >> sql_boot.log 2>&1
+          echo "parent_role_insert_exit=$?" >> sql_boot.log
+          psql -v ON_ERROR_STOP=1 -c "INSERT INTO users(id, full_name, email, password_hash, role) VALUES (uuid_generate_v4(), 'X Tester', 'junk@check.klc', 'x', 'HACKER');" >> sql_boot.log 2>&1
+          echo "junk_role_rejected_exit=$?" >> sql_boot.log
+          tail -n 40 sql_boot.log
 
       - name: Emit SQL annotations
         if: always()
         run: |
-          grep -iE "ERROR:|FATAL:|syntax error|does not exist|already exists" sql_boot.log | head -n 6 | sed 's/^/::error::/' || true
-          tail -n 12 sql_boot.log | sed 's/^/::warning::/' || true
+          grep -E "ERROR:|FATAL:" sql_boot.log | head -n 8 | sed 's/^/::error::/' || true
+          grep -E "psql_exit|scaffold_exit|role_insert|role_rejected" sql_boot.log | sed 's/^/::warning::/' || true
+          tail -n 8 sql_boot.log | sed 's/^/::warning::/' || true
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -114,21 +133,30 @@ jobs:
           PGUSER: ${{ secrets.KLC_DB_USER }}
           PGPASSWORD: ${{ secrets.KLC_DB_PASS }}
           PGDATABASE: postgres
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '15'
         run: |
           set +e
-          {
-            echo "users_present=$(psql -tA -c \"SELECT to_regclass('public.users') IS NOT NULL;\" 2>&1)"
-            echo "table_count=$(psql -tA -c \"SELECT count(*) FROM information_schema.tables WHERE table_schema='public';\" 2>&1)"
-            echo "tables=$(psql -tA -c \"SELECT string_agg(table_name, ', ' ORDER BY table_name) FROM information_schema.tables WHERE table_schema='public';\" 2>&1)"
-          } > remote_probe.log
+          psql -tA -c "SELECT to_regclass('public.users') IS NOT NULL;" \
+            > users_present.out 2> psql.err
+          echo "users_present_query_exit=$?" > remote_probe.log
+          cat psql.err >> remote_probe.log
+          cat users_present.out >> remote_probe.log
+          echo "users_present=$(cat users_present.out 2>/dev/null | head -c 8)" >> "$GITHUB_OUTPUT"
+          psql -tA -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';" \
+            >> remote_probe.log 2>&1
+          echo "table_count_query_exit=$?" >> remote_probe.log
+          psql -tA -c "SELECT string_agg(table_name, ', ' ORDER BY table_name) FROM information_schema.tables WHERE table_schema='public';" \
+            >> remote_probe.log 2>&1
+          echo "tables_query_exit=$?" >> remote_probe.log
           cat remote_probe.log
       - name: Emit remote probe annotations
         if: always()
         run: |
-          sed 's/^/::warning::/' remote_probe.log || true
+          sed 's/^/::warning::/' remote_probe.log 2>/dev/null || true
       - name: Run bootstrap chain on remote ONLY if users table absent
         id: boot
-        if: steps.probe.outcome == 'success'
+        if: steps.probe.outputs.users_present == 'f'
         continue-on-error: true
         env:
           PGHOST: ${{ steps.db.outputs.host }}
