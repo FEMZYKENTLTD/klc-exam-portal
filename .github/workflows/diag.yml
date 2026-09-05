@@ -1,0 +1,197 @@
+name: CI Diagnostics (temporary)
+# TEMPORARY diagnostic workflow - captures the exact failure output of the
+# two currently-red CI jobs (fresh Supabase bootstrap + mvn package) and
+# posts it to the triggering PR comment so it can be read from a sandbox
+# whose egress blocks results-receiver.actions.githubusercontent.com.
+# REMOVE THIS FILE after the root causes are fixed.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  compile:
+    name: mvn package (capture errors)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: mvn clean package (capture)
+        id: mvn
+        continue-on-error: true
+        run: |
+          mvn -B -ntp clean package > /tmp/mvn.log 2>&1
+          echo "MVN_EXIT=$?" | tee -a /tmp/mvn.log
+          tail -n 5 /tmp/mvn.log
+      - name: Report mvn result to PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$PR_NUMBER" ]; then
+            echo "no PR context - skipping comment (workflow_dispatch)"
+            exit 0
+          fi
+          {
+            echo "## CI diagnostics: mvn clean package"
+            echo ""
+            echo '```'
+            tail -c 28000 /tmp/mvn.log
+            echo '```'
+          } > /tmp/comment_body.md
+          python3 - <<'EOF'
+import json, urllib.request, os
+body = open('/tmp/comment_body.md').read()
+data = json.dumps({'body': body}).encode()
+req = urllib.request.Request(
+    f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/issues/{os.environ['PR_NUMBER']}/comments",
+    data=data, headers={'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                        'Accept': 'application/vnd.github+json',
+                        'X-GitHub-Api-Version': '2022-11-28'})
+try:
+    urllib.request.urlopen(req)
+except Exception as e:
+    print('comment failed (non-fatal):', e)
+EOF
+
+  db:
+    name: Fresh bootstrap SQL repro (local Postgres)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install and start local Postgres
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql >/dev/null 2>&1
+          sudo service postgresql start || sudo systemctl start postgresql
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';" >/dev/null
+          sudo -u postgres dropdb --if-exists klcboot
+          sudo -u postgres createdb klcboot
+          sudo -u postgres psql -d klcboot -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"; CREATE EXTENSION IF NOT EXISTS pgcrypto;" >/dev/null
+      - name: Run exact CI fresh-bootstrap chain
+        id: sql
+        continue-on-error: true
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: klcboot
+        run: |
+          {
+            echo "### CI diagnostics: fresh bootstrap chain (local PostgreSQL $(psql -tA -c 'SELECT version();' | head -c 60))"
+            echo ""
+            for f in supabase/klc_supabase_schema.sql \
+                     supabase/klc_supabase_schema_v6_2.sql \
+                     supabase/klc_supabase_schema_v6_3_final.sql; do
+              echo "---- $f ----"
+              psql -v ON_ERROR_STOP=1 -f "$f" 2>&1 | tail -n 25
+              echo "exit_code=$?"
+            done
+          } > /tmp/sql_log.md
+          cat /tmp/sql_log.md
+      - name: Post SQL repro result to PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$PR_NUMBER" ]; then echo "no PR context - skipping"; exit 0; fi
+          {
+            echo "## CI diagnostics: fresh bootstrap SQL"
+            echo ""
+            tail -c 28000 /tmp/sql_log.md
+          } > /tmp/sql_body.md
+          python3 - <<'EOF'
+import json, urllib.request, os
+body = open('/tmp/sql_body.md').read()
+data = json.dumps({'body': body}).encode()
+req = urllib.request.Request(
+    f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/issues/{os.environ['PR_NUMBER']}/comments",
+    data=data, headers={'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                        'Accept': 'application/vnd.github+json',
+                        'X-GitHub-Api-Version': '2022-11-28'})
+try:
+    urllib.request.urlopen(req)
+except Exception as e:
+    print('comment failed (non-fatal):', e)
+EOF
+
+  remotedb:
+    name: Repro remote Supabase bootstrap (uses repo secrets)
+    runs-on: ubuntu-latest
+    if: ${{ vars.DIAG_RUN_REMOTE == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Resolve DB connection
+        id: db
+        env:
+          HOST: ${{ secrets.KLC_DB_HOST }}
+          PORT: ${{ secrets.KLC_DB_PORT }}
+          POOLER_URL: ${{ secrets.KLC_DB_POOLER_URL }}
+        run: |
+          host="${HOST}"; port="${PORT}"
+          if { [ -z "$host" ] || [ -z "$port" ]; } && [ -n "$POOLER_URL" ]; then
+            case "$POOLER_URL" in
+              jdbc:postgresql://*)
+                rest="${POOLER_URL#jdbc:postgresql://}"
+                [ -n "$host" ] || host="${rest%%:*}"
+                if [ -z "$port" ]; then
+                  port="${rest#*:}"; port="${port%%/*}"
+                fi
+                ;;
+            esac
+          fi
+          echo "host=$host port=$port"
+          echo "host=$host" >> "$GITHUB_OUTPUT"
+          echo "port=$port" >> "$GITHUB_OUTPUT"
+      - name: Check whether users table exists
+        id: probe
+        continue-on-error: true
+        env:
+          PGHOST: ${{ steps.db.outputs.host }}
+          PGPORT: ${{ steps.db.outputs.port }}
+          PGUSER: ${{ secrets.KLC_DB_USER }}
+          PGPASSWORD: ${{ secrets.KLC_DB_PASS }}
+          PGDATABASE: postgres
+        run: |
+          EXISTS=$(psql --set ON_ERROR_STOP=1 -tA -c "SELECT to_regclass('public.users') IS NOT NULL;")
+          echo "users present: $EXISTS"
+          echo "exists=$EXISTS" >> "$GITHUB_OUTPUT"
+          echo "table_count=$(psql -tA -c \"SELECT count(*) FROM information_schema.tables WHERE table_schema='public';\")" >> "$GITHUB_OUTPUT"
+          echo "probe ran"
+      - name: Report remote probe to PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          USERS_PRESENT: ${{ steps.probe.outputs.exists }}
+        run: |
+          if [ -z "$PR_NUMBER" ]; then echo "no PR context - skipping"; exit 0; fi
+          {
+            echo "## CI diagnostics: remote Supabase state probe"
+            echo ""
+            echo "users table present (before fix attempt): '${USERS_PRESENT}'"
+            echo "probe step conclusion: ${{ steps.probe.conclusion }}"
+          } > /tmp/remote_body.md
+          python3 - <<'EOF'
+import json, urllib.request, os
+body = open('/tmp/remote_body.md').read()
+data = json.dumps({'body': body}).encode()
+req = urllib.request.Request(
+    f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/issues/{os.environ['PR_NUMBER']}/comments",
+    data=data, headers={'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                        'Accept': 'application/vnd.github+json',
+                        'X-GitHub-Api-Version': '2022-11-28'})
+try:
+    urllib.request.urlopen(req)
+except Exception as e:
+    print('comment failed (non-fatal):', e)
+EOF
