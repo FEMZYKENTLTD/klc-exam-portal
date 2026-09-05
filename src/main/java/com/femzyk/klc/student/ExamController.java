@@ -1011,10 +1011,14 @@ public class ExamController {
                 if (sel.equals(correctLabel)) correct++; else wrong++;
             }
 
-            double rawScore = Math.max(0,
-                correct - (wrong * negativeMarking));
-            double pct = questions.isEmpty()
-                ? 0 : rawScore * 100.0 / questions.size();
+            // KLC v1.0: scoring arithmetic lives in the pure helper
+            // util.ExamScoring so it is covered by unit tests.
+            com.femzyk.klc.util.ExamScoring.Result score =
+                com.femzyk.klc.util.ExamScoring.compute(
+                    correct, wrong, unanswered,
+                    negativeMarking, questions.size());
+            double rawScore = score.rawScore;
+            double pct      = score.percentage;
 
             if (isPractice) {
                 // Practice Mode: update attempt status only, DO NOT insert into official results table
