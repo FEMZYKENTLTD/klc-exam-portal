@@ -73,13 +73,15 @@ delegates to it with identical formulas (`max(0, correct − wrong×neg)`,
 `pct = raw×100/total`). Makes the single most critical business rule
 unit-testable.
 
-### 2.5 Diagnostics channel (temporary)
+### 2.5 Diagnostics channel (temporary, since removed)
 
-`.github/workflows/diag.yml` — TEMPORARY workflow (to be removed before
-merge) that reproduces the failing CI steps on runners and re-emits the
-captured output as check-run annotations, because the sandbox egress blocks
-GitHub's log hosts (`results-receiver.actions.githubusercontent.com`) and
-the bot token cannot write PR comments/branches.
+A temporary `.github/workflows/diag.yml` reproduced the failing CI steps on
+runners and re-emitted captured output as check-run annotations, because
+the sandbox egress blocks GitHub's log hosts
+(`results-receiver.actions.githubusercontent.com`) and the bot token cannot
+write PR comments/branches. It was removed once the fixes were verified;
+its SQL-validation role is now a permanent job in `build.yml`
+("Schema migration check (local PostgreSQL)").
 
 ## 3. What was built & tested
 
