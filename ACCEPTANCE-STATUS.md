@@ -6,7 +6,14 @@
 > elements alone. Evidence IDs reference the sections of
 > `docs/VERIFICATION-REPORT-2026-09-05.md`.
 
-**Last updated:** 2026-09-05 (session: CI remediation + first automated test suite)
+**Last updated:** 2026-09-05 (session: CI remediation + automated tests + 68-feature spec cross-check)
+
+> **Spec cross-check:** full evidence-backed mapping of the sponsor's
+> "68-feature v1.0 build plan" against the repository is in
+> **`docs/FEATURE-MATRIX.md`** (every item → ✅/🟡/🟠/❌/⚠️ with file
+> evidence). Aggregate: ~24 ✅ implemented+verified · ~23 🟡 implemented
+> (desktop/cloud runtime not exercised in sandbox) · ~14 🟠 partial ·
+> ~7 ❌/⚠️ not-found/overclaim. Headline gaps flagged there (F1–F7).
 
 ## Measured acceptance criteria
 
