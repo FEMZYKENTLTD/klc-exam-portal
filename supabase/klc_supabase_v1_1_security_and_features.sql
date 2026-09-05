@@ -20,32 +20,30 @@ ALTER TABLE school_profile ADD COLUMN IF NOT EXISTS campus_name VARCHAR(120);
 -- include 'PARENT', so parent registration failed on cloud projects
 -- (offline/H2 has no such constraint - which is why it worked locally).
 -- Drop the old role check and re-add it with PARENT. Idempotent.
+--
+-- FIX (2026-09-05): the previous version inspected pg_constraint.consrc,
+-- which was REMOVED in PostgreSQL 12 - it errored on Supabase (PG 15) and
+-- on CI (PG 16). This version finds every CHECK constraint whose column
+-- set includes users.role via pg_attribute, drops it, and re-creates the
+-- canonical one including PARENT. Safe to run repeatedly on PG 11+.
 DO $$
 DECLARE r RECORD;
 BEGIN
   FOR r IN
-    SELECT con.conname
+    SELECT DISTINCT con.conname
     FROM pg_constraint con
     JOIN pg_class rel ON rel.oid = con.conrelid
+    JOIN pg_attribute att ON att.attrelid = con.conrelid
+      AND att.attnum = ANY(con.conkey)
     WHERE rel.relname = 'users'
+      AND att.attname = 'role'
       AND con.contype = 'c'
-      AND con.consrc::text ILIKE '%role in (%)%'
-      AND con.consrc::text NOT ILIKE '%parent%'
   LOOP
     EXECUTE format('ALTER TABLE users DROP CONSTRAINT %I', r.conname);
   END LOOP;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint con
-    JOIN pg_class rel ON rel.oid = con.conrelid
-    WHERE rel.relname = 'users'
-      AND con.contype = 'c'
-      AND con.consrc::text ILIKE '%role in (%)%'
-      AND con.consrc::text ILIKE '%parent%'
-  ) THEN
-    ALTER TABLE users ADD CONSTRAINT users_role_v2
-      CHECK (role IN ('SUPER_ADMIN','PRINCIPAL_ADMIN','EXAM_OFFICER',
-                      'TEACHER','STUDENT','PARENT'));
-  END IF;
+  ALTER TABLE users ADD CONSTRAINT users_role_check_v2
+    CHECK (role IN ('SUPER_ADMIN','PRINCIPAL_ADMIN','EXAM_OFFICER',
+                    'TEACHER','STUDENT','PARENT'));
 END $$;
 
 CREATE TABLE IF NOT EXISTS parent_profiles (

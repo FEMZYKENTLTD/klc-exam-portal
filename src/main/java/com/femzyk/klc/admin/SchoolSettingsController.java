@@ -247,10 +247,16 @@ public class SchoolSettingsController {
             return;
         }
         status.setText(
-            "Codes in effect: SUPER_ADMIN = " + AuthService.getCodeSuperAdmin() + " | " +
-            "TEACHER = " + AuthService.getCodeAdmin() + " | " +
-            "STUDENT = " + AuthService.getCodeStudent() + ". " +
+            "Codes in effect: SUPER_ADMIN = "
+                + displayCode(AuthService.getCodeSuperAdmin()) + " | " +
+            "TEACHER = " + displayCode(AuthService.getCodeAdmin()) + " | " +
+            "STUDENT = " + displayCode(AuthService.getCodeStudent()) + ". " +
             "Set code.* in config.properties to change - takes effect at next " +
             "app start (no rebuild). See SECURITY_CREDENTIALS.md for rotation.");
+    }
+
+    private String displayCode(String code) {
+        return (code == null || code.isBlank())
+            ? "NOT SET (registration disabled)" : code;
     }
 }

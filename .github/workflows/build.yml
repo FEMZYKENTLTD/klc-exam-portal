@@ -126,6 +126,85 @@ jobs:
           psql --set ON_ERROR_STOP=1 -f supabase/klc_supabase_v1_1_security_and_features.sql
           echo "Supabase schema is up to date."
 
+  schema-check:
+    name: Schema migration check (local PostgreSQL)
+    runs-on: ubuntu-latest
+    # Executes the FULL Supabase migration chain (5 files) against a fresh
+    # local PostgreSQL with Supabase-only objects scaffolded, plus the
+    # role-constraint probes. Catches schema regressions on every PR/push
+    # (e.g. the pg_constraint.consrc removal that broke PG 12+ in v1.1).
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install and start local Postgres
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql >/dev/null 2>&1
+          sudo service postgresql start || sudo systemctl start postgresql
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';" >/dev/null
+          sudo -u postgres dropdb --if-exists klcboot
+          sudo -u postgres createdb klcboot
+          sudo -u postgres psql -d klcboot -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE EXTENSION IF NOT EXISTS pgcrypto;' >/dev/null
+
+      - name: Run full migration chain and probes
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: klcboot
+        run: |
+          set +e
+          psql -v ON_ERROR_STOP=1 <<'EOF' >/dev/null 2>&1
+          DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon')
+              THEN CREATE ROLE anon NOLOGIN; END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated')
+              THEN CREATE ROLE authenticated NOLOGIN; END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role')
+              THEN CREATE ROLE service_role NOLOGIN; END IF;
+          END $$;
+          CREATE SCHEMA IF NOT EXISTS storage;
+          CREATE TABLE IF NOT EXISTS storage.buckets (
+            id text PRIMARY KEY, name text, public boolean);
+          CREATE TABLE IF NOT EXISTS storage.objects (
+            id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+            bucket_id text, name text, owner uuid);
+          EOF
+          scaffold=$?
+          fail=0
+          for f in supabase/klc_supabase_schema.sql \
+                   supabase/klc_supabase_schema_v6_2.sql \
+                   supabase/klc_supabase_schema_v6_3_final.sql \
+                   supabase/klc_supabase_schema_v1_0_social.sql \
+                   supabase/klc_supabase_v1_1_security_and_features.sql; do
+            echo "--- $f"
+            psql -v ON_ERROR_STOP=1 -f "$f" >/dev/null 2>sql.err
+            ec=$?
+            echo "exit=$ec"
+            if [ "$ec" -ne 0 ]; then
+              fail=1
+              cat sql.err
+              echo "::error::migration file failed: $f (exit $ec)"
+            fi
+          done
+          # role-CHECK replacement must accept PARENT and reject junk roles
+          psql -v ON_ERROR_STOP=1 -c "INSERT INTO users(id, full_name, email, password_hash, role) VALUES (uuid_generate_v4(), 'P Tester', 'parent@check.klc', 'x', 'PARENT');" >/dev/null 2>&1
+          echo "parent_insert_exit=$?"
+          psql -v ON_ERROR_STOP=1 -c "INSERT INTO users(id, full_name, email, password_hash, role) VALUES (uuid_generate_v4(), 'X Tester', 'junk@check.klc', 'x', 'HACKER');" >/dev/null 2>&1
+          junk=$?
+          echo "junk_insert_exit=$junk (expect 1 = rejected)"
+          if [ "$junk" -eq 0 ]; then
+            fail=1
+            echo "::error::invalid role HACKER was accepted by users.role CHECK"
+          fi
+          echo "scaffold_exit=$scaffold"
+          if [ "$scaffold" -ne 0 ] || [ "$fail" -ne 0 ]; then
+            echo "::error::schema migration check FAILED"
+            exit 1
+          fi
+          echo "schema migration check PASSED (all 5 files clean)"
+
   build:
     name: Compile & package (Java 17)
     runs-on: ubuntu-latest
