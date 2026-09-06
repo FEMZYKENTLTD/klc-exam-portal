@@ -29,13 +29,13 @@
     </VBox>
   </top>
   <left>
-    <VBox spacing="8" prefWidth="260" style="-fx-padding:12; -fx-background-color:#eef2f9;">
+    <VBox spacing="8" prefWidth="260" style="-fx-padding:12; -fx-background-color:#eef2f9">
       <Label text="Question Navigator"/>
       <FlowPane fx:id="navPane" hgap="6" vgap="6"/>
       <Label fx:id="progressLabel" styleClass="small-muted"/>
       <Separator/>
-      <Label text="Proctoring" style="-fx-font-weight:bold; -fx-font-size:11px;"/>
-      <ImageView fx:id="webcamThumb" fitWidth="220" fitHeight="165" preserveRatio="true" style="-fx-background-color:#000;"/>
+      <Label text="Proctoring" style="-fx-font-weight:bold; -fx-font-size:11px"/>
+      <ImageView fx:id="webcamThumb" fitWidth="220" fitHeight="165" preserveRatio="true" style="-fx-background-color:#000"/>
       <Label text="Webcam: auto-capture every 60s – if available" styleClass="small-muted" wrapText="true"/>
       <Separator/>
       <Button text="Submit Exam" fx:id="submitBtn" onAction="#submitExamClicked" styleClass="btn-gold" maxWidth="1.7976931348623157E308"/>
@@ -43,11 +43,11 @@
     </VBox>
   </left>
   <center>
-    <ScrollPane fitToWidth="true" style="-fx-background-color:transparent;">
-    <VBox spacing="14" style="-fx-padding:24;">
-      <Label fx:id="examTitleLabel" text="Exam in Progress" style="-fx-font-size:18px; -fx-font-weight:bold;"/>
+    <ScrollPane fitToWidth="true" style="-fx-background-color:transparent">
+    <VBox spacing="14" style="-fx-padding:24">
+      <Label fx:id="examTitleLabel" text="Exam in Progress" style="-fx-font-size:18px; -fx-font-weight:bold"/>
       <ImageView fx:id="questionImageView" fitWidth="560" preserveRatio="true" visible="false" managed="false"/>
-      <Label fx:id="questionLabel" wrapText="true" style="-fx-font-size:16px;"/>
+      <Label fx:id="questionLabel" wrapText="true" style="-fx-font-size:16px"/>
       <VBox spacing="8">
         <RadioButton fx:id="optA" text="A"/><RadioButton fx:id="optB" text="B"/>
         <RadioButton fx:id="optC" text="C"/><RadioButton fx:id="optD" text="D"/>

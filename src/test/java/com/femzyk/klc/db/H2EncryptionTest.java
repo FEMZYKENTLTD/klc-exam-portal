@@ -165,15 +165,21 @@ class H2EncryptionTest {
                 "migrated encrypted cache must preserve data");
         }
 
-        // plaintext file must be gone and the bytes must be encrypted now
-        assertFalse(plainDb.exists()
-                || new File(dir, "klc.mv.db.cipher").exists(),
-            "plaintext H2 file must be removed after migration");
+        // The encrypted cache now lives at the SAME file name (the URL base
+        // is unchanged - only the file content is AES). Acceptance:
+        //   1. the on-disk bytes must not contain the readable marker, and
+        //   2. opening the file WITHOUT the AES file key must fail - i.e. no
+        //      plaintext cache remains behind under this name.
+        File dbFile = new File(dir, "klc.mv.db");
+        assertTrue(dbFile.exists(), "encrypted cache must exist at base name");
         String bytes = new String(
-            Files.readAllBytes(new File(dir, "klc.mv.db").toPath()),
+            Files.readAllBytes(dbFile.toPath()),
             StandardCharsets.ISO_8859_1);
         assertFalse(bytes.contains(MARKER),
             "marker must not remain readable after migration");
+        assertThrows(Exception.class,
+            () -> DriverManager.getConnection(plainUrl(dir), "sa", ""),
+            "a plaintext (no-key) open must be refused after migration");
     }
 
     @Test

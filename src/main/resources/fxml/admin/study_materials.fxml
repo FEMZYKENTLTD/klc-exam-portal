@@ -3,93 +3,75 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="0"
+<VBox styleClass="screen-root" spacing="0"
       xmlns="http://javafx.com/javafx/17"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.femzyk.klc.admin.StudyMaterialsController"
-      style="-fx-background-color:#f5f7fb;">
+      fx:controller="com.femzyk.klc.admin.StudyMaterialsController">
 
 	<!-- Header -->
-	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4;">
+	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4">
 		<Label text="Study Materials - E-Library"
-               style="-fx-text-fill:white; -fx-font-size:20px;
-                      -fx-font-weight:bold;"/>
+               style="-fx-text-fill:white; -fx-font-size:20px; -fx-font-weight:bold"/>
 		<Label text="Upload and manage study materials for students"
-               style="-fx-text-fill:#94a3b8; -fx-font-size:12px;"/>
+               style="-fx-text-fill:#94a3b8; -fx-font-size:12px"/>
 	</VBox>
 
-	<VBox spacing="14" style="-fx-padding:16;">
+	<VBox spacing="14" style="-fx-padding:16">
 
 		<!-- Upload Card -->
 		<VBox styleClass="card" spacing="12">
 			<Label text="Upload New Study Material"
-                   style="-fx-font-size:15px; -fx-font-weight:bold;
-                          -fx-text-fill:#0f1f3c;"/>
+                   style="-fx-font-size:15px; -fx-font-weight:bold"/>
 
 			<HBox spacing="14">
 				<VBox spacing="4" HBox.hgrow="ALWAYS">
 					<Label text="Subject"
-                           style="-fx-font-weight:bold; -fx-font-size:13px;
-                                  -fx-text-fill:#0f1f3c;"/>
+                           style="-fx-font-weight:bold; -fx-font-size:13px"/>
 					<ComboBox fx:id="subjectBox"
                               promptText="Select subject"
                               maxWidth="1.7976931348623157E308"
-                              style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+                              style="-fx-border-color:#c8d3e8; -fx-border-radius:8"/>
 				</VBox>
 				<VBox spacing="4">
 					<Label text="Class Level"
-                           style="-fx-font-weight:bold; -fx-font-size:13px;
-                                  -fx-text-fill:#0f1f3c;"/>
+                           style="-fx-font-weight:bold; -fx-font-size:13px"/>
 					<ComboBox fx:id="classBox"
                               promptText="Select class"
                               prefWidth="140"
-                              style="-fx-border-color:#c8d3e8; -fx-border-radius:8;"/>
+                              style="-fx-border-color:#c8d3e8; -fx-border-radius:8"/>
 				</VBox>
 			</HBox>
 
 			<VBox spacing="4">
 				<Label text="Material Title"
-                       style="-fx-font-weight:bold; -fx-font-size:13px;
-                              -fx-text-fill:#0f1f3c;"/>
+                       style="-fx-font-weight:bold; -fx-font-size:13px"/>
 				<TextField fx:id="titleField"
                            promptText="e.g. Mathematics Textbook Chapter 5 - Quadratic Equations"
-                           style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
-                                  -fx-background-radius:8; -fx-padding:9;
-                                  -fx-font-size:14px;
-                                  -fx-prompt-text-fill:#64748b;"/>
+                           style="-fx-border-color:#c8d3e8; -fx-border-radius:8; -fx-background-radius:8; -fx-padding:9; -fx-font-size:14px; -fx-prompt-text-fill:#64748b"/>
 			</VBox>
 
 			<VBox spacing="4">
 				<Label text="Description (optional)"
-                       style="-fx-font-weight:bold; -fx-font-size:13px;
-                              -fx-text-fill:#0f1f3c;"/>
+                       style="-fx-font-weight:bold; -fx-font-size:13px"/>
 				<TextArea fx:id="descArea"
                           prefRowCount="2"
                           wrapText="true"
                           promptText="Brief description of this study material..."
-                          style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
-                                 -fx-background-radius:8; -fx-font-size:13px;
-                                 -fx-prompt-text-fill:#64748b;"/>
+                          style="-fx-border-color:#c8d3e8; -fx-border-radius:8; -fx-background-radius:8; -fx-font-size:13px; -fx-prompt-text-fill:#64748b"/>
 			</VBox>
 
 			<VBox spacing="4">
 				<Label text="File (PDF, DOCX, PPTX, MP4)"
-                       style="-fx-font-weight:bold; -fx-font-size:13px;
-                              -fx-text-fill:#0f1f3c;"/>
+                       style="-fx-font-weight:bold; -fx-font-size:13px"/>
 				<HBox spacing="8">
 					<TextField fx:id="filePathField"
                                promptText="Click Choose File to select a file..."
                                HBox.hgrow="ALWAYS"
                                editable="false"
-                               style="-fx-border-color:#c8d3e8; -fx-border-radius:8;
-                                      -fx-background-radius:8; -fx-padding:9;
-                                      -fx-font-size:13px;
-                                      -fx-prompt-text-fill:#64748b;"/>
+                               style="-fx-border-color:#c8d3e8; -fx-border-radius:8; -fx-background-radius:8; -fx-padding:9; -fx-font-size:13px; -fx-prompt-text-fill:#64748b"/>
 					<Button text="Choose File"
                             onAction="#chooseFile"
-                            style="-fx-background-color:#3b82f6; -fx-text-fill:white;
-                                   -fx-font-weight:bold; -fx-background-radius:8;
-                                   -fx-padding:9 14; -fx-cursor:hand;"/>
+                            style="-fx-background-color:#3b82f6; -fx-text-fill:white; -fx-font-weight:bold; -fx-background-radius:8; -fx-padding:9 14; -fx-cursor:hand"/>
 				</HBox>
 			</VBox>
 
@@ -97,21 +79,19 @@
                     onAction="#upload"
                     styleClass="btn-primary"
                     maxWidth="1.7976931348623157E308"
-                    style="-fx-font-size:14px; -fx-padding:11 0;"/>
+                    style="-fx-font-size:14px; -fx-padding:11 0"/>
 
 			<Label fx:id="status"
                    wrapText="true"
-                   style="-fx-font-size:13px; -fx-font-weight:bold;"/>
+                   style="-fx-font-size:13px; -fx-font-weight:bold"/>
 		</VBox>
 
 		<!-- Materials Table -->
 		<VBox styleClass="card" spacing="10" VBox.vgrow="ALWAYS">
 			<Label text="Uploaded Materials"
-                   style="-fx-font-size:15px; -fx-font-weight:bold;
-                          -fx-text-fill:#0f1f3c;"/>
+                   style="-fx-font-size:15px; -fx-font-weight:bold"/>
 			<TableView fx:id="table" prefHeight="300"
-                       style="-fx-background-radius:10; -fx-border-color:#e2e8f0;
-                              -fx-border-radius:10;">
+                       style="-fx-background-radius:10; -fx-border-color:#e2e8f0; -fx-border-radius:10">
 				<columns>
 					<TableColumn fx:id="colTitle"   text="Title"    prefWidth="280"/>
 					<TableColumn fx:id="colSubject" text="Subject"  prefWidth="130"/>
@@ -120,7 +100,7 @@
 				</columns>
 				<placeholder>
 					<Label text="No study materials uploaded yet."
-                           style="-fx-text-fill:#94a3b8;"/>
+                           style="-fx-text-fill:#94a3b8"/>
 				</placeholder>
 			</TableView>
 		</VBox>

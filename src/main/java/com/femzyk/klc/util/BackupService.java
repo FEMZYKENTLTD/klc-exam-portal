@@ -488,12 +488,24 @@ public class BackupService {
             "fees_ledger", "result_pins", "results", "audit_logs",
             "announcements", "study_materials", "messages",
             "notification_queue", "user_profiles", "result_appeals");
-        // Only tables that ACTUALLY exist in this database are backed up:
-        // a schema may legitimately lack some of the preferred names.
+        // Only tables that ACTUALLY exist in this database are backed up,
+        // and only in the application schema - INFORMATION_SCHEMA / catalog
+        // pseudo-tables (e.g. H2 "constants", PG pg_catalog) are excluded.
         Set<String> present = new LinkedHashSet<>();
         try (ResultSet rs = c.getMetaData().getTables(null, null, "%",
                 new String[]{"TABLE"})) {
             while (rs.next()) {
+                String schema = rs.getString(2);
+                if (schema != null) {
+                    String s = schema.toLowerCase();
+                    if (s.contains("information_schema")
+                            || s.equals("pg_catalog")
+                            || s.equals("pg_toast")
+                            || s.startsWith("pg_")
+                            || s.equals("system")) {
+                        continue;
+                    }
+                }
                 String n = rs.getString(3);
                 if (n != null) present.add(n);
             }
@@ -529,6 +541,12 @@ public class BackupService {
                 try (ResultSet rs = c.getMetaData().getTables(null, null,
                         "%", new String[]{"TABLE"})) {
                     while (rs.next()) {
+                        String schema = rs.getString(2);
+                        if (schema != null) {
+                            String sc = schema.toLowerCase();
+                            if (sc.contains("information_schema")
+                                    || sc.startsWith("pg_")) continue;
+                        }
                         String t = rs.getString(3);
                         try (Statement st = c.createStatement()) {
                             st.execute("ALTER TABLE " + quote(t)
@@ -554,6 +572,12 @@ public class BackupService {
                 try (ResultSet rs = c.getMetaData().getTables(null, null,
                         "%", new String[]{"TABLE"})) {
                     while (rs.next()) {
+                        String schema = rs.getString(2);
+                        if (schema != null) {
+                            String sc = schema.toLowerCase();
+                            if (sc.contains("information_schema")
+                                    || sc.startsWith("pg_")) continue;
+                        }
                         String t = rs.getString(3);
                         try (Statement st = c.createStatement()) {
                             st.execute("ALTER TABLE " + quote(t)

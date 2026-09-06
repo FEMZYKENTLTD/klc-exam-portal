@@ -123,6 +123,7 @@ public class PracticeExamController {
             scene.getStylesheets().add(
                 getClass().getResource(
                     "/css/klc-premium.css").toExternalForm());
+            com.femzyk.klc.util.ThemeService.apply(scene);   // dark/light theme
 
             ExamController ctrl = loader.getController();
             ctrl.startExam(practiceExamId, "A");  // practice variant A

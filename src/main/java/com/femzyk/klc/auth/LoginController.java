@@ -13,6 +13,7 @@ public class LoginController {
     @FXML private PasswordField passField;
     @FXML private TextField     passVisible;
     @FXML private Button        togglePassBtn;
+    @FXML private Button        themeToggle;
     @FXML private Label         statusLabel;
     @FXML private Label         totpLabel;
     @FXML private TextField     totpField;
@@ -51,6 +52,17 @@ public class LoginController {
                 togglePassBtn.getStyle() +
                 " -fx-font-size:16px;");
         }
+    }
+
+    // =========================================================================
+    //  GLOBAL DARK / LIGHT THEME TOGGLE
+    // =========================================================================
+    @FXML
+    private void toggleTheme() {
+        com.femzyk.klc.util.ThemeService.toggle(
+            themeToggle.getScene());   // restyles this scene immediately
+        themeToggle.setText(com.femzyk.klc.util.ThemeService.isDark()
+            ? "\u2600 Light Mode" : "\uD83C\uDF19 Dark Mode");
     }
 
     // =========================================================================

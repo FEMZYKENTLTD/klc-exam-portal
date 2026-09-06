@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox spacing="10" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-  fx:controller="com.femzyk.klc.admin.TeacherBulkImportController" style="-fx-padding:12;">
-  <Label text="👨‍🏫 Teacher Bulk Import – CSV" style="-fx-font-size:18px; -fx-font-weight:bold;"/>
+<VBox styleClass="screen-root" spacing="10" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+  fx:controller="com.femzyk.klc.admin.TeacherBulkImportController" style="-fx-padding:12">
+  <Label text="👨‍🏫 Teacher Bulk Import – CSV" style="-fx-font-size:18px; -fx-font-weight:bold"/>
   <HBox spacing="8">
     <Button text="📥 Import Teachers CSV" onAction="#importTeachers" styleClass="btn-primary"/>
     <Label fx:id="status"/>

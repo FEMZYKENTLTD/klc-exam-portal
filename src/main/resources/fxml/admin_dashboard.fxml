@@ -12,7 +12,7 @@
 	<!-- TOP HEADER -->
 	<top>
 		<HBox styleClass="header" alignment="CENTER_LEFT" spacing="12"
-              style="-fx-padding:10 20;">
+              style="-fx-padding:10 20">
 			<ImageView fitWidth="42" fitHeight="42" preserveRatio="true">
 				<image>
 					<Image url="@../images/klc_logo.png"/>
@@ -20,33 +20,28 @@
 			</ImageView>
 			<VBox spacing="2">
 				<Label text="KNOWLEDGE LAND COLLEGE"
-                       style="-fx-text-fill:white; -fx-font-size:16px;
-                              -fx-font-weight:bold;"/>
+                       style="-fx-text-fill:white; -fx-font-size:16px; -fx-font-weight:bold"/>
 				<Label fx:id="portalSubtitle"
                        text="CBT SUITE v1.0 - Admin Portal"
-                       style="-fx-text-fill:#d4af37; -fx-font-size:11px;"/>
+                       style="-fx-text-fill:#d4af37; -fx-font-size:11px"/>
 			</VBox>
 			<Region HBox.hgrow="ALWAYS"/>
 			<Label fx:id="sessionStatusLabel"
-                   style="-fx-text-fill:#94a3b8; -fx-font-size:11px;"/>
+                   style="-fx-text-fill:#94a3b8; -fx-font-size:11px"/>
 			<Button text="Logout" onAction="#logout"
-                    style="-fx-background-color:#c0392b; -fx-text-fill:white;
-                           -fx-font-weight:bold; -fx-background-radius:8;
-                           -fx-padding:8 16; -fx-cursor:hand;"/>
+                    style="-fx-background-color:#c0392b; -fx-text-fill:white; -fx-font-weight:bold; -fx-background-radius:8; -fx-padding:8 16; -fx-cursor:hand"/>
 		</HBox>
 	</top>
 
 	<!-- LEFT SIDEBAR -->
 	<left>
 		<ScrollPane fitToWidth="true" hbarPolicy="NEVER"
-                    style="-fx-background-color:#0f1f3c;
-                           -fx-background:transparent;">
+                    style="-fx-background-color:#0f1f3c; -fx-background:transparent">
 			<VBox styleClass="sidebar" prefWidth="225" spacing="4">
 
 				<!-- MY ACCOUNT -->
 				<Label text="MY ACCOUNT"
-                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
-                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px; -fx-font-weight:bold; -fx-padding:12 0 4 14"/>
 				<Button text="My Profile"
                         onAction="#showProfile" styleClass="sidebar-btn"/>
 				<Button text="Friends"
@@ -57,8 +52,7 @@
 
 				<!-- OVERVIEW -->
 				<Label fx:id="secOverview" text="OVERVIEW"
-                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
-                              -fx-font-weight:bold; -fx-padding:8 0 4 14;"/>
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px; -fx-font-weight:bold; -fx-padding:8 0 4 14"/>
 				<Button fx:id="btnDashboard" text="Dashboard"
                         onAction="#showDashboard" styleClass="sidebar-btn"/>
 				<Button fx:id="btnLiveMonitor" text="Live Monitor"
@@ -68,8 +62,7 @@
 
 				<!-- ACADEMIC -->
 				<Label fx:id="secAcademic" text="ACADEMIC"
-                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
-                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px; -fx-font-weight:bold; -fx-padding:12 0 4 14"/>
 				<Button fx:id="btnSubjects" text="Subjects"
                         onAction="#showSubjects" styleClass="sidebar-btn"/>
 				<Button fx:id="btnClassMgr" text="Class Manager"
@@ -79,8 +72,7 @@
 
 				<!-- QUESTION BANK -->
 				<Label fx:id="secQuestions" text="QUESTION BANK"
-                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
-                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px; -fx-font-weight:bold; -fx-padding:12 0 4 14"/>
 				<Button fx:id="btnQBank" text="Question Bank"
                         onAction="#showQuestions" styleClass="sidebar-btn"/>
 				<Button fx:id="btnQEditor" text="Question Editor"
@@ -92,8 +84,7 @@
 
 				<!-- EXAMS -->
 				<Label fx:id="secExams" text="EXAMS"
-                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
-                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px; -fx-font-weight:bold; -fx-padding:12 0 4 14"/>
 				<Button fx:id="btnExamMgr" text="Exam Manager"
                         onAction="#showExams" styleClass="sidebar-btn"/>
 				<Button fx:id="btnCaScores" text="CA Scores"
@@ -101,8 +92,7 @@
 
 				<!-- RESULTS -->
 				<Label fx:id="secResults" text="RESULTS"
-                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
-                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px; -fx-font-weight:bold; -fx-padding:12 0 4 14"/>
 				<Button fx:id="btnResults" text="Results / Reports"
                         onAction="#showResults" styleClass="sidebar-btn"/>
 				<Button fx:id="btnBroadsheet" text="Broadsheet"
@@ -112,8 +102,7 @@
 
 				<!-- PEOPLE -->
 				<Label fx:id="secPeople" text="PEOPLE"
-                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
-                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px; -fx-font-weight:bold; -fx-padding:12 0 4 14"/>
 				<Button fx:id="btnStudents" text="Students"
                         onAction="#showStudents" styleClass="sidebar-btn"/>
 				<Button fx:id="btnTeachers" text="Teachers"
@@ -122,21 +111,12 @@
                         onAction="#showIdCards" styleClass="sidebar-btn"/>
 				<Button fx:id="btnCreateUser" text="Create User (Admin)"
                         onAction="#showManualUserCreation"
-                        style="-fx-background-color:transparent;
-                               -fx-text-fill:#d4af37;
-                               -fx-font-size:14px;
-                               -fx-alignment:CENTER_LEFT;
-                               -fx-padding:11 14;
-                               -fx-background-radius:8;
-                               -fx-cursor:hand;
-                               -fx-max-width:infinity;
-                               -fx-font-weight:bold;"/>
+                        style="-fx-background-color:transparent; -fx-text-fill:#d4af37; -fx-font-size:14px; -fx-alignment:CENTER_LEFT; -fx-padding:11 14; -fx-background-radius:8; -fx-cursor:hand; -fx-max-width:infinity; -fx-font-weight:bold"/>
 
 				
 				<!-- SYSTEM -->
 				<Label fx:id="secSystem" text="SYSTEM"
-                       style="-fx-text-fill:#64748b; -fx-font-size:11px;
-                              -fx-font-weight:bold; -fx-padding:12 0 4 14;"/>
+                       style="-fx-text-fill:#64748b; -fx-font-size:11px; -fx-font-weight:bold; -fx-padding:12 0 4 14"/>
 				<Button fx:id="btnNotifications" text="Notifications"
                         onAction="#showNotifications" styleClass="sidebar-btn"/>
 				<Button fx:id="btnSettings" text="School Settings"
@@ -151,10 +131,9 @@
                         onAction="#showAbout" styleClass="sidebar-btn"/>
 
 				<Region VBox.vgrow="ALWAYS"/>
-				<Separator style="-fx-background-color:#1b2f5a;"/>
+				<Separator style="-fx-background-color:#1b2f5a"/>
 				<Label text="Powered by FEMZYK"
-                       style="-fx-text-fill:#d4af37; -fx-font-size:11px;
-                              -fx-padding:8 0 8 14;"/>
+                       style="-fx-text-fill:#d4af37; -fx-font-size:11px; -fx-padding:8 0 8 14"/>
 			</VBox>
 		</ScrollPane>
 	</left>
@@ -162,7 +141,7 @@
 	<!-- MAIN CONTENT -->
 	<center>
 		<StackPane fx:id="contentPane"
-                   style="-fx-background-color:#f5f7fb;"/>
+                   style="-fx-background-color:#f5f7fb"/>
 	</center>
 
 </BorderPane>

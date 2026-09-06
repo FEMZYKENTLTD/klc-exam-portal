@@ -48,6 +48,7 @@ public class StudentDashboardController {
     private static final int REFRESH_SECONDS = 30;
 
     @FXML private Label welcomeLabel, pinLabel, cgpaLabel;
+    @FXML private Button themeBtn;
     @FXML private TabPane mainTabs;
 
     @FXML private ComboBox<String>  subjectBox;
@@ -776,6 +777,7 @@ public class StudentDashboardController {
             Scene scene = new Scene(loader.load(), w, h);
             scene.getStylesheets().add(
                 getClass().getResource("/css/klc-premium.css").toExternalForm());
+            com.femzyk.klc.util.ThemeService.apply(scene);   // dark/light theme
             ExamInstructionsController ctrl = loader.getController();
             ctrl.init(examId, "A");
             Stage st = (Stage) welcomeLabel.getScene().getWindow();
@@ -800,6 +802,7 @@ public class StudentDashboardController {
             Scene scene = new Scene(loader.load(), 1100, 700);
             scene.getStylesheets().add(
                 getClass().getResource("/css/klc-premium.css").toExternalForm());
+            com.femzyk.klc.util.ThemeService.apply(scene);   // dark/light theme
             Stage st = new Stage();
             st.setTitle("KLC v1.0 - Practice Mode - " + subj);
             st.setScene(scene);
@@ -807,6 +810,14 @@ public class StudentDashboardController {
         } catch (Exception e) {
             setPracticeStatus("Error: " + e.getMessage(), true);
         }
+    }
+
+    @FXML
+    private void toggleTheme() {
+        com.femzyk.klc.util.ThemeService.toggle(
+            themeBtn.getScene());
+        themeBtn.setText(com.femzyk.klc.util.ThemeService.isDark()
+            ? "\u2600 Light" : "\uD83C\uDF19 Dark");
     }
 
     @FXML

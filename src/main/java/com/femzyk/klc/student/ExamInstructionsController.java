@@ -96,6 +96,7 @@ public class ExamInstructionsController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/exam.fxml"));
         Scene scene = new Scene(loader.load(), 1200, 750);
         scene.getStylesheets().add(getClass().getResource("/css/klc-premium.css").toExternalForm());
+        com.femzyk.klc.util.ThemeService.apply(scene);   // dark/light theme
         Stage st = (Stage) startBtn.getScene().getWindow();
         st.setScene(scene);
         ExamController ec = loader.getController();
@@ -107,6 +108,7 @@ public class ExamInstructionsController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/student_dashboard.fxml"));
         Scene scene = new Scene(loader.load(), 1150, 720);
         scene.getStylesheets().add(getClass().getResource("/css/klc-premium.css").toExternalForm());
+        com.femzyk.klc.util.ThemeService.apply(scene);   // dark/light theme
         Stage st = (Stage) startBtn.getScene().getWindow();
         st.setScene(scene);
         st.setFullScreen(false);

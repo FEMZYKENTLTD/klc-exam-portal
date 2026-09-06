@@ -16,6 +16,14 @@
     -fx-font-size: 14px;
 }
 
+/* Theme-owned surface classes (light values; klc-dark.css overrides) */
+.screen-root {
+    -fx-background-color: #f5f7fb;
+}
+.surface {
+    -fx-background-color: white;
+}
+
 /* ====== HEADER ====== */
 .header {
     -fx-background-color: linear-gradient(to right, #0f1f3c, #1b2f5a);
