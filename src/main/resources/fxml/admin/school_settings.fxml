@@ -14,6 +14,11 @@
                style="-fx-text-fill:white; -fx-font-size:20px; -fx-font-weight:bold"/>
 		<Label text="Configure school profile, term rollover, announcements and backups"
                style="-fx-text-fill:#94a3b8; -fx-font-size:12px"/>
+		<HBox alignment="CENTER_RIGHT">
+			<Button fx:id="themeBtn" text="&#127769; Dark"
+                    onAction="#toggleTheme"
+                    style="-fx-background-color:#1b2f5a; -fx-text-fill:white; -fx-border-radius:8; -fx-background-radius:8; -fx-padding:6 12; -fx-cursor:hand; -fx-font-size:11px"/>
+		</HBox>
 	</VBox>
 
 	<ScrollPane fitToWidth="true"

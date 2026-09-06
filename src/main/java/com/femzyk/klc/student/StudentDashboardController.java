@@ -125,6 +125,10 @@ public class StudentDashboardController {
     @FXML
     public void initialize() {
         welcomeLabel.setText("Welcome, " + AuthService.Session.fullName);
+        if (themeBtn != null) {
+            themeBtn.setText(com.femzyk.klc.util.ThemeService.isDark()
+                ? "\u2600 Light" : "\uD83C\uDF19 Dark");
+        }
 
         setupResultsTableCols();
         setupFullResultsTableCols();

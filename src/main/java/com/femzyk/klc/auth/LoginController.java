@@ -2,6 +2,7 @@ package com.femzyk.klc.auth;
 
 import com.femzyk.klc.MainApp;
 import com.femzyk.klc.db.DatabaseManager;
+import com.femzyk.klc.util.ThemeService;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
@@ -51,6 +52,12 @@ public class LoginController {
             togglePassBtn.setStyle(
                 togglePassBtn.getStyle() +
                 " -fx-font-size:16px;");
+        }
+
+        // Reflect the persisted theme on the toggle button
+        if (themeToggle != null) {
+            themeToggle.setText(ThemeService.isDark()
+                ? "\u2600 Light Mode" : "\uD83C\uDF19 Dark Mode");
         }
     }
 

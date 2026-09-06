@@ -52,6 +52,7 @@
 				</placeholder>
 			</ListView>
 			<HBox spacing="8">
+				<Label text="Message:" style="-fx-font-weight:bold; -fx-font-size:12px"/>
 				<TextField fx:id="messageField"
                            promptText="Type a message and press Enter..."
                            HBox.hgrow="ALWAYS"

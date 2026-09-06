@@ -20,10 +20,12 @@
 		<!-- Toolbar -->
 		<HBox styleClass="surface" spacing="8" alignment="CENTER_LEFT"
               style="-fx-padding:12; -fx-background-radius:10; -fx-effect:dropshadow(gaussian,rgba(0,0,0,0.08),8,0,0,2)">
+			<Label text="Search:" style="-fx-font-weight:bold; -fx-font-size:12px"/>
 			<TextField fx:id="searchField"
                        promptText="Search questions by text or subject..."
                        prefWidth="260"
                        style="-fx-border-color:#c8d3e8; -fx-border-radius:8; -fx-background-radius:8; -fx-padding:8; -fx-font-size:13px"/>
+			<Label text="Class:" style="-fx-font-weight:bold; -fx-font-size:12px"/>
 			<ComboBox fx:id="classFilter"
                       prefWidth="130"
                       promptText="Class filter"

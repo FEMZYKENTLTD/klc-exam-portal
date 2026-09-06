@@ -41,6 +41,7 @@
                               text="Enable auto-backup"
                               onAction="#toggleAutoBackup"
                               style="-fx-font-size:13px"/>
+					<Label text="Backup time:" style="-fx-font-size:12px; -fx-font-weight:bold"/>
 					<ComboBox fx:id="autoBackupTimeBox"
                               prefWidth="120"
                               style="-fx-border-color:#c8d3e8; -fx-border-radius:8"/>

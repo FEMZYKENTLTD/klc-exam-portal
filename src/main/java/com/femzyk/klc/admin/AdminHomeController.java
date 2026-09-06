@@ -101,6 +101,10 @@ public class AdminHomeController {
 
     @FXML
     public void initialize() {
+        if (themeBtn != null) themeBtn.setText(
+            com.femzyk.klc.util.ThemeService.isDark()
+            ? "\u2600 Light" : "\uD83C\uDF19 Dark");
+
         colRegName.setCellValueFactory(c ->
             new javafx.beans.property.SimpleStringProperty(c.getValue().getName()));
         colRegRole.setCellValueFactory(c ->

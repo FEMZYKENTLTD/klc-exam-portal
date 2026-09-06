@@ -20,6 +20,7 @@ public class SchoolSettingsController {
     @FXML private ComboBox<String> termBox;
     @FXML private TextArea    mottoArea;
     @FXML private Label       status;
+    @FXML private Button      themeBtn;
     @FXML private ComboBox<String> fromClassBox, toClassBox;
     @FXML private TextField   announceTitle;
 
@@ -258,5 +259,12 @@ public class SchoolSettingsController {
     private String displayCode(String code) {
         return (code == null || code.isBlank())
             ? "NOT SET (registration disabled)" : code;
+    }
+
+    @FXML
+    private void toggleTheme() {
+        com.femzyk.klc.util.ThemeService.toggle(themeBtn.getScene());
+        themeBtn.setText(com.femzyk.klc.util.ThemeService.isDark()
+            ? "\u2600 Light" : "\uD83C\uDF19 Dark");
     }
 }

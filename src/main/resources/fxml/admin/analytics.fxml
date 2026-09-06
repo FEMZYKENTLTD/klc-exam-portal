@@ -71,6 +71,8 @@
                         onAction="#exportReport"
                         style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8; -fx-border-radius:8; -fx-background-radius:8; -fx-padding:8 16; -fx-cursor:hand"/>
 			</HBox>
+			<Label text="Report Preview"
+                   style="-fx-font-weight:bold; -fx-font-size:13px"/>
 			<TextArea fx:id="reportArea"
                       editable="false"
                       wrapText="true"
