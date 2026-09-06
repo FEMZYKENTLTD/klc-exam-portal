@@ -253,7 +253,12 @@ public class DatabaseManager {
             }
             System.out.println("[DB] AES migration stage 1: plaintext cache "
                 + "dumped to script OK.");
-            String tmpUrl = h2Url.replace(base.getPath(), tmpBase.getPath())
+            // URL-string surgery only: File.getPath() returns '\' separators
+            // on Windows while the JDBC URL keeps '/', so replacing the
+            // File-formatted path inside the URL silently no-ops there and
+            // H2 would try to AES-open the plaintext file (90049). Building
+            // the temp URL from the URL text is separator-independent.
+            String tmpUrl = h2UrlWithBaseSuffix(h2Url, "_aes_mig")
                 + ";CIPHER=AES";
             try (Connection ec = DriverManager.getConnection(
                      tmpUrl, h2User, cipherPass);
@@ -332,6 +337,23 @@ public class DatabaseManager {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * Appends {@code suffix} to the file-base of a jdbc:h2:file URL while
+     * keeping every {@code ;}-separated parameter. Operates purely on the
+     * URL text, so it is immune to platform path separators (on Windows
+     * {@code File.getPath()} yields {@code '\'} while the URL keeps
+     * {@code '/'}, which used to make {@code String.replace(filePath, ...)}
+     * a silent no-op and broke the AES migration with H2 error 90049).
+     * Package-private for the regression test; returns the input unchanged
+     * when the URL has no file base.
+     */
+    static String h2UrlWithBaseSuffix(String url, String suffix) {
+        if (url == null || !url.startsWith("jdbc:h2:file:")) return url;
+        int semi = url.indexOf(';');
+        if (semi < 0) return url + suffix;
+        return url.substring(0, semi) + suffix + url.substring(semi);
     }
 
     // =========================================================================
