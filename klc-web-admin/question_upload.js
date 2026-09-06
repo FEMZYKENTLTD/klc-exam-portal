@@ -87,6 +87,20 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
   document.getElementById("questions").addEventListener("input", preview);
+  document.getElementById("filePick").addEventListener("change", async ev => {
+    const file = ev.target.files && ev.target.files[0];
+    const note = document.getElementById("fileNote");
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      note.textContent = "File too large (max 2 MB).";
+      return;
+    }
+    document.getElementById("questions").value = await file.text();
+    document.getElementById("filePick").value = "";
+    note.textContent = "Loaded " + file.name
+      + " - review the parse above, edit if needed, then upload.";
+    preview();
+  });
   document.getElementById("upForm").addEventListener("submit", upload);
   if (session.email && session.password) enter();
 });

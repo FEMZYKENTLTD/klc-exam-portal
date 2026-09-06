@@ -59,6 +59,11 @@
             </select>
           </label>
         </div>
+        <label>Load from file (TXT/CSV — same format, parsed in your
+          browser)
+          <input id="filePick" type="file"
+                 accept=".txt,.csv,text/plain,text/csv"/>
+        </label>
         <label>Questions (plain text — one block per question)
         <textarea id="questions" placeholder="Question: What is 2 + 2?
 Topic: Addition
@@ -73,6 +78,7 @@ Topic: Photosynthesis
 [x] Carbon dioxide"></textarea>
         </label>
         <div class="preview" id="preview"></div>
+        <p class="muted" style="margin-top:4px" id="fileNote"></p>
         <div id="parseError" class="error" hidden></div>
         <button class="btn gold" type="submit">UPLOAD TO QUEUE FOR APPROVAL</button>
         <div id="result"></div>
