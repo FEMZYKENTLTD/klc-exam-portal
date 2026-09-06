@@ -54,7 +54,7 @@ public class AuthService {
     static {
         try {
             // Merged classpath (embedded) + external overrides (AppConfig).
-            Properties p = AppConfig.properties();
+            Properties p = com.femzyk.klc.util.AppConfig.properties();
             codeSuperAdmin = trimToNull(p.getProperty("code.super_admin"));
             codeAdmin      = trimToNull(p.getProperty("code.admin"));
             codeStudent    = trimToNull(p.getProperty("code.student"));
