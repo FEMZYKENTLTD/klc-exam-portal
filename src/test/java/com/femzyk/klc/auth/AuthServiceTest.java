@@ -200,6 +200,25 @@ class AuthServiceTest {
         }
     }
 
+    @Test
+    void seededOfflineSuperAdminCanLogin() {
+        // The offline bootstrap seeds a SUPER_ADMIN whose password comes from
+        // config (src/test/resources/config.properties -> TestSuperAdminPass1),
+        // never from a hard-coded source. Proves the secure seed -> login path
+        // end to end: valid password succeeds with the SUPER_ADMIN role, an
+        // invalid password is rejected without a session.
+        assertTrue(AuthService.login(
+            "femzykenterprisesltd@gmail.com", "TestSuperAdminPass1"),
+            "seeded super admin (config password) must log in");
+        assertEquals("SUPER_ADMIN", AuthService.Session.role);
+        AuthService.Session.clear();
+
+        assertFalse(AuthService.login(
+            "femzykenterprisesltd@gmail.com", "Wrong-Pass-1"));
+        assertTrue(AuthService.Session.userId == null,
+            "no session on failed seeded-admin login");
+    }
+
     // ---- login failure handling ------------------------------------------
 
     @Test

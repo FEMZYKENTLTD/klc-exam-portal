@@ -30,6 +30,10 @@ backup.key=
 # Optional: fixed super-admin seed password at first boot (else random,
 # printed once to console)
 app.superadmin.password=
+# Cloud (PostgreSQL) super-admin bootstrap email. Together with
+# app.superadmin.password (never committed; inject from CI secrets) this
+# creates the SUPER_ADMIN on a fresh cloud project when none exists.
+app.superadmin.email=
 
 # ── Safeguarding switches (social module) ───────────────────────────────────
 # Students messaging staff accounts (default false = blocked)

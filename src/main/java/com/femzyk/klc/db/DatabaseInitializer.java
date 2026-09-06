@@ -68,6 +68,7 @@ public class DatabaseInitializer {
                 seedSchoolProfile(conn);
             } else {
                 ensurePostgresColumns(stmt);
+                ensurePostgresSuperAdmin(conn);
             }
 
             System.out.println("[DB] Initialization complete");
@@ -618,6 +619,75 @@ public class DatabaseInitializer {
         System.out.println("[DB] PostgreSQL columns verified");
     }
 
+    /**
+     * Secure cloud (PostgreSQL) super-admin bootstrap.
+     *
+     * The cloud schema's seed row carries a placeholder hash (the historical
+     * password was retired from the repo), so a freshly-bootstrapped cloud
+     * project has NO usable super admin until one is created. This method
+     * makes the seeded account securely usable after deployment:
+     *
+     *  1. If a SUPER_ADMIN row already exists -> nothing to do (idempotent).
+     *  2. If config.properties supplies app.superadmin.email AND
+     *     app.superadmin.password (CI can inject these from repo secrets) ->
+     *     create the account with a fresh BCrypt hash in one transaction.
+     *  3. Otherwise print a one-time console instruction (no secrets) and
+     *     leave the DB untouched so the school can register the super admin
+     *     with the configured code, or set the config keys and restart.
+     *
+     * No production password is ever committed or printed.
+     */
+    private static void ensurePostgresSuperAdmin(Connection conn) {
+        try {
+            try (PreparedStatement check = conn.prepareStatement(
+                    "SELECT COUNT(*) FROM users WHERE role = 'SUPER_ADMIN'")) {
+                ResultSet rs = check.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) return;
+            }
+
+            java.util.Properties p = new java.util.Properties();
+            try (java.io.InputStream in = DatabaseInitializer.class
+                    .getResourceAsStream("/config.properties")) {
+                if (in != null) p.load(in);
+            }
+            String email = p.getProperty("app.superadmin.email", "");
+            String pass  = p.getProperty("app.superadmin.password", "");
+            if (email.isBlank() || pass.isBlank()) {
+                System.err.println("[DB] Cloud has no SUPER_ADMIN. To seed it "
+                    + "securely set app.superadmin.email + "
+                    + "app.superadmin.password in config.properties "
+                    + "(never committed; inject from repo secrets in CI), or "
+                    + "register the Super Admin through the app with the "
+                    + "configured super-admin code.");
+                return;
+            }
+
+            String uid = UUID.randomUUID().toString();
+            String hash = at.favre.lib.crypto.bcrypt.BCrypt.withDefaults()
+                .hashToString(12, pass.toCharArray());
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO users(" +
+                    "  id, full_name, email, password_hash, role, phone, " +
+                    "  is_active, totp_enabled, password_changed_at, " +
+                    "  created_at) VALUES(?,?,?,?,?,?,TRUE,FALSE," +
+                    "  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)")) {
+                ps.setObject(1, java.util.UUID.fromString(uid));
+                ps.setString(2, SA_NAME);
+                ps.setString(3, email.trim().toLowerCase());
+                ps.setString(4, hash);
+                ps.setString(5, "SUPER_ADMIN");
+                ps.setString(6, SA_PHONE);
+                ps.executeUpdate();
+            }
+            System.out.println("[DB] Cloud SUPER_ADMIN seeded from config "
+                + "(email: " + email.trim().toLowerCase() + "). Password is "
+                + "taken from config - rotate it after first login.");
+        } catch (Exception e) {
+            System.err.println("[DB] Cloud SUPER_ADMIN seed error: "
+                + e.getMessage());
+        }
+    }
+
     private static void seedSuperAdmin(Connection conn) {
         try {
             try (PreparedStatement check = conn.prepareStatement(
@@ -660,17 +730,163 @@ public class DatabaseInitializer {
         }
     }
 
+    /**
+     * Ensures the complete secondary-school subject catalogue exists.
+     *
+     * Runs on EVERY offline (H2) startup, not only on first boot, so both
+     * fresh caches AND existing caches upgrade in place: every row insert
+     * is guarded by "WHERE NOT EXISTS (subject_code)", which makes the
+     * whole operation idempotent and safe for pre-existing databases
+     * (no duplicates, no FK breakage, no touches to exams/results).
+     *
+     * The cloud (PostgreSQL) equivalent lives at the end of
+     * supabase/klc_supabase_v1_1_security_and_features.sql and must mirror
+     * this catalogue exactly.
+     */
+
+
+    /** Complete Nigerian secondary-school subject catalogue (JSS1-SS3).
+     *  Mirrored in supabase/klc_supabase_v1_1_security_and_features.sql.
+     */
+    private static final String[][] SUBJECT_CATALOG = {
+        {"ACCOUNTING", "ACC-SS1", "SS1"},        {"ACCOUNTING", "ACC-SS2", "SS2"},
+        {"ACCOUNTING", "ACC-SS3", "SS3"},
+        {"AGRICULTURAL SCIENCE", "AGR-JSS1", "JSS1"},
+        {"AGRICULTURAL SCIENCE", "AGR-JSS2", "JSS2"},
+        {"AGRICULTURAL SCIENCE", "AGR-JSS3", "JSS3"},
+        {"AGRICULTURAL SCIENCE", "AGR-SS1", "SS1"},
+        {"AGRICULTURAL SCIENCE", "AGR-SS2", "SS2"},
+        {"AGRICULTURAL SCIENCE", "AGR-SS3", "SS3"},
+        {"BASIC SCIENCE", "BSC-JSS1", "JSS1"},
+        {"BASIC SCIENCE", "BSC-JSS2", "JSS2"},
+        {"BASIC SCIENCE", "BSC-JSS3", "JSS3"},
+        {"BASIC TECHNOLOGY", "BTH-JSS1", "JSS1"},
+        {"BASIC TECHNOLOGY", "BTH-JSS2", "JSS2"},
+        {"BASIC TECHNOLOGY", "BTH-JSS3", "JSS3"},
+        {"BIOLOGY", "BIO-SS1", "SS1"},
+        {"BIOLOGY", "BIO-SS2", "SS2"},
+        {"BIOLOGY", "BIO-SS3", "SS3"},
+        {"BUSINESS STUDIES", "BUS-JSS1", "JSS1"},
+        {"BUSINESS STUDIES", "BUS-JSS2", "JSS2"},
+        {"BUSINESS STUDIES", "BUS-JSS3", "JSS3"},
+        {"CHEMISTRY", "CHM-SS1", "SS1"},
+        {"CHEMISTRY", "CHM-SS2", "SS2"},
+        {"CHEMISTRY", "CHM-SS3", "SS3"},
+        {"CHRISTIAN RELIGIOUS STUDIES", "CRS-JSS1", "JSS1"},
+        {"CHRISTIAN RELIGIOUS STUDIES", "CRS-JSS2", "JSS2"},
+        {"CHRISTIAN RELIGIOUS STUDIES", "CRS-JSS3", "JSS3"},
+        {"CHRISTIAN RELIGIOUS STUDIES", "CRS-SS1", "SS1"},
+        {"CHRISTIAN RELIGIOUS STUDIES", "CRS-SS2", "SS2"},
+        {"CHRISTIAN RELIGIOUS STUDIES", "CRS-SS3", "SS3"},
+        {"CIVIC EDUCATION", "CIV-JSS1", "JSS1"},
+        {"CIVIC EDUCATION", "CIV-JSS2", "JSS2"},
+        {"CIVIC EDUCATION", "CIV-JSS3", "JSS3"},
+        {"CIVIC EDUCATION", "CIV-SS1", "SS1"},
+        {"CIVIC EDUCATION", "CIV-SS2", "SS2"},
+        {"CIVIC EDUCATION", "CIV-SS3", "SS3"},
+        {"COMMERCE", "COM-SS1", "SS1"},
+        {"COMMERCE", "COM-SS2", "SS2"},
+        {"COMMERCE", "COM-SS3", "SS3"},
+        {"CULTURAL AND CREATIVE ART", "CCA-JSS1", "JSS1"},
+        {"CULTURAL AND CREATIVE ART", "CCA-JSS2", "JSS2"},
+        {"CULTURAL AND CREATIVE ART", "CCA-JSS3", "JSS3"},
+        {"DATA PROCESSING", "DTP-SS1", "SS1"},
+        {"DATA PROCESSING", "DTP-SS2", "SS2"},
+        {"DATA PROCESSING", "DTP-SS3", "SS3"},
+        {"DIGITAL TECHNOLOGY", "DGT-JSS1", "JSS1"},
+        {"DIGITAL TECHNOLOGY", "DGT-JSS2", "JSS2"},
+        {"DIGITAL TECHNOLOGY", "DGT-JSS3", "JSS3"},
+        {"ECONOMICS", "ECO-SS1", "SS1"},
+        {"ECONOMICS", "ECO-SS2", "SS2"},
+        {"ECONOMICS", "ECO-SS3", "SS3"},
+        {"ENGLISH LANGUAGE", "ENG-JSS1", "JSS1"},
+        {"ENGLISH LANGUAGE", "ENG-JSS2", "JSS2"},
+        {"ENGLISH LANGUAGE", "ENG-JSS3", "JSS3"},
+        {"ENGLISH LANGUAGE", "ENG-SS1", "SS1"},
+        {"ENGLISH LANGUAGE", "ENG-SS2", "SS2"},
+        {"ENGLISH LANGUAGE", "ENG-SS3", "SS3"},
+        {"FRENCH", "FRN-JSS1", "JSS1"},
+        {"FRENCH", "FRN-JSS2", "JSS2"},
+        {"FRENCH", "FRN-JSS3", "JSS3"},
+        {"FRENCH", "FRN-SS1", "SS1"},
+        {"FRENCH", "FRN-SS2", "SS2"},
+        {"FRENCH", "FRN-SS3", "SS3"},
+        {"FURTHER MATHEMATICS", "FMT-SS1", "SS1"},
+        {"FURTHER MATHEMATICS", "FMT-SS2", "SS2"},
+        {"FURTHER MATHEMATICS", "FMT-SS3", "SS3"},
+        {"GEOGRAPHY", "GEO-SS1", "SS1"},
+        {"GEOGRAPHY", "GEO-SS2", "SS2"},
+        {"GEOGRAPHY", "GEO-SS3", "SS3"},
+        {"GOVERNMENT", "GOV-SS1", "SS1"},
+        {"GOVERNMENT", "GOV-SS2", "SS2"},
+        {"GOVERNMENT", "GOV-SS3", "SS3"},
+        {"HAUSA LANGUAGE", "HAS-JSS1", "JSS1"},
+        {"HAUSA LANGUAGE", "HAS-JSS2", "JSS2"},
+        {"HAUSA LANGUAGE", "HAS-JSS3", "JSS3"},
+        {"HAUSA LANGUAGE", "HAS-SS1", "SS1"},
+        {"HAUSA LANGUAGE", "HAS-SS2", "SS2"},
+        {"HAUSA LANGUAGE", "HAS-SS3", "SS3"},
+        {"HOME ECONOMICS", "HEC-JSS1", "JSS1"},
+        {"HOME ECONOMICS", "HEC-JSS2", "JSS2"},
+        {"HOME ECONOMICS", "HEC-JSS3", "JSS3"},
+        {"IGBO LANGUAGE", "IGB-JSS1", "JSS1"},
+        {"IGBO LANGUAGE", "IGB-JSS2", "JSS2"},
+        {"IGBO LANGUAGE", "IGB-JSS3", "JSS3"},
+        {"IGBO LANGUAGE", "IGB-SS1", "SS1"},
+        {"IGBO LANGUAGE", "IGB-SS2", "SS2"},
+        {"IGBO LANGUAGE", "IGB-SS3", "SS3"},
+        {"ISLAMIC RELIGIOUS KNOWLEDGE", "IRK-JSS1", "JSS1"},
+        {"ISLAMIC RELIGIOUS KNOWLEDGE", "IRK-JSS2", "JSS2"},
+        {"ISLAMIC RELIGIOUS KNOWLEDGE", "IRK-JSS3", "JSS3"},
+        {"ISLAMIC RELIGIOUS KNOWLEDGE", "IRS-SS1", "SS1"},
+        {"ISLAMIC RELIGIOUS KNOWLEDGE", "IRS-SS2", "SS2"},
+        {"ISLAMIC RELIGIOUS KNOWLEDGE", "IRS-SS3", "SS3"},
+        {"LITERATURE IN ENGLISH", "LIT-SS1", "SS1"},
+        {"LITERATURE IN ENGLISH", "LIT-SS2", "SS2"},
+        {"LITERATURE IN ENGLISH", "LIT-SS3", "SS3"},
+        {"MATHEMATICS", "MTH-JSS1", "JSS1"},
+        {"MATHEMATICS", "MTH-JSS2", "JSS2"},
+        {"MATHEMATICS", "MTH-JSS3", "JSS3"},
+        {"MATHEMATICS", "MTH-SS1", "SS1"},
+        {"MATHEMATICS", "MTH-SS2", "SS2"},
+        {"MATHEMATICS", "MTH-SS3", "SS3"},
+        {"OFFICE PRACTICE", "OFP-SS1", "SS1"},
+        {"OFFICE PRACTICE", "OFP-SS2", "SS2"},
+        {"OFFICE PRACTICE", "OFP-SS3", "SS3"},
+        {"PHYSICAL HEALTH EDUCATION", "PHE-JSS1", "JSS1"},
+        {"PHYSICAL HEALTH EDUCATION", "PHE-JSS2", "JSS2"},
+        {"PHYSICAL HEALTH EDUCATION", "PHE-JSS3", "JSS3"},
+        {"PHYSICAL HEALTH EDUCATION", "PHE-SS1", "SS1"},
+        {"PHYSICAL HEALTH EDUCATION", "PHE-SS2", "SS2"},
+        {"PHYSICAL HEALTH EDUCATION", "PHE-SS3", "SS3"},
+        {"PHYSICS", "PHY-SS1", "SS1"},
+        {"PHYSICS", "PHY-SS2", "SS2"},
+        {"PHYSICS", "PHY-SS3", "SS3"},
+        {"SECURITY EDUCATION", "SEC-JSS1", "JSS1"},
+        {"SECURITY EDUCATION", "SEC-JSS2", "JSS2"},
+        {"SECURITY EDUCATION", "SEC-JSS3", "JSS3"},
+        {"SOCIAL STUDIES", "SST-JSS1", "JSS1"},
+        {"SOCIAL STUDIES", "SST-JSS2", "JSS2"},
+        {"SOCIAL STUDIES", "SST-JSS3", "JSS3"},
+        {"TECHNICAL DRAWING", "TDW-SS1", "SS1"},
+        {"TECHNICAL DRAWING", "TDW-SS2", "SS2"},
+        {"TECHNICAL DRAWING", "TDW-SS3", "SS3"},
+        {"TRADE SUBJECT", "TRD-SS1", "SS1"},
+        {"TRADE SUBJECT", "TRD-SS2", "SS2"},
+        {"TRADE SUBJECT", "TRD-SS3", "SS3"},
+        {"VISUAL ARTS", "VAS-SS1", "SS1"},
+        {"VISUAL ARTS", "VAS-SS2", "SS2"},
+        {"VISUAL ARTS", "VAS-SS3", "SS3"},
+        {"YORUBA LANGUAGE", "YRB-JSS1", "JSS1"},
+        {"YORUBA LANGUAGE", "YRB-JSS2", "JSS2"},
+        {"YORUBA LANGUAGE", "YRB-JSS3", "JSS3"},
+        {"YORUBA LANGUAGE", "YRB-SS1", "SS1"},
+        {"YORUBA LANGUAGE", "YRB-SS2", "SS2"},
+        {"YORUBA LANGUAGE", "YRB-SS3", "SS3"},
+    };
+
     private static void seedSubjects(Connection conn) {
         try {
-            try (PreparedStatement check = conn.prepareStatement(
-                    "SELECT COUNT(*) FROM subjects")) {
-                ResultSet rs = check.executeQuery();
-                if (rs.next() && rs.getInt(1) > 0) {
-                    System.out.println("[DB] Subjects already seeded");
-                    return;
-                }
-            }
-
             String saId = null;
             try (PreparedStatement ps = conn.prepareStatement(
                     "SELECT id FROM users WHERE role = 'SUPER_ADMIN' LIMIT 1")) {
@@ -678,143 +894,8 @@ public class DatabaseInitializer {
                 if (rs.next()) saId = rs.getString(1);
             }
 
-            String[][] subjects = {
-                {"ACCOUNTING",                    "ACC-SS1",   "SS1"},
-                {"ACCOUNTING",                    "ACC-SS2",   "SS2"},
-                {"ACCOUNTING",                    "ACC-SS3",   "SS3"},
-                {"AGRICULTURAL SCIENCE",          "AGR-JSS1",  "JSS1"},
-                {"AGRICULTURAL SCIENCE",          "AGR-JSS2",  "JSS2"},
-                {"AGRICULTURAL SCIENCE",          "AGR-JSS3",  "JSS3"},
-                {"AGRICULTURAL SCIENCE",          "AGR-SS1",   "SS1"},
-                {"AGRICULTURAL SCIENCE",          "AGR-SS2",   "SS2"},
-                {"AGRICULTURAL SCIENCE",          "AGR-SS3",   "SS3"},
-                {"BASIC SCIENCE",                 "BSC-JSS1",  "JSS1"},
-                {"BASIC SCIENCE",                 "BSC-JSS2",  "JSS2"},
-                {"BASIC SCIENCE",                 "BSC-JSS3",  "JSS3"},
-                {"BASIC TECHNOLOGY",              "BTH-JSS1",  "JSS1"},
-                {"BASIC TECHNOLOGY",              "BTH-JSS2",  "JSS2"},
-                {"BASIC TECHNOLOGY",              "BTH-JSS3",  "JSS3"},
-                {"BIOLOGY",                       "BIO-SS1",   "SS1"},
-                {"BIOLOGY",                       "BIO-SS2",   "SS2"},
-                {"BIOLOGY",                       "BIO-SS3",   "SS3"},
-                {"BUSINESS STUDIES",              "BUS-JSS1",  "JSS1"},
-                {"BUSINESS STUDIES",              "BUS-JSS2",  "JSS2"},
-                {"BUSINESS STUDIES",              "BUS-JSS3",  "JSS3"},
-                {"CHEMISTRY",                     "CHM-SS1",   "SS1"},
-                {"CHEMISTRY",                     "CHM-SS2",   "SS2"},
-                {"CHEMISTRY",                     "CHM-SS3",   "SS3"},
-                {"CHRISTIAN RELIGIOUS STUDIES",   "CRS-JSS1",  "JSS1"},
-                {"CHRISTIAN RELIGIOUS STUDIES",   "CRS-JSS2",  "JSS2"},
-                {"CHRISTIAN RELIGIOUS STUDIES",   "CRS-JSS3",  "JSS3"},
-                {"CHRISTIAN RELIGIOUS STUDIES",   "CRS-SS1",   "SS1"},
-                {"CHRISTIAN RELIGIOUS STUDIES",   "CRS-SS2",   "SS2"},
-                {"CHRISTIAN RELIGIOUS STUDIES",   "CRS-SS3",   "SS3"},
-                {"CIVIC EDUCATION",               "CIV-JSS1",  "JSS1"},
-                {"CIVIC EDUCATION",               "CIV-JSS2",  "JSS2"},
-                {"CIVIC EDUCATION",               "CIV-JSS3",  "JSS3"},
-                {"CIVIC EDUCATION",               "CIV-SS1",   "SS1"},
-                {"CIVIC EDUCATION",               "CIV-SS2",   "SS2"},
-                {"CIVIC EDUCATION",               "CIV-SS3",   "SS3"},
-                {"COMMERCE",                      "COM-SS1",   "SS1"},
-                {"COMMERCE",                      "COM-SS2",   "SS2"},
-                {"COMMERCE",                      "COM-SS3",   "SS3"},
-                {"CULTURAL AND CREATIVE ART",     "CCA-JSS1",  "JSS1"},
-                {"CULTURAL AND CREATIVE ART",     "CCA-JSS2",  "JSS2"},
-                {"CULTURAL AND CREATIVE ART",     "CCA-JSS3",  "JSS3"},
-                {"DATA PROCESSING",               "DTP-SS1",   "SS1"},
-                {"DATA PROCESSING",               "DTP-SS2",   "SS2"},
-                {"DATA PROCESSING",               "DTP-SS3",   "SS3"},
-                {"DIGITAL TECHNOLOGY",            "DGT-JSS1",  "JSS1"},
-                {"DIGITAL TECHNOLOGY",            "DGT-JSS2",  "JSS2"},
-                {"DIGITAL TECHNOLOGY",            "DGT-JSS3",  "JSS3"},
-                {"ECONOMICS",                     "ECO-SS1",   "SS1"},
-                {"ECONOMICS",                     "ECO-SS2",   "SS2"},
-                {"ECONOMICS",                     "ECO-SS3",   "SS3"},
-                {"ENGLISH LANGUAGE",              "ENG-JSS1",  "JSS1"},
-                {"ENGLISH LANGUAGE",              "ENG-JSS2",  "JSS2"},
-                {"ENGLISH LANGUAGE",              "ENG-JSS3",  "JSS3"},
-                {"ENGLISH LANGUAGE",              "ENG-SS1",   "SS1"},
-                {"ENGLISH LANGUAGE",              "ENG-SS2",   "SS2"},
-                {"ENGLISH LANGUAGE",              "ENG-SS3",   "SS3"},
-                {"FRENCH",                        "FRN-JSS1",  "JSS1"},
-                {"FRENCH",                        "FRN-JSS2",  "JSS2"},
-                {"FRENCH",                        "FRN-JSS3",  "JSS3"},
-                {"FRENCH",                        "FRN-SS1",   "SS1"},
-                {"FRENCH",                        "FRN-SS2",   "SS2"},
-                {"FRENCH",                        "FRN-SS3",   "SS3"},
-                {"FURTHER MATHEMATICS",           "FMT-SS1",   "SS1"},
-                {"FURTHER MATHEMATICS",           "FMT-SS2",   "SS2"},
-                {"FURTHER MATHEMATICS",           "FMT-SS3",   "SS3"},
-                {"GEOGRAPHY",                     "GEO-SS1",   "SS1"},
-                {"GEOGRAPHY",                     "GEO-SS2",   "SS2"},
-                {"GEOGRAPHY",                     "GEO-SS3",   "SS3"},
-                {"GOVERNMENT",                    "GOV-SS1",   "SS1"},
-                {"GOVERNMENT",                    "GOV-SS2",   "SS2"},
-                {"GOVERNMENT",                    "GOV-SS3",   "SS3"},
-                {"HAUSA LANGUAGE",                "HAS-JSS1",  "JSS1"},
-                {"HAUSA LANGUAGE",                "HAS-JSS2",  "JSS2"},
-                {"HAUSA LANGUAGE",                "HAS-JSS3",  "JSS3"},
-                {"HAUSA LANGUAGE",                "HAS-SS1",   "SS1"},
-                {"HAUSA LANGUAGE",                "HAS-SS2",   "SS2"},
-                {"HAUSA LANGUAGE",                "HAS-SS3",   "SS3"},
-                {"HOME ECONOMICS",                "HEC-JSS1",  "JSS1"},
-                {"HOME ECONOMICS",                "HEC-JSS2",  "JSS2"},
-                {"HOME ECONOMICS",                "HEC-JSS3",  "JSS3"},
-                {"IGBO LANGUAGE",                 "IGB-JSS1",  "JSS1"},
-                {"IGBO LANGUAGE",                 "IGB-JSS2",  "JSS2"},
-                {"IGBO LANGUAGE",                 "IGB-JSS3",  "JSS3"},
-                {"IGBO LANGUAGE",                 "IGB-SS1",   "SS1"},
-                {"IGBO LANGUAGE",                 "IGB-SS2",   "SS2"},
-                {"IGBO LANGUAGE",                 "IGB-SS3",   "SS3"},
-                {"ISLAMIC RELIGIOUS KNOWLEDGE",   "IRK-JSS1",  "JSS1"},
-                {"ISLAMIC RELIGIOUS KNOWLEDGE",   "IRK-JSS2",  "JSS2"},
-                {"ISLAMIC RELIGIOUS KNOWLEDGE",   "IRK-JSS3",  "JSS3"},
-                {"ISLAMIC RELIGIOUS KNOWLEDGE",   "IRS-SS1",   "SS1"},
-                {"ISLAMIC RELIGIOUS KNOWLEDGE",   "IRS-SS2",   "SS2"},
-                {"ISLAMIC RELIGIOUS KNOWLEDGE",   "IRS-SS3",   "SS3"},
-                {"LITERATURE IN ENGLISH",         "LIT-SS1",   "SS1"},
-                {"LITERATURE IN ENGLISH",         "LIT-SS2",   "SS2"},
-                {"LITERATURE IN ENGLISH",         "LIT-SS3",   "SS3"},
-                {"MATHEMATICS",                   "MTH-JSS1",  "JSS1"},
-                {"MATHEMATICS",                   "MTH-JSS2",  "JSS2"},
-                {"MATHEMATICS",                   "MTH-JSS3",  "JSS3"},
-                {"MATHEMATICS",                   "MTH-SS1",   "SS1"},
-                {"MATHEMATICS",                   "MTH-SS2",   "SS2"},
-                {"MATHEMATICS",                   "MTH-SS3",   "SS3"},
-                {"OFFICE PRACTICE",               "OFP-SS1",   "SS1"},
-                {"OFFICE PRACTICE",               "OFP-SS2",   "SS2"},
-                {"OFFICE PRACTICE",               "OFP-SS3",   "SS3"},
-                {"PHYSICAL HEALTH EDUCATION",     "PHE-JSS1",  "JSS1"},
-                {"PHYSICAL HEALTH EDUCATION",     "PHE-JSS2",  "JSS2"},
-                {"PHYSICAL HEALTH EDUCATION",     "PHE-JSS3",  "JSS3"},
-                {"PHYSICAL HEALTH EDUCATION",     "PHE-SS1",   "SS1"},
-                {"PHYSICAL HEALTH EDUCATION",     "PHE-SS2",   "SS2"},
-                {"PHYSICAL HEALTH EDUCATION",     "PHE-SS3",   "SS3"},
-                {"PHYSICS",                       "PHY-SS1",   "SS1"},
-                {"PHYSICS",                       "PHY-SS2",   "SS2"},
-                {"PHYSICS",                       "PHY-SS3",   "SS3"},
-                {"SECURITY EDUCATION",            "SEC-JSS1",  "JSS1"},
-                {"SECURITY EDUCATION",            "SEC-JSS2",  "JSS2"},
-                {"SECURITY EDUCATION",            "SEC-JSS3",  "JSS3"},
-                {"SOCIAL STUDIES",                "SST-JSS1",  "JSS1"},
-                {"SOCIAL STUDIES",                "SST-JSS2",  "JSS2"},
-                {"SOCIAL STUDIES",                "SST-JSS3",  "JSS3"},
-                {"TECHNICAL DRAWING",             "TDW-SS1",   "SS1"},
-                {"TECHNICAL DRAWING",             "TDW-SS2",   "SS2"},
-                {"TECHNICAL DRAWING",             "TDW-SS3",   "SS3"},
-                {"TRADE SUBJECT",                 "TRD-SS1",   "SS1"},
-                {"TRADE SUBJECT",                 "TRD-SS2",   "SS2"},
-                {"TRADE SUBJECT",                 "TRD-SS3",   "SS3"},
-                {"VISUAL ARTS",                   "VAS-SS1",   "SS1"},
-                {"VISUAL ARTS",                   "VAS-SS2",   "SS2"},
-                {"VISUAL ARTS",                   "VAS-SS3",   "SS3"},
-                {"YORUBA LANGUAGE",               "YRB-JSS1",  "JSS1"},
-                {"YORUBA LANGUAGE",               "YRB-JSS2",  "JSS2"},
-                {"YORUBA LANGUAGE",               "YRB-JSS3",  "JSS3"},
-                {"YORUBA LANGUAGE",               "YRB-SS1",   "SS1"},
-                {"YORUBA LANGUAGE",               "YRB-SS2",   "SS2"},
-                {"YORUBA LANGUAGE",               "YRB-SS3",   "SS3"},
-            };
+            String[][] subjects = SUBJECT_CATALOG;
+           };
 
             int inserted = 0;
             for (String[] sub : subjects) {

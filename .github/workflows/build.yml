@@ -253,6 +253,11 @@ jobs:
           KLC_SMTP_PASS: ${{ secrets.KLC_SMTP_PASS }}
           KLC_SMTP_FROM_NAME: ${{ secrets.KLC_SMTP_FROM_NAME }}
           KLC_SMTP_FROM_EMAIL: ${{ secrets.KLC_SMTP_FROM_EMAIL }}
+          # OPTIONAL: seed the cloud SUPER_ADMIN securely on a fresh project.
+          # Leave unset to skip (registration with the super-admin code, or a
+          # manual SQL hash, are the fallbacks).
+          KLC_SUPERADMIN_EMAIL: ${{ secrets.KLC_SUPERADMIN_EMAIL }}
+          KLC_SUPERADMIN_PASSWORD: ${{ secrets.KLC_SUPERADMIN_PASSWORD }}
         run: |
           if [ -z "$KLC_SUPABASE_URL" ]; then
             echo "::notice::Secrets not set - building WITHOUT embedded config (lab PCs use local config.properties)."
@@ -281,6 +286,8 @@ jobs:
           code.student=$KLC_CODE_STUDENT
           social.allow_student_staff_dm=false
           social.allow_student_attachments=false
+          app.superadmin.email=$KLC_SUPERADMIN_EMAIL
+          app.superadmin.password=$KLC_SUPERADMIN_PASSWORD
           smtp.host=$KLC_SMTP_HOST
           smtp.port=$KLC_SMTP_PORT
           smtp.user=$KLC_SMTP_USER
