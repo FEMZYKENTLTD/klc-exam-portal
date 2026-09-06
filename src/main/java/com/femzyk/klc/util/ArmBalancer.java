@@ -36,7 +36,8 @@ public final class ArmBalancer {
         public final String userId;
         public final String name;
         public final String admissionNo;
-        public final String arm;
+        /** Current arm - mutable so the caller can apply a proposed Move. */
+        public String arm;
         public Student(String userId, String name, String admissionNo,
                        String arm) {
             this.userId = userId;
