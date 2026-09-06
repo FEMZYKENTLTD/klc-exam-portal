@@ -192,11 +192,8 @@ public class AdminDashboardController {
     private void connectRealtime() {
         closeWebSocket();
         try {
-            Properties p = new Properties();
-            try (InputStream in = getClass()
-                    .getResourceAsStream("/config.properties")) {
-                if (in != null) p.load(in);
-            }
+            // Merged embedded (classpath) + external overrides (AppConfig).
+            Properties p = com.femzyk.klc.util.AppConfig.properties();
             String base = p.getProperty("supabase.url", "").trim();
             String key  = p.getProperty("supabase.key", "").trim();
             if (base.isBlank() || key.isBlank()) {

@@ -42,13 +42,9 @@ public class ConfigService {
 
     private static synchronized void loadProps() {
         if (appProps != null) return;
-        java.util.Properties p = new java.util.Properties();
-        try (java.io.InputStream in =
-                 ConfigService.class.getResourceAsStream(
-                     "/config.properties")) {
-            if (in != null) p.load(in);
-        } catch (Exception ignored) {}
-        appProps = p;
+        // Merged classpath (embedded) + external overrides, loaded once per
+        // JVM by AppConfig - never per-call.
+        appProps = AppConfig.properties();
     }
 
     public static void reload(){

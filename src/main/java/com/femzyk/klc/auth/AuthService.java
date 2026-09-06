@@ -53,11 +53,8 @@ public class AuthService {
 
     static {
         try {
-            Properties p = new Properties();
-            try (InputStream in = AuthService.class
-                    .getResourceAsStream("/config.properties")) {
-                if (in != null) p.load(in);
-            }
+            // Merged classpath (embedded) + external overrides (AppConfig).
+            Properties p = AppConfig.properties();
             codeSuperAdmin = trimToNull(p.getProperty("code.super_admin"));
             codeAdmin      = trimToNull(p.getProperty("code.admin"));
             codeStudent    = trimToNull(p.getProperty("code.student"));

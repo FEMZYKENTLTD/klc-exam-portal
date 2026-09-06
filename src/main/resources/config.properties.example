@@ -1,6 +1,18 @@
 # KLC CBT Suite v1.0 - configuration template
 # Copy to: src/main/resources/config.properties  (gitignored - never commit)
-# On lab PCs keep this file next to the packaged JAR with real values.
+#
+# OVERRIDE PRECEDENCE (see docs/INSTALLER_GUIDE.md): a deployment never
+# needs to rebuild to change values. Effective config = embedded default
+# (config.properties inside the JAR, injected by CI from repo secrets)
+# overlaid by the first of these EXTERNAL config.properties files:
+#   1. ./config.properties          (current working folder)
+#   2. <jar folder>/config.properties
+#   3. <folder ABOVE the jar>/config.properties  - the folder that holds
+#      the launcher .exe in the KLC-CBT-Suite app image. Put a school's
+#      file here on each lab PC to override the embedded values.
+# An external file with only SOME keys keeps the embedded values for the
+# rest. Keep it gitignored and never commit it.
+# On lab PCs keep this file beside the packaged exe with real values.
 
 # ── Supabase cloud (Storage + REST + DB) ────────────────────────────────────
 supabase.url=YOUR_SUPABASE_URL

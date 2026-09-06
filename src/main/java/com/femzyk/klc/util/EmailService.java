@@ -46,11 +46,8 @@ public class EmailService {
 
     static {
         try {
-            Properties p = new Properties();
-            try (var in = EmailService.class
-                    .getResourceAsStream("/config.properties")) {
-                if (in != null) p.load(in);
-            }
+            // Merged embedded (classpath) + external overrides (AppConfig).
+            Properties p = AppConfig.properties();
             smtpHost  = p.getProperty("smtp.host",       "");
             smtpPort  = p.getProperty("smtp.port",       "587");
             smtpUser  = p.getProperty("smtp.user",       "");
