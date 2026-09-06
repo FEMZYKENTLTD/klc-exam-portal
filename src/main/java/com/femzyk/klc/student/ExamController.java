@@ -53,6 +53,7 @@ public class ExamController {
     private boolean highContrast  = false;
     private boolean dyslexicFont  = false;
     private boolean isPractice    = false;
+    private boolean isMock        = false;    // mock mode: timed, exam-style, NEVER recorded as an official result
     private String formulaSheetText =
         "Area = L x W\nVolume = L x W x H\na^2 + b^2 = c^2\n" +
         "Quadratic: x = (-b +/- sqrt(b^2-4ac))/2a\nSpeed = Distance / Time";
@@ -129,7 +130,7 @@ public class ExamController {
         st.setFullScreen(true);
 
         // Anti-Malpractice: Only enable 3-strike proctoring for official (non-practice) exams
-        if (!isPractice) {
+        if (!isPractice && !isMock) {
             new FocusLossDetector(
                 st,
                 strikes -> {
@@ -148,7 +149,8 @@ public class ExamController {
             );
         } else {
             if (strikeLabel != null) {
-                strikeLabel.setText("Practice Mode | Anti-Malpractice Disabled");
+                strikeLabel.setText((isMock ? "Mock Exam" : "Practice Mode")
+                    + " | Anti-Malpractice Disabled | Not recorded officially");
             }
         }
 
@@ -233,7 +235,8 @@ public class ExamController {
                    s.subject_code || ' - ' || e.class_level AS title,
                    COALESCE(fs.content,'') AS formula,
                    e.negative_marking,
-                   COALESCE(e.is_practice, FALSE)
+                   COALESCE(e.is_practice, FALSE),
+                   COALESCE(e.is_mock, FALSE)
             FROM exams e
             JOIN subjects s ON s.id = e.subject_id
             LEFT JOIN formula_sheets fs
@@ -250,8 +253,11 @@ public class ExamController {
                 if (f != null && !f.isBlank()) formulaSheetText = f;
                 negativeMarking = rs.getDouble(4);
                 isPractice = rs.getBoolean(5);
+                isMock     = rs.getBoolean(6);
                 if (isPractice) {
                     titleText += "  [PRACTICE MODE - NOT RECORDED]";
+                } else if (isMock) {
+                    titleText += "  [MOCK EXAM - NOT RECORDED]";
                 }
                 if (examTitleLabel != null)
                     examTitleLabel.setText(titleText);
@@ -1020,32 +1026,46 @@ public class ExamController {
             double rawScore = score.rawScore;
             double pct      = score.percentage;
 
-            if (isPractice) {
-                // Practice Mode: update attempt status only, DO NOT insert into official results table
+            if (isPractice || isMock) {
+                // Practice / Mock mode: update the attempt status ONLY.
+                // NEVER write an official results row - mock and practice
+                // results must not contaminate position, report cards,
+                // transcripts, CA or the official examination record.
+                String modeStatus = isMock ? "MOCK_SUBMITTED"
+                                           : "PRACTICE_SUBMITTED";
                 try (PreparedStatement ps = c.prepareStatement(
                         "UPDATE exam_attempts " +
                         "SET submitted_at = CURRENT_TIMESTAMP, status = ? " +
                         "WHERE id = ?")) {
-                    ps.setString(1, "PRACTICE_SUBMITTED");
+                    ps.setString(1, modeStatus);
                     AuthService.setUuid(ps, 2, attemptId, c);
                     ps.executeUpdate();
                 }
 
+                String modeTitle = isMock ? "MOCK EXAM COMPLETED"
+                                          : "PRACTICE EXAM COMPLETED";
+                String modeLabel = isMock ? "MOCK SCORE" : "PRACTICE SCORE";
+                String modeNote  = isMock
+                    ? "Note: MOCK results are NOT recorded on your permanent "
+                      + "academic record - they never affect position, "
+                      + "report cards or transcripts."
+                    : "Note: Practice results are NOT recorded on your "
+                      + "permanent academic record.";
                 resultSummary = String.format(
-                    "PRACTICE EXAM COMPLETED\n\n" +
+                    modeTitle + "\n\n" +
                     "Correct:    %d\n" +
                     "Wrong:      %d\n" +
                     "Unanswered: %d\n" +
                     "Negative marking: %.2f per wrong answer\n\n" +
-                    "PRACTICE SCORE:  %.1f / %d\n" +
+                    modeLabel + ":  %.1f / %d\n" +
                     "PERCENTAGE:      %.1f%%\n\n" +
                     "%s" +
                     "Well done, %s!\n" +
-                    "Note: Practice results are NOT recorded on your permanent academic record.",
+                    "%s",
                     correct, wrong, unanswered, negativeMarking,
                     rawScore, questions.size(), pct,
                     topicBreakdownText(),
-                    AuthService.Session.fullName);
+                    AuthService.Session.fullName, modeNote);
 
             } else {
                 // Official Exam Mode: update attempt status, save official result, and send email
@@ -1143,10 +1163,18 @@ public class ExamController {
         // FIX: Show result dialog THEN redirect to dashboard when OK clicked
         Alert resultAlert = new Alert(Alert.AlertType.INFORMATION);
         resultAlert.setTitle("Exam Result");
-        resultAlert.setHeaderText(isPractice ? "Practice Result" : "Your Result");
+        resultAlert.setHeaderText(isPractice ? "Practice Result"
+            : isMock ? "Mock Exam Result" : "Your Result");
         resultAlert.setContentText(resultSummary);
         resultAlert.getDialogPane().setPrefWidth(480);
         resultAlert.showAndWait();
+
+        // Practice / Mock: real learning feedback - allow a full answer
+        // review (question, selected vs correct answer, explanation topic).
+        // Correct answers are NEVER revealed for official examinations.
+        if (isPractice || isMock) {
+            showAnswerReview();
+        }
 
         // After student clicks OK on result - go to dashboard
         Platform.runLater(() -> {
@@ -1157,6 +1185,62 @@ public class ExamController {
             }
         });
     }
+
+
+    /**
+     * Practice / Mock answer review (never shown for official exams).
+     * Lists every question with the topic, the student's selection, the
+     * correct answer and a right/wrong marker so practice is a learning
+     * loop. Reads everything from in-memory state - no DB round trips.
+     */
+    private void showAnswerReview() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(isMock ? "MOCK EXAM - ANSWER REVIEW\n"
+                         : "PRACTICE EXAM - ANSWER REVIEW\n");
+        sb.append("Correct answers are shown here ONLY because this was a ")
+          .append(isMock ? "mock" : "practice").append(" exam.\n");
+        sb.append("Official examinations never reveal answers this way.\n\n");
+
+        int n = 1;
+        for (Question q : questions) {
+            String sel = answers.get(q.id);
+            String correctLabel = correctAnswerMap.get(q.id);
+            String correctText = q.opts == null ? ""
+                : q.opts.getOrDefault(correctLabel, "");
+            boolean right = sel != null && sel.equals(correctLabel);
+            String txt = q.text == null ? "" : q.text.replaceAll("\\s+", " ")
+                .trim();
+            if (txt.length() > 220) txt = txt.substring(0, 220) + "...";
+            sb.append("Q").append(n++).append(" [")
+              .append(q.topic == null || q.topic.isBlank()
+                  ? "no topic" : q.topic).append("] ").append(txt)
+              .append("\n   Your answer: ")
+              .append(sel == null ? "(not answered)" : sel)
+              .append("\n   Correct:     ")
+              .append(correctLabel == null ? "?" : correctLabel)
+              .append(correctText.isBlank() ? "" : " - " + correctText)
+              .append("\n   ").append(right ? "RIGHT" : "WRONG")
+              .append("\n\n");
+        }
+
+        TextArea area = new TextArea(sb.toString());
+        area.setEditable(false);
+        area.setWrapText(false);
+        area.setPrefSize(760, 560);
+        area.setStyle("-fx-font-family: monospace;");
+
+        javafx.scene.control.Dialog<ButtonType> dlg =
+            new javafx.scene.control.Dialog<>();
+        dlg.setTitle("Answer Review");
+        dlg.setHeaderText(isMock ? "Mock Exam Review"
+                                 : "Practice Exam Review");
+        dlg.getDialogPane().setContent(area);
+        dlg.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dlg.getDialogPane().setPrefWidth(820);
+        dlg.initOwner(timerLabel.getScene().getWindow());
+        dlg.showAndWait();
+    }
+
 
     private void alert(String m) {
         Alert a = new Alert(Alert.AlertType.INFORMATION, m);

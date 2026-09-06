@@ -30,7 +30,7 @@ public class ExamManagerController {
     @FXML private Spinner<Integer>  startHour, startMin, endHour, endMin,
                                     questionCountSpinner;
     @FXML private CheckBox          practiceCheck, feeGateCheck,
-                                    negativeMarkCheck;
+                                    negativeMarkCheck, mockCheck;
     @FXML private Label             status, statusLabel;
 
     private final ObservableList<ExamRow> data = FXCollections.observableArrayList();
@@ -89,6 +89,7 @@ public class ExamManagerController {
         setupSpinner(questionCountSpinner, 1, 200, 40);
 
         loadSubjectsIntoBox();
+        com.femzyk.klc.util.ComboSearch.enable(subjectBox);
         loadExams();
         startRealtimeListener();
     }
@@ -123,7 +124,7 @@ public class ExamManagerController {
              PreparedStatement ps = c.prepareStatement(
                  "SELECT e.id, e.title, s.subject_name, e.class_level, " +
                  "e.term, e.duration_minutes, e.is_active, " +
-                 "e.is_practice, e.start_at, e.end_at " +
+                 "e.is_practice, e.is_mock, e.start_at, e.end_at " +
                  "FROM exams e " +
                  "JOIN subjects s ON s.id = e.subject_id " +
                  "ORDER BY e.created_at DESC LIMIT 100")) {
@@ -132,7 +133,9 @@ public class ExamManagerController {
             while (rs.next()) {
                 boolean isActive   = rs.getBoolean("is_active");
                 boolean isPractice = rs.getBoolean("is_practice");
-                String statusStr   = (isPractice ? "[PRACTICE] " : "") +
+                boolean isMock     = rs.getBoolean("is_mock");
+                String statusStr   = (isPractice ? "[PRACTICE] "
+                                       : isMock ? "[MOCK] " : "") +
                     (isActive ? "Active" : "Inactive");
 
                 String sch = "";
@@ -208,6 +211,11 @@ public class ExamManagerController {
                 && negativeMarkCheck.isSelected() ? 0.25 : 0.0;
             boolean practice = practiceCheck != null
                 && practiceCheck.isSelected();
+            boolean mock     = mockCheck != null && mockCheck.isSelected();
+            if (practice && mock) {
+                setStatus("An exam cannot be Practice AND Mock - choose one", true);
+                return;
+            }
             boolean feeGate  = feeGateCheck != null
                 && feeGateCheck.isSelected();
             int     qCount   = questionCountSpinner == null
@@ -223,9 +231,9 @@ public class ExamManagerController {
             try (PreparedStatement ps = c.prepareStatement(
                     "INSERT INTO exams(id, subject_id, class_level, arm, " +
                     "term, session, title, instructions, duration_minutes, " +
-                    "start_at, end_at, attempt_limit, is_practice, fee_gate, " +
-                    "negative_marking, is_active, created_by) " +
-                    "VALUES(?,?,?,NULL,?,?,?,?,?,?,?,1,?,?,?,TRUE,?)")) {
+                    "start_at, end_at, attempt_limit, is_practice, is_mock, " +
+                    "fee_gate, negative_marking, is_active, created_by) " +
+                    "VALUES(?,?,?,NULL,?,?,?,?,?,?,?,1,?,?,?,?,TRUE,?)")) {
                 ps.setString(1, examId);
                 ps.setString(2, subjectId);
                 ps.setString(3, cls);
@@ -238,9 +246,10 @@ public class ExamManagerController {
                 ps.setTimestamp(9, startTs);
                 ps.setTimestamp(10, endTs);
                 ps.setBoolean(11, practice);
-                ps.setBoolean(12, feeGate);
-                ps.setDouble(13, negMark);
-                ps.setString(14, AuthService.Session.userId);
+                ps.setBoolean(12, mock);
+                ps.setBoolean(13, feeGate);
+                ps.setDouble(14, negMark);
+                ps.setString(15, AuthService.Session.userId);
                 ps.executeUpdate();
             }
 
@@ -387,12 +396,12 @@ public class ExamManagerController {
             try (PreparedStatement ps = c.prepareStatement(
                     "INSERT INTO exams(id, subject_id, class_level, arm, " +
                     "term, session, title, instructions, duration_minutes, " +
-                    "attempt_limit, is_practice, fee_gate, negative_marking, " +
-                    "is_active, created_by) " +
+                    "attempt_limit, is_practice, is_mock, fee_gate, " +
+                    "negative_marking, is_active, created_by) " +
                     "SELECT ?, subject_id, class_level, arm, " +
                     "term, session, title || ' (Copy)', instructions, " +
-                    "duration_minutes, attempt_limit, is_practice, fee_gate, " +
-                    "negative_marking, FALSE, created_by " +
+                    "duration_minutes, attempt_limit, is_practice, is_mock, " +
+                    "fee_gate, negative_marking, FALSE, created_by " +
                     "FROM exams WHERE id = ?")) {
                 ps.setString(1, newId);
                 ps.setString(2, r.id);

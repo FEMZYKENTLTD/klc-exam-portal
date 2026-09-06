@@ -209,6 +209,9 @@ jobs:
     name: Compile & package (Java 17)
     runs-on: ubuntu-latest
     needs: migrate
+    permissions:
+      contents: write   # rolling pre-release upload on main
+      pull-requests: write  # failure-diagnostic comments on PRs
     # A failed migration (e.g. expired DB password) must NOT stop the JAR
     # from being published - the JAR does not depend on the cloud. The
     # migrate job failure still shows as red on the workflow run.
@@ -298,7 +301,42 @@ jobs:
           echo "config.properties generated from secrets (values hidden)."
 
       - name: Build fat JAR
-        run: mvn -B -ntp clean package
+        run: |
+          set -o pipefail
+          mvn -B -ntp clean package 2>&1 | tee mvn_build.log
+
+      # Failure diagnostics are posted straight onto the PR so a build/test
+      # failure can be read from the API (comments are reachable even where
+      # the Actions log download endpoint is not).
+      - name: Report build/test failure on the PR
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRNUM="${{ github.event.pull_request.number }}"
+          {
+            echo "Build/tests failed on commit \`${GITHUB_SHA:0:7}\`."
+            echo
+            echo '```'
+            tail -c 12000 mvn_build.log 2>/dev/null || true
+            echo '```'
+          } > /tmp/klc_fail_body.md
+          if ls target/surefire-reports/*.txt >/dev/null 2>&1; then
+            {
+              echo
+              echo '### Failing tests (surefire)'
+              echo '```'
+              for f in target/surefire-reports/*.txt; do
+                if grep -qE 'FAILURE|ERROR' "$f" 2>/dev/null; then
+                  echo "--- $f"
+                  tail -c 1500 "$f"
+                fi
+              done
+              echo '```'
+            } >> /tmp/klc_fail_body.md
+          fi
+          gh pr comment "$PRNUM" --body-file /tmp/klc_fail_body.md 2>/dev/null \
+            || echo "Could not post failure comment (token permissions)."
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4

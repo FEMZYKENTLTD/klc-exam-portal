@@ -23,6 +23,7 @@ import javafx.util.Duration;
 import java.awt.Desktop;
 import java.io.File;
 import java.sql.*;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -257,6 +258,9 @@ public class StudentDashboardController {
             if (subjectBox != null) subjectBox.getItems().clear();
             while (rs.next())
                 if (subjectBox != null) subjectBox.getItems().add(rs.getString(1));
+            // Searchable subject picker: typing filters the list (directive
+            // - subject selection must not be a static dropdown only).
+            com.femzyk.klc.util.ComboSearch.enable(subjectBox);
         } catch (Exception ignored) {}
     }
 
@@ -702,6 +706,7 @@ public class StudentDashboardController {
                     "WHERE (s.subject_name = ? OR s.subject_code = ?) " +
                     "  AND e.class_level = ? AND e.is_active = TRUE " +
                     "  AND e.is_practice = FALSE " +
+                    "  AND COALESCE(e.is_mock, FALSE) = FALSE " +
                     "  AND (e.start_at IS NULL OR e.start_at <= CURRENT_TIMESTAMP) " +
                     "  AND (e.end_at IS NULL OR e.end_at >= CURRENT_TIMESTAMP) " +
                     "ORDER BY e.created_at DESC LIMIT 1")) {
@@ -712,10 +717,41 @@ public class StudentDashboardController {
                 if (rs.next()) { examId = rs.getString(1); examTitle = rs.getString(2); }
             }
             if (examId == null) {
-                new Alert(Alert.AlertType.INFORMATION,
-                    "No active exam found for " + selectedSubject +
-                    " - " + classLevel).showAndWait();
-                return;
+                // No OFFICIAL exam is live for this subject/class right now.
+                // Offer any scheduled MOCK exam instead - mock runs are timed
+                // and exam-style but are NEVER recorded as official results.
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT e.id, e.title FROM exams e " +
+                        "JOIN subjects s ON s.id = e.subject_id " +
+                        "WHERE (s.subject_name = ? OR s.subject_code = ?) " +
+                        "  AND e.class_level = ? AND e.is_active = TRUE " +
+                        "  AND COALESCE(e.is_mock, FALSE) = TRUE " +
+                        "  AND (e.start_at IS NULL OR e.start_at <= CURRENT_TIMESTAMP) " +
+                        "  AND (e.end_at IS NULL OR e.end_at >= CURRENT_TIMESTAMP) " +
+                        "ORDER BY e.created_at DESC LIMIT 1")) {
+                    ps.setString(1, selectedSubject);
+                    ps.setString(2, selectedSubject);
+                    ps.setString(3, classLevel);
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        examId = rs.getString(1);
+                        examTitle = rs.getString(2);
+                    }
+                }
+                if (examId == null) {
+                    new Alert(Alert.AlertType.INFORMATION,
+                        "No active exam or scheduled mock found for "
+                        + selectedSubject + " - " + classLevel).showAndWait();
+                    return;
+                }
+                java.util.Optional<ButtonType> ans = new Alert(
+                    Alert.AlertType.CONFIRMATION,
+                    "There is no OFFICIAL exam live right now, but a MOCK "
+                    + "exam is scheduled:\n\n" + examTitle + "\n\n"
+                    + "Start the mock? MOCK results are NOT recorded "
+                    + "officially (no effect on position or report cards).",
+                    ButtonType.YES, ButtonType.NO).showAndWait();
+                if (!ans.isPresent() || ans.get() != ButtonType.YES) return;
             }
             try (PreparedStatement chk = c.prepareStatement(
                     "SELECT status FROM exam_attempts " +

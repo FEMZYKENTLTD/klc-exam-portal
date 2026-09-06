@@ -164,6 +164,7 @@
 				<!-- Options + Action Buttons -->
 				<HBox spacing="12" alignment="CENTER_LEFT">
 					<CheckBox fx:id="practiceCheck" text="Practice Mode"/>
+					<CheckBox fx:id="mockCheck" text="Mock Exam (not recorded officially)" tooltip="Timed exam-style run whose result never affects position, report cards or transcripts"/>
 					<CheckBox fx:id="feeGateCheck"  text="Fee Gate"/>
 					<CheckBox fx:id="negativeMarkCheck" text="Negative Marking (-0.25)"/>
 					<Region HBox.hgrow="ALWAYS"/>

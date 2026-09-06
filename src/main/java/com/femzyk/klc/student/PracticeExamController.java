@@ -64,6 +64,8 @@ public class PracticeExamController {
                 subjectIdMap.put(name, id);
             }
 
+            com.femzyk.klc.util.ComboSearch.enable(subjectBox);
+
             if (subjectMap.isEmpty())
                 setStatus("No active subjects found. Contact admin.", true);
 

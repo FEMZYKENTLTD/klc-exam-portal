@@ -15,6 +15,12 @@
 -- ── 0. Schema top-ups (harmless if the app already created these) ──────────
 ALTER TABLE questions      ADD COLUMN IF NOT EXISTS topic VARCHAR(150);
 ALTER TABLE school_profile ADD COLUMN IF NOT EXISTS campus_name VARCHAR(120);
+-- v1.0 mock exam mode: timed exam-style runs EXCLUDED from official results
+ALTER TABLE exams ADD COLUMN IF NOT EXISTS is_mock BOOLEAN DEFAULT FALSE;
+-- v1.0 practice/mock exams must never appear in official analytics positions
+CREATE OR REPLACE VIEW v_official_exams AS
+  SELECT * FROM exams WHERE COALESCE(is_practice,FALSE)=FALSE
+                        AND COALESCE(is_mock,FALSE)=FALSE;
 
 -- v1.0 parent portal: the original schema's role CHECK constraint does NOT
 -- include 'PARENT', so parent registration failed on cloud projects

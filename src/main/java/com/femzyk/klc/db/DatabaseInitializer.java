@@ -225,6 +225,7 @@ public class DatabaseInitializer {
             "  end_at           TIMESTAMP," +
             "  attempt_limit    INT          DEFAULT 1," +
             "  is_practice      BOOLEAN      DEFAULT FALSE," +
+            "  is_mock          BOOLEAN      DEFAULT FALSE," +
             "  fee_gate         BOOLEAN      DEFAULT FALSE," +
             "  negative_marking NUMERIC(3,2) DEFAULT 0," +
             "  is_active        BOOLEAN      DEFAULT TRUE," +
@@ -521,6 +522,8 @@ public class DatabaseInitializer {
                 "phone_type VARCHAR(20)",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS " +
                 "phone_contact VARCHAR(20)",
+            "ALTER TABLE exams ADD COLUMN IF NOT EXISTS " +
+                "is_mock BOOLEAN DEFAULT FALSE",
             "ALTER TABLE questions ADD COLUMN IF NOT EXISTS " +
                 "topic VARCHAR(150)",
             "ALTER TABLE questions ADD COLUMN IF NOT EXISTS " +
@@ -556,6 +559,7 @@ public class DatabaseInitializer {
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP DEFAULT now()",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_type VARCHAR(20)",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_contact VARCHAR(20)",
+            "ALTER TABLE exams ADD COLUMN IF NOT EXISTS is_mock BOOLEAN DEFAULT FALSE",
             "ALTER TABLE announcements ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'APPROVED'",
             "ALTER TABLE study_materials ADD COLUMN IF NOT EXISTS title VARCHAR(200)",
             "CREATE TABLE IF NOT EXISTS formula_sheets (" +
