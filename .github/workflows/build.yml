@@ -371,8 +371,12 @@ jobs:
 
   release:
     name: Versioned release (JAR + zero-JDK Windows bundle)
+    # Runs on version tags. Deliberately does NOT `need: build`: that job's
+    # own dependency (`migrate`) is skipped on tag events, and GitHub skips
+    # downstream jobs whose needs graph contains a skip even when the
+    # intermediate job ran via `if: always()`. This job rebuilds the JAR
+    # itself on Windows anyway, so it is fully self-contained.
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
