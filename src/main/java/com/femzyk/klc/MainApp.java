@@ -41,6 +41,7 @@ public class MainApp extends Application {
         Scene scene = new Scene(loader.load(), 720, 420);
         scene.getStylesheets().add(
             getClass().getResource("/css/klc-premium.css").toExternalForm());
+        com.femzyk.klc.util.ThemeService.apply(scene);   // dark/light theme
 
         stage.setTitle(
             "KNOWLEDGE LAND COLLEGE CBT SUITE v1.0 | Powered by FEMZYK");
@@ -94,6 +95,7 @@ public class MainApp extends Application {
         Scene scene = new Scene(loader.load(), w, h);
         scene.getStylesheets().add(
             MainApp.class.getResource("/css/klc-premium.css").toExternalForm());
+        com.femzyk.klc.util.ThemeService.apply(scene);   // dark/light theme
         primaryStage.setScene(scene);
         primaryStage.setMaximized(true);
     }

@@ -1,0 +1,187 @@
+/* =====================================================================
+   KLC CBT SUITE v1.0 - GLOBAL DARK THEME (directive F6)
+   Loaded LAST (highest precedence among stylesheets) by ThemeService so
+   equal-specificity rules in klc-premium.css are overridden. Inline FXML
+   style attributes still win in JavaFX, therefore the screens were
+   migrated to CSS classes for their page background (`.screen-root`) and
+   navy text fills - this file restyles both themes consistently.
+   ===================================================================== */
+
+.root {
+    -fx-base: #1c2a44;
+    -fx-background: #0d1526;
+    -fx-background-color: #0d1526;
+    -fx-text-background-color: #e6ebf5;
+    -fx-text-fill: #e6ebf5;
+    -fx-control-inner-background: #16213a;
+    -fx-control-inner-background-alt: #1c2a44;
+    -fx-accent: #d4af37;
+    -fx-focus-color: #d4af37;
+    -fx-faint-focus-color: #d4af3722;
+    -fx-mark-color: #d4af37;
+}
+
+/* Page backgrounds moved from inline FXML styles into this class */
+.screen-root {
+    -fx-background-color: #0d1526;
+}
+
+/* Text */
+.label {
+    -fx-text-fill: #e6ebf5;
+}
+.small-muted,
+.small-muted .label {
+    -fx-text-fill: #8fa0bd;
+}
+.muted {
+    -fx-text-fill: #8fa0bd;
+}
+.gold {
+    -fx-text-fill: #d4af37;
+}
+
+/* Cards */
+.card {
+    -fx-background-color: #16213a;
+    -fx-background-radius: 14;
+    -fx-border-color: #243253;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 18, 0, 0, 4);
+}
+
+/* Buttons keep their brand: CSS .btn-primary switches to the gold/ink
+   contrast for dark surfaces; inline-styled buttons (navy/amber) are
+   untouched so their original inline text fills stay readable. */
+.btn-primary {
+    -fx-background-color: #d4af37;
+    -fx-text-fill: #101a2e;
+}
+.btn-primary:hover {
+    -fx-background-color: #e6c55a;
+}
+.btn-primary .label {
+    -fx-text-fill: #101a2e;
+}
+
+/* Inputs */
+.text-field,
+.text-area,
+.combo-box,
+.date-picker,
+.spinner {
+    -fx-background-color: #101a2e;
+    -fx-text-fill: #e6ebf5;
+    -fx-border-color: #33507e;
+}
+.text-field:focused,
+.text-area:focused,
+.combo-box:focused,
+.date-picker:focused {
+    -fx-border-color: #d4af37;
+}
+.combo-box .list-cell,
+.combo-box-base .text {
+    -fx-text-fill: #e6ebf5;
+}
+.check-box .box,
+.radio-button .radio {
+    -fx-background-color: #101a2e;
+    -fx-border-color: #33507e;
+}
+.check-box:selected .box,
+.radio-button:selected .radio {
+    -fx-background-color: #d4af37;
+}
+.check-box:selected .mark,
+.radio-button:selected .dot {
+    -fx-background-color: #101a2e;
+}
+.date-picker .text-field {
+    -fx-background-color: #101a2e;
+}
+
+/* Tables / lists */
+.table-view,
+.tree-table-view,
+.list-view {
+    -fx-background-color: #16213a;
+    -fx-border-color: #243253;
+}
+.table-view .column-header-background {
+    -fx-background-color: #1c2a44;
+}
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: #1c2a44;
+    -fx-border-color: #243253;
+}
+.table-view .column-header .label {
+    -fx-text-fill: #e6ebf5;
+    -fx-font-weight: bold;
+}
+.table-view .table-row-cell {
+    -fx-background-color: #16213a;
+}
+.table-view .table-row-cell:odd {
+    -fx-background-color: #1a2846;
+}
+.table-view .table-row-cell:selected {
+    -fx-background-color: #2a3b63;
+}
+.table-view .table-cell {
+    -fx-text-fill: #e6ebf5;
+    -fx-border-color: transparent transparent #1c2a44 transparent;
+}
+.list-view .list-cell {
+    -fx-background-color: #16213a;
+    -fx-text-fill: #e6ebf5;
+}
+.list-view .list-cell:odd {
+    -fx-background-color: #1a2846;
+}
+
+/* Context menus / popups / combobox dropdowns */
+.context-menu,
+.menu-item .label {
+    -fx-background-color: #1c2a44;
+    -fx-text-fill: #e6ebf5;
+}
+.menu-item:focused .label {
+    -fx-background-color: #2a3b63;
+}
+
+/* Tabs */
+.tab-pane .tab-header-background {
+    -fx-background-color: #101a2e;
+}
+.tab-pane .tab {
+    -fx-background-color: #16213a;
+}
+.tab-pane .tab:selected {
+    -fx-background-color: #2a3b63;
+}
+.tab-pane .tab .tab-label {
+    -fx-text-fill: #e6ebf5;
+}
+
+/* Scrollbars */
+.scroll-bar {
+    -fx-background-color: #101a2e;
+}
+.scroll-bar .thumb {
+    -fx-background-color: #33507e;
+}
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: #101a2e;
+}
+
+/* Separators & remaining chrome */
+.separator .line {
+    -fx-border-color: #33507e;
+}
+.tooltip {
+    -fx-background-color: #1c2a44;
+    -fx-text-fill: #e6ebf5;
+}

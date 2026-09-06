@@ -8,6 +8,7 @@ import javafx.scene.control.TextArea;
 
 import java.sql.*;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * AnalyticsController - KLC CBT Suite v1.0

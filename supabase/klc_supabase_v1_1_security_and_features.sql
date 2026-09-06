@@ -15,37 +15,41 @@
 -- ── 0. Schema top-ups (harmless if the app already created these) ──────────
 ALTER TABLE questions      ADD COLUMN IF NOT EXISTS topic VARCHAR(150);
 ALTER TABLE school_profile ADD COLUMN IF NOT EXISTS campus_name VARCHAR(120);
+-- v1.0 mock exam mode: timed exam-style runs EXCLUDED from official results
+ALTER TABLE exams ADD COLUMN IF NOT EXISTS is_mock BOOLEAN DEFAULT FALSE;
+-- v1.0 practice/mock exams must never appear in official analytics positions
+CREATE OR REPLACE VIEW v_official_exams AS
+  SELECT * FROM exams WHERE COALESCE(is_practice,FALSE)=FALSE
+                        AND COALESCE(is_mock,FALSE)=FALSE;
 
 -- v1.0 parent portal: the original schema's role CHECK constraint does NOT
 -- include 'PARENT', so parent registration failed on cloud projects
 -- (offline/H2 has no such constraint - which is why it worked locally).
 -- Drop the old role check and re-add it with PARENT. Idempotent.
+--
+-- FIX (2026-09-05): the previous version inspected pg_constraint.consrc,
+-- which was REMOVED in PostgreSQL 12 - it errored on Supabase (PG 15) and
+-- on CI (PG 16). This version finds every CHECK constraint whose column
+-- set includes users.role via pg_attribute, drops it, and re-creates the
+-- canonical one including PARENT. Safe to run repeatedly on PG 11+.
 DO $$
 DECLARE r RECORD;
 BEGIN
   FOR r IN
-    SELECT con.conname
+    SELECT DISTINCT con.conname
     FROM pg_constraint con
     JOIN pg_class rel ON rel.oid = con.conrelid
+    JOIN pg_attribute att ON att.attrelid = con.conrelid
+      AND att.attnum = ANY(con.conkey)
     WHERE rel.relname = 'users'
+      AND att.attname = 'role'
       AND con.contype = 'c'
-      AND con.consrc::text ILIKE '%role in (%)%'
-      AND con.consrc::text NOT ILIKE '%parent%'
   LOOP
     EXECUTE format('ALTER TABLE users DROP CONSTRAINT %I', r.conname);
   END LOOP;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint con
-    JOIN pg_class rel ON rel.oid = con.conrelid
-    WHERE rel.relname = 'users'
-      AND con.contype = 'c'
-      AND con.consrc::text ILIKE '%role in (%)%'
-      AND con.consrc::text ILIKE '%parent%'
-  ) THEN
-    ALTER TABLE users ADD CONSTRAINT users_role_v2
-      CHECK (role IN ('SUPER_ADMIN','PRINCIPAL_ADMIN','EXAM_OFFICER',
-                      'TEACHER','STUDENT','PARENT'));
-  END IF;
+  ALTER TABLE users ADD CONSTRAINT users_role_check_v2
+    CHECK (role IN ('SUPER_ADMIN','PRINCIPAL_ADMIN','EXAM_OFFICER',
+                    'TEACHER','STUDENT','PARENT'));
 END $$;
 
 CREATE TABLE IF NOT EXISTS parent_profiles (
@@ -327,3 +331,314 @@ BEGIN
                FROM subjects s ORDER BY s.subject_code;
 END $$;
 GRANT EXECUTE ON FUNCTION staff_subjects(TEXT, TEXT) TO anon;
+-- ---------------------------------------------------------------------------
+-- COMPLETE SUBJECT CATALOGUE (KLC v1.0, 2026-09-05)
+-- Ensures every deployment - fresh AND existing - carries the full Nigerian
+-- secondary-school catalogue for the right class levels (Geography,
+-- Further Mathematics, Civic Education JSS+SSS, all core JSS subjects for
+-- JSS1-JSS3, etc.). Idempotent: subject_code is UNIQUE, ON CONFLICT skips
+-- existing rows. Mirrors DatabaseInitializer.SUBJECT_CATALOG (Java).
+-- ---------------------------------------------------------------------------
+INSERT INTO subjects (id, subject_name, subject_code, class_level, is_active, created_by)
+SELECT uuid_generate_v4(), v.name, v.code, v.klass, TRUE,
+       (SELECT id FROM users WHERE email = 'superadmin@knowledgeland.edu.ng' LIMIT 1)
+FROM (VALUES
+  ('ACCOUNTING','ACC-SS1','SS1'),
+  ('ACCOUNTING','ACC-SS2','SS2'),
+  ('ACCOUNTING','ACC-SS3','SS3'),
+  ('AGRICULTURAL SCIENCE','AGR-JSS1','JSS1'),
+  ('AGRICULTURAL SCIENCE','AGR-JSS2','JSS2'),
+  ('AGRICULTURAL SCIENCE','AGR-JSS3','JSS3'),
+  ('AGRICULTURAL SCIENCE','AGR-SS1','SS1'),
+  ('AGRICULTURAL SCIENCE','AGR-SS2','SS2'),
+  ('AGRICULTURAL SCIENCE','AGR-SS3','SS3'),
+  ('BASIC SCIENCE','BSC-JSS1','JSS1'),
+  ('BASIC SCIENCE','BSC-JSS2','JSS2'),
+  ('BASIC SCIENCE','BSC-JSS3','JSS3'),
+  ('BASIC TECHNOLOGY','BTH-JSS1','JSS1'),
+  ('BASIC TECHNOLOGY','BTH-JSS2','JSS2'),
+  ('BASIC TECHNOLOGY','BTH-JSS3','JSS3'),
+  ('BIOLOGY','BIO-SS1','SS1'),
+  ('BIOLOGY','BIO-SS2','SS2'),
+  ('BIOLOGY','BIO-SS3','SS3'),
+  ('BUSINESS STUDIES','BUS-JSS1','JSS1'),
+  ('BUSINESS STUDIES','BUS-JSS2','JSS2'),
+  ('BUSINESS STUDIES','BUS-JSS3','JSS3'),
+  ('CHEMISTRY','CHM-SS1','SS1'),
+  ('CHEMISTRY','CHM-SS2','SS2'),
+  ('CHEMISTRY','CHM-SS3','SS3'),
+  ('CHRISTIAN RELIGIOUS STUDIES','CRS-JSS1','JSS1'),
+  ('CHRISTIAN RELIGIOUS STUDIES','CRS-JSS2','JSS2'),
+  ('CHRISTIAN RELIGIOUS STUDIES','CRS-JSS3','JSS3'),
+  ('CHRISTIAN RELIGIOUS STUDIES','CRS-SS1','SS1'),
+  ('CHRISTIAN RELIGIOUS STUDIES','CRS-SS2','SS2'),
+  ('CHRISTIAN RELIGIOUS STUDIES','CRS-SS3','SS3'),
+  ('CIVIC EDUCATION','CIV-JSS1','JSS1'),
+  ('CIVIC EDUCATION','CIV-JSS2','JSS2'),
+  ('CIVIC EDUCATION','CIV-JSS3','JSS3'),
+  ('CIVIC EDUCATION','CIV-SS1','SS1'),
+  ('CIVIC EDUCATION','CIV-SS2','SS2'),
+  ('CIVIC EDUCATION','CIV-SS3','SS3'),
+  ('COMMERCE','COM-SS1','SS1'),
+  ('COMMERCE','COM-SS2','SS2'),
+  ('COMMERCE','COM-SS3','SS3'),
+  ('CULTURAL AND CREATIVE ART','CCA-JSS1','JSS1'),
+  ('CULTURAL AND CREATIVE ART','CCA-JSS2','JSS2'),
+  ('CULTURAL AND CREATIVE ART','CCA-JSS3','JSS3'),
+  ('DATA PROCESSING','DTP-SS1','SS1'),
+  ('DATA PROCESSING','DTP-SS2','SS2'),
+  ('DATA PROCESSING','DTP-SS3','SS3'),
+  ('DIGITAL TECHNOLOGY','DGT-JSS1','JSS1'),
+  ('DIGITAL TECHNOLOGY','DGT-JSS2','JSS2'),
+  ('DIGITAL TECHNOLOGY','DGT-JSS3','JSS3'),
+  ('ECONOMICS','ECO-SS1','SS1'),
+  ('ECONOMICS','ECO-SS2','SS2'),
+  ('ECONOMICS','ECO-SS3','SS3'),
+  ('ENGLISH LANGUAGE','ENG-JSS1','JSS1'),
+  ('ENGLISH LANGUAGE','ENG-JSS2','JSS2'),
+  ('ENGLISH LANGUAGE','ENG-JSS3','JSS3'),
+  ('ENGLISH LANGUAGE','ENG-SS1','SS1'),
+  ('ENGLISH LANGUAGE','ENG-SS2','SS2'),
+  ('ENGLISH LANGUAGE','ENG-SS3','SS3'),
+  ('FRENCH','FRN-JSS1','JSS1'),
+  ('FRENCH','FRN-JSS2','JSS2'),
+  ('FRENCH','FRN-JSS3','JSS3'),
+  ('FRENCH','FRN-SS1','SS1'),
+  ('FRENCH','FRN-SS2','SS2'),
+  ('FRENCH','FRN-SS3','SS3'),
+  ('FURTHER MATHEMATICS','FMT-SS1','SS1'),
+  ('FURTHER MATHEMATICS','FMT-SS2','SS2'),
+  ('FURTHER MATHEMATICS','FMT-SS3','SS3'),
+  ('GEOGRAPHY','GEO-SS1','SS1'),
+  ('GEOGRAPHY','GEO-SS2','SS2'),
+  ('GEOGRAPHY','GEO-SS3','SS3'),
+  ('GOVERNMENT','GOV-SS1','SS1'),
+  ('GOVERNMENT','GOV-SS2','SS2'),
+  ('GOVERNMENT','GOV-SS3','SS3'),
+  ('HAUSA LANGUAGE','HAS-JSS1','JSS1'),
+  ('HAUSA LANGUAGE','HAS-JSS2','JSS2'),
+  ('HAUSA LANGUAGE','HAS-JSS3','JSS3'),
+  ('HAUSA LANGUAGE','HAS-SS1','SS1'),
+  ('HAUSA LANGUAGE','HAS-SS2','SS2'),
+  ('HAUSA LANGUAGE','HAS-SS3','SS3'),
+  ('HOME ECONOMICS','HEC-JSS1','JSS1'),
+  ('HOME ECONOMICS','HEC-JSS2','JSS2'),
+  ('HOME ECONOMICS','HEC-JSS3','JSS3'),
+  ('IGBO LANGUAGE','IGB-JSS1','JSS1'),
+  ('IGBO LANGUAGE','IGB-JSS2','JSS2'),
+  ('IGBO LANGUAGE','IGB-JSS3','JSS3'),
+  ('IGBO LANGUAGE','IGB-SS1','SS1'),
+  ('IGBO LANGUAGE','IGB-SS2','SS2'),
+  ('IGBO LANGUAGE','IGB-SS3','SS3'),
+  ('ISLAMIC RELIGIOUS KNOWLEDGE','IRK-JSS1','JSS1'),
+  ('ISLAMIC RELIGIOUS KNOWLEDGE','IRK-JSS2','JSS2'),
+  ('ISLAMIC RELIGIOUS KNOWLEDGE','IRK-JSS3','JSS3'),
+  ('ISLAMIC RELIGIOUS KNOWLEDGE','IRS-SS1','SS1'),
+  ('ISLAMIC RELIGIOUS KNOWLEDGE','IRS-SS2','SS2'),
+  ('ISLAMIC RELIGIOUS KNOWLEDGE','IRS-SS3','SS3'),
+  ('LITERATURE IN ENGLISH','LIT-SS1','SS1'),
+  ('LITERATURE IN ENGLISH','LIT-SS2','SS2'),
+  ('LITERATURE IN ENGLISH','LIT-SS3','SS3'),
+  ('MATHEMATICS','MTH-JSS1','JSS1'),
+  ('MATHEMATICS','MTH-JSS2','JSS2'),
+  ('MATHEMATICS','MTH-JSS3','JSS3'),
+  ('MATHEMATICS','MTH-SS1','SS1'),
+  ('MATHEMATICS','MTH-SS2','SS2'),
+  ('MATHEMATICS','MTH-SS3','SS3'),
+  ('OFFICE PRACTICE','OFP-SS1','SS1'),
+  ('OFFICE PRACTICE','OFP-SS2','SS2'),
+  ('OFFICE PRACTICE','OFP-SS3','SS3'),
+  ('PHYSICAL HEALTH EDUCATION','PHE-JSS1','JSS1'),
+  ('PHYSICAL HEALTH EDUCATION','PHE-JSS2','JSS2'),
+  ('PHYSICAL HEALTH EDUCATION','PHE-JSS3','JSS3'),
+  ('PHYSICAL HEALTH EDUCATION','PHE-SS1','SS1'),
+  ('PHYSICAL HEALTH EDUCATION','PHE-SS2','SS2'),
+  ('PHYSICAL HEALTH EDUCATION','PHE-SS3','SS3'),
+  ('PHYSICS','PHY-SS1','SS1'),
+  ('PHYSICS','PHY-SS2','SS2'),
+  ('PHYSICS','PHY-SS3','SS3'),
+  ('SECURITY EDUCATION','SEC-JSS1','JSS1'),
+  ('SECURITY EDUCATION','SEC-JSS2','JSS2'),
+  ('SECURITY EDUCATION','SEC-JSS3','JSS3'),
+  ('SOCIAL STUDIES','SST-JSS1','JSS1'),
+  ('SOCIAL STUDIES','SST-JSS2','JSS2'),
+  ('SOCIAL STUDIES','SST-JSS3','JSS3'),
+  ('TECHNICAL DRAWING','TDW-SS1','SS1'),
+  ('TECHNICAL DRAWING','TDW-SS2','SS2'),
+  ('TECHNICAL DRAWING','TDW-SS3','SS3'),
+  ('TRADE SUBJECT','TRD-SS1','SS1'),
+  ('TRADE SUBJECT','TRD-SS2','SS2'),
+  ('TRADE SUBJECT','TRD-SS3','SS3'),
+  ('VISUAL ARTS','VAS-SS1','SS1'),
+  ('VISUAL ARTS','VAS-SS2','SS2'),
+  ('VISUAL ARTS','VAS-SS3','SS3'),
+  ('YORUBA LANGUAGE','YRB-JSS1','JSS1'),
+  ('YORUBA LANGUAGE','YRB-JSS2','JSS2'),
+  ('YORUBA LANGUAGE','YRB-JSS3','JSS3'),
+  ('YORUBA LANGUAGE','YRB-SS1','SS1'),
+  ('YORUBA LANGUAGE','YRB-SS2','SS2'),
+  ('YORUBA LANGUAGE','YRB-SS3','SS3')
+) AS v(name, code, klass)
+WHERE NOT EXISTS (SELECT 1 FROM subjects s WHERE s.subject_code = v.code);
+
+-- ---------------------------------------------------------------------------
+-- INVIGILATOR LIVE ROOM (directive F6: invigilator mobile monitor web page)
+-- Read-only room view for invigilators on phones/tablets: every attempt
+-- currently in progress for OFFICIAL exams (practice/mock excluded), with
+-- elapsed time and malpractice strikes. Credentials re-checked per call.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION staff_live_room(
+  p_email TEXT, p_password TEXT, p_minutes INT DEFAULT 240)
+RETURNS TABLE(admission_no VARCHAR, student VARCHAR, subject_code VARCHAR,
+              class_level VARCHAR, arm VARCHAR, exam_title VARCHAR,
+              started_at TIMESTAMP, elapsed_min NUMERIC,
+              strike_count INT, status VARCHAR)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  PERFORM staff_check(p_email, p_password);
+  RETURN QUERY
+  SELECT sp.admission_no,
+         sp.surname || ' ' || COALESCE(sp.other_names,''),
+         s.subject_code, e.class_level, COALESCE(sp.arm,''),
+         COALESCE(e.title,''),
+         ea.started_at,
+         ROUND(EXTRACT(EPOCH FROM (now() - ea.started_at)) / 60.0)::NUMERIC,
+         ea.strike_count, ea.status
+  FROM exam_attempts ea
+  JOIN exams e            ON e.id = ea.exam_id
+  JOIN subjects s         ON s.id = e.subject_id
+  JOIN student_profiles sp ON sp.user_id = ea.student_id
+  WHERE ea.status NOT IN ('SUBMITTED','MALPRACTICE',
+                          'PRACTICE_SUBMITTED','MOCK_SUBMITTED')
+    AND COALESCE(e.is_practice,FALSE) = FALSE
+    AND COALESCE(e.is_mock,FALSE)     = FALSE
+    AND ea.started_at >= now()
+        - make_interval(mins => LEAST(COALESCE(p_minutes,240), 1440))
+  ORDER BY ea.started_at DESC
+  LIMIT 500;
+END $$;
+GRANT EXECUTE ON FUNCTION staff_live_room(TEXT, TEXT, INT) TO anon;
+
+-- ---------------------------------------------------------------------------
+-- WEB QUESTION UPLOAD (directive F6: web-admin question upload)
+-- Staff paste/upload questions from a browser. Credentials verified; a
+-- TEACHER may only upload for subjects assigned to them in
+-- teacher_subjects; EXAM_OFFICER/PRINCIPAL_ADMIN/SUPER_ADMIN may upload to
+-- any active subject. Questions are inserted is_approved = FALSE so the
+-- existing approval workflow still gates what reaches students.
+--
+-- p_questions JSONB example:
+--   [{"q":"2 + 2 = ?","type":"MCQ","topic":"Addition","source":"KLC bank",
+--     "opts":[{"label":"A","text":"4","correct":true},
+--             {"label":"B","text":"22","correct":false}]}]
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION staff_upload_questions(
+  p_email TEXT, p_password TEXT,
+  p_subject_code TEXT, p_class_level TEXT,
+  p_questions JSONB)
+RETURNS INT  -- number of questions inserted
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_role VARCHAR;
+  v_user uuid;
+  v_subject uuid;
+  v_owns BOOLEAN;
+  v_q JSONB;
+  v_opt JSONB;
+  v_qid uuid;
+  v_type VARCHAR(20);
+  v_n INT := 0;
+  v_opts_ok INT;
+BEGIN
+  PERFORM staff_check(p_email, p_password);
+
+  SELECT id, role INTO v_user, v_role
+  FROM users
+  WHERE lower(email) = lower(trim(p_email)) AND is_active
+  LIMIT 1;
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Invalid credentials'; END IF;
+
+  IF p_subject_code IS NULL OR btrim(p_subject_code) = '' THEN
+    RAISE EXCEPTION 'Subject is required';
+  END IF;
+  SELECT id INTO v_subject
+  FROM subjects
+  WHERE upper(subject_code) = upper(btrim(p_subject_code))
+    AND is_active
+  LIMIT 1;
+  IF v_subject IS NULL THEN
+    RAISE EXCEPTION 'Unknown or inactive subject code: %', p_subject_code;
+  END IF;
+
+  IF v_role = 'TEACHER' THEN
+    SELECT EXISTS (
+      SELECT 1 FROM teacher_subjects
+      WHERE teacher_id = v_user AND subject_id = v_subject)
+    INTO v_owns;
+    IF NOT v_owns THEN
+      RAISE EXCEPTION 'You may only upload questions for subjects assigned to you';
+    END IF;
+  END IF;
+
+  IF jsonb_typeof(p_questions) <> 'array'
+     OR jsonb_array_length(p_questions) = 0 THEN
+    RAISE EXCEPTION 'No questions supplied';
+  END IF;
+
+  FOR v_q IN SELECT * FROM jsonb_array_elements(p_questions) LOOP
+    IF v_q->>'q' IS NULL
+       OR length(btrim(coalesce(v_q->>'q',''))) < 5 THEN
+      CONTINUE;  -- skip empty question text
+    END IF;
+    v_type := upper(coalesce(v_q->>'type','MCQ'));
+    IF v_type NOT IN ('MCQ','TRUE_FALSE','IMAGE') THEN v_type := 'MCQ'; END IF;
+
+    v_qid := uuid_generate_v4();
+    INSERT INTO questions(id, subject_id, class_level, topic,
+                          question_text, question_type, source,
+                          marks, is_approved, created_by)
+    VALUES (v_qid, v_subject,
+            NULLIF(btrim(coalesce(p_class_level,'')), ''),
+            NULLIF(btrim(coalesce(v_q->>'topic','')), ''),
+            btrim(v_q->>'q'), v_type,
+            NULLIF(btrim(coalesce(v_q->>'source','')), ''),
+            1, FALSE, v_user);
+
+    v_opts_ok := 0;
+    IF jsonb_typeof(v_q->'opts') = 'array' THEN
+      FOR v_opt IN SELECT * FROM jsonb_array_elements(v_q->'opts') LOOP
+        IF coalesce(v_opt->>'text','') = ''
+           OR coalesce(v_opt->>'label','') NOT IN ('A','B','C','D','E') THEN
+          CONTINUE;
+        END IF;
+        INSERT INTO question_options(id, question_id, option_label,
+                                     option_text, is_correct)
+        VALUES (uuid_generate_v4(), v_qid, v_opt->>'label',
+                btrim(v_opt->>'text'),
+                coalesce((v_opt->>'correct')::boolean, FALSE));
+        v_opts_ok := v_opts_ok + 1;
+      END LOOP;
+    END IF;
+    IF v_type = 'MCQ' AND v_opts_ok < 2 THEN
+      -- an MCQ needs real options; discard this malformed question
+      DELETE FROM questions WHERE id = v_qid;
+      CONTINUE;
+    END IF;
+    v_n := v_n + 1;
+  END LOOP;
+
+  IF v_n > 0 THEN
+    INSERT INTO audit_logs(id, user_id, action, entity_type, entity_id,
+                           details)
+    VALUES (uuid_generate_v4(), v_user,
+            'WEB_QUESTION_UPLOAD', 'questions', v_subject,
+            v_n || ' question(s) queued for approval (code '
+              || upper(btrim(p_subject_code)) || ', class '
+              || coalesce(btrim(p_class_level), 'any')
+              || ', browser upload)');
+  END IF;
+
+  RETURN v_n;
+END $$;
+GRANT EXECUTE ON FUNCTION staff_upload_questions(TEXT, TEXT, TEXT, TEXT,
+                                                 JSONB) TO anon;

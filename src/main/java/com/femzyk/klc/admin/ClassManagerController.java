@@ -119,4 +119,173 @@ public class ClassManagerController {
         if(s==null || !s.matches("\\d{4}/\\d{4}")){ academicStatus.setText("Session format: YYYY/YYYY e.g. 2025/2026"); return; }
         saveAcademic();
     }
+
+    // =========================================================================
+    //  CLASS-ARM AUTO-BALANCING TOOL (directive: class-arm balancing).
+    //  Planner: util.ArmBalancer (pure + unit tested). This controller only
+    //  loads students, previews, and - after explicit admin confirmation -
+    //  applies the minimum moves inside one transaction, audited per move.
+    // =========================================================================
+    private java.util.List<com.femzyk.klc.util.ArmBalancer.Move> pendingMoves
+        = new java.util.ArrayList<>();
+    private String pendingLevel = null, pendingSession = null;
+
+    private String currentSessionText(){
+        if(sessionNameField != null && sessionNameField.getText() != null
+                && !sessionNameField.getText().isBlank())
+            return sessionNameField.getText().trim();
+        return "2024/2025";
+    }
+
+    @FXML
+    private void previewBalance() {
+        String level = cClassLevel == null ? null : cClassLevel.getValue();
+        String session = cSession == null ? null : cSession.getValue();
+        if (level == null) {
+            cStatus.setText("Select a Class Level first (e.g. SS1).");
+            return;
+        }
+        if (session == null || session.isBlank()) session = currentSessionText();
+        try (Connection conn = DatabaseManager.getConnection()) {
+            // Authoritative arm order: arms configured in school_classes for
+            // this class+session; fall back to the arms actually in use.
+            java.util.List<String> arms = new java.util.ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT DISTINCT arm FROM school_classes " +
+                    "WHERE class_level = ? AND session = ? " +
+                    "  AND arm IS NOT NULL AND arm <> '' ORDER BY arm")) {
+                ps.setString(1, level); ps.setString(2, session);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) arms.add(rs.getString(1));
+            }
+            if (arms.isEmpty()) {
+                java.util.Set<String> used = new java.util.TreeSet<>();
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT DISTINCT arm FROM student_profiles " +
+                        "WHERE class_level = ? AND session = ? " +
+                        "  AND arm IS NOT NULL AND arm <> ''")) {
+                    ps.setString(1, level); ps.setString(2, session);
+                    ResultSet rs = ps.executeQuery();
+                    while (rs.next()) used.add(rs.getString(1));
+                }
+                arms.addAll(used);
+            }
+
+            java.util.List<com.femzyk.klc.util.ArmBalancer.Student> students
+                = new java.util.ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT u.id, COALESCE(sp.surname,'') || ' ' || " +
+                    "       COALESCE(sp.other_names,''), " +
+                    "       sp.admission_no, COALESCE(sp.arm,'') " +
+                    "FROM student_profiles sp " +
+                    "JOIN users u ON u.id = sp.user_id " +
+                    "WHERE sp.class_level = ? AND sp.session = ? " +
+                    "  AND sp.arm IS NOT NULL AND sp.arm <> '' " +
+                    "ORDER BY sp.admission_no")) {
+                ps.setString(1, level); ps.setString(2, session);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    students.add(new com.femzyk.klc.util.ArmBalancer.Student(
+                        rs.getString(1), rs.getString(2),
+                        rs.getString(3), rs.getString(4)));
+                }
+            }
+
+            if (students.isEmpty()) {
+                cStatus.setText("No enrolled students found for " + level
+                    + " " + session + ".");
+                return;
+            }
+            pendingLevel   = level;
+            pendingSession = session;
+            pendingMoves   = com.femzyk.klc.util.ArmBalancer.plan(
+                students, arms);
+
+            java.util.Map<String,Integer> counts = new java.util.TreeMap<>();
+            for (com.femzyk.klc.util.ArmBalancer.Student s : students)
+                counts.merge(s.arm, 1, Integer::sum);
+            StringBuilder sb = new StringBuilder();
+            sb.append("Enrolment: ").append(level).append(" - ").append(session)
+              .append(" (").append(students.size()).append(" students)\n\n");
+            for (java.util.Map.Entry<String,Integer> e : counts.entrySet())
+                sb.append("   Arm ").append(e.getKey()).append(": ")
+                  .append(e.getValue()).append("\n");
+
+            if (pendingMoves.isEmpty()) {
+                cStatus.setText("Arms are already balanced for " + level
+                    + " " + session + " - no moves needed.");
+                new Alert(Alert.AlertType.INFORMATION, sb.toString()
+                    + "\nNo moves needed - arms are balanced.").showAndWait();
+                return;
+            }
+            sb.append("\nProposed minimum moves: ")
+              .append(pendingMoves.size()).append("\n");
+            for (com.femzyk.klc.util.ArmBalancer.Move m : pendingMoves) {
+                sb.append("   ").append(m.name).append(" (")
+                  .append(m.admissionNo).append(")  ")
+                  .append(m.fromArm).append("  ->  ").append(m.toArm)
+                  .append("\n");
+            }
+            TextArea ta = new TextArea(sb.toString());
+            ta.setEditable(false);
+            ta.setPrefSize(680, 420);
+            Dialog<ButtonType> dlg = new Dialog<>();
+            dlg.setTitle("Arm Balance Preview");
+            dlg.setHeaderText("Review the proposed arm changes");
+            dlg.getDialogPane().setContent(ta);
+            dlg.getDialogPane().getButtonTypes()
+               .addAll(ButtonType.CLOSE, ButtonType.APPLY);
+            dlg.initOwner(classTable.getScene().getWindow());
+            java.util.Optional<ButtonType> r = dlg.showAndWait();
+            if (r.isPresent() && r.get() == ButtonType.APPLY) applyBalanceNow();
+        } catch (Exception e) {
+            cStatus.setText("Balance error: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void applyBalance() {
+        if (pendingMoves == null || pendingMoves.isEmpty()
+                || pendingLevel == null) {
+            cStatus.setText("Run 'Preview Arm Balance' first - nothing to "
+                + "apply yet.");
+            return;
+        }
+        new Alert(Alert.AlertType.CONFIRMATION,
+            "Apply " + pendingMoves.size() + " arm move(s) for "
+            + pendingLevel + " " + pendingSession + "?\n\n"
+            + "Each student's arm is updated and the change is written to "
+            + "the audit log. This balances class arms evenly.",
+            ButtonType.YES, ButtonType.NO).showAndWait().ifPresent(a -> {
+                if (a == ButtonType.YES) applyBalanceNow();
+            });
+    }
+
+    private void applyBalanceNow() {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            conn.setAutoCommit(false);
+            int done = 0;
+            for (com.femzyk.klc.util.ArmBalancer.Move m : pendingMoves) {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE student_profiles SET arm = ?, " +
+                        "updated_at = now() WHERE user_id = ?")) {
+                    ps.setString(1, m.toArm);
+                    AuthService.setUuid(ps, 2, m.userId, conn);
+                    done += ps.executeUpdate();
+                }
+                AuthService.logAudit("ARM_BALANCE_MOVE",
+                    "student_profiles", m.userId,
+                    m.fromArm + " -> " + m.toArm
+                        + " (" + m.admissionNo + ")");
+            }
+            conn.commit();
+            pendingMoves.clear();
+            cStatus.setText("Arm balance applied: " + done + " student(s) "
+                + "moved for " + pendingLevel + " " + pendingSession + ".");
+            pendingLevel = pendingSession = null;
+            loadClasses();
+        } catch (Exception e) {
+            cStatus.setText("Apply error: " + e.getMessage());
+        }
+    }
 }

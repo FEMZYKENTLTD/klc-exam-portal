@@ -8,14 +8,14 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+<VBox styleClass="screen-root" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.femzyk.klc.student.ParentPortalController"
-      spacing="14" style="-fx-padding:28; -fx-background-color:#f4f7fc;">
+      spacing="14" style="-fx-padding:28">
 
 	<Label text="PARENT PORTAL - KNOWLEDGE LAND COLLEGE"
-           style="-fx-font-size:24px; -fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+           style="-fx-font-size:24px; -fx-font-weight:bold"/>
 	<Label fx:id="wardLabel" text="Loading ward information..."
-           style="-fx-font-size:15px; -fx-text-fill:#0f1f3c; -fx-font-weight:bold;"/>
+           style="-fx-font-size:15px; -fx-font-weight:bold"/>
 
 	<TableView fx:id="resultTable" prefHeight="420" prefWidth="1000">
 		<columns>
@@ -33,9 +33,9 @@
 	</TableView>
 
 	<Label fx:id="statusLabel" wrapText="true"
-           style="-fx-font-size:13px; -fx-text-fill:#555555;"/>
+           style="-fx-font-size:13px; -fx-text-fill:#555555"/>
 	<Label text="Read-only view. Result queries: contact the school office."
-           style="-fx-font-size:12px; -fx-text-fill:#888888;"/>
+           style="-fx-font-size:12px; -fx-text-fill:#888888"/>
 
 	<HBox spacing="10">
 		<Button text="Refresh" onAction="#refresh" styleClass="btn-primary" prefWidth="140"/>

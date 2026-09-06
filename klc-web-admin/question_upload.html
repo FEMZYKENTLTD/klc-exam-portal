@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>QUESTION UPLOAD — KNOWLEDGE LAND COLLEGE CBT</title>
+<link rel="stylesheet" href="style.css"/>
+<script src="config.js"></script>
+<style>
+  textarea { width:100%; min-height:240px; padding:11px 12px;
+    border:1px solid #c8d3e8; border-radius:8px; font-size:13px;
+    font-family:ui-monospace,Consolas,monospace; margin-top:4px;
+    line-height:1.5; }
+  .ok { background:#e8f7ee; color:#166534; border-radius:8px; padding:10px 12px;
+    margin-top:12px; font-size:13px; }
+  .preview { background:#f8fafc; border:1px dashed #c8d3e8; border-radius:10px;
+    padding:12px; font-size:12px; color:#334155; white-space:pre-wrap; }
+  .row2 { display:flex; gap:14px; flex-wrap:wrap; }
+  .row2 label { flex:1; min-width:150px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="school">KNOWLEDGE LAND COLLEGE</div>
+    <div class="tag">Web question upload — saved for approval</div>
+  </div>
+  <nav><a href="index.html">Staff Portal</a>
+    <a href="invigilator.html">Live Room</a><a href="parent.html">Parent Checker</a></nav>
+</header>
+
+<main>
+  <section class="card" id="loginCard">
+    <h1>Teacher / Staff Login</h1>
+    <p class="muted">Questions are stored with <b>is_approved = FALSE</b> —
+      an Exam Officer or Super Admin approves them before any student sees
+      them. Teachers can only upload for subjects assigned to them.</p>
+    <form id="loginForm">
+      <label>Email <input id="email" type="email" required/></label>
+      <label>Password <input id="password" type="password" required/></label>
+      <button class="btn gold" type="submit">LOGIN</button>
+      <div id="loginError" class="error" hidden></div>
+    </form>
+  </section>
+
+  <section id="uploadCard" hidden>
+    <div class="card">
+      <h1 id="who"></h1>
+      <form id="upForm">
+        <div class="row2">
+          <label>Subject code
+            <input id="subjectCode" list="subjectList" placeholder="e.g. MTH-SS1" required/>
+            <datalist id="subjectList"></datalist>
+          </label>
+          <label>Class level
+            <select id="classLevel">
+              <option>JSS1</option><option>JSS2</option><option>JSS3</option>
+              <option>SS1</option><option>SS2</option><option>SS3</option>
+            </select>
+          </label>
+        </div>
+        <label>Load from file (TXT/CSV — same format, parsed in your
+          browser)
+          <input id="filePick" type="file"
+                 accept=".txt,.csv,text/plain,text/csv"/>
+        </label>
+        <label>Questions (plain text — one block per question)
+        <textarea id="questions" placeholder="Question: What is 2 + 2?
+Topic: Addition
+[x] 4
+[ ] 22
+[ ] 6
+[ ] 0
+
+Question: Which gas do plants absorb?
+Topic: Photosynthesis
+[ ] Oxygen
+[x] Carbon dioxide"></textarea>
+        </label>
+        <div class="preview" id="preview"></div>
+        <p class="muted" style="margin-top:4px" id="fileNote"></p>
+        <div id="parseError" class="error" hidden></div>
+        <button class="btn gold" type="submit">UPLOAD TO QUEUE FOR APPROVAL</button>
+        <div id="result"></div>
+        <p class="muted" style="margin-top:12px">Format rules: each question
+          starts with <code>Question:</code> (or a blank line). Option lines
+          begin <code>[x]</code> (correct) or <code>[ ]</code> (wrong).
+          Optional <code>Topic:</code> and <code>Source:</code> lines.
+          Type is MCQ automatically; <code>[x] True</code>/<code>[ ] False</code>
+          only becomes TRUE_FALSE.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>Staff web tools — KNOWLEDGE LAND COLLEGE CBT Suite</footer>
+<script src="question_upload.js"></script>
+</body>
+</html>

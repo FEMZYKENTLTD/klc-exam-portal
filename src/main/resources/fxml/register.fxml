@@ -19,21 +19,20 @@
 	</VBox>
 
 	<ScrollPane fitToWidth="true"
-                style="-fx-background-color:transparent;">
+                style="-fx-background-color:transparent">
 		<HBox spacing="18" alignment="TOP_CENTER"
-              style="-fx-padding:20;">
+              style="-fx-padding:20">
 
 			<!-- Main Registration Form -->
 			<VBox styleClass="card" maxWidth="640" spacing="12">
 
 				<Label text="Account Details"
-                       style="-fx-font-size:16px; -fx-font-weight:bold;
-                              -fx-text-fill:#0f1f3c;"/>
+                       style="-fx-font-size:16px; -fx-font-weight:bold"/>
 
 				<!-- Role -->
 				<VBox spacing="4">
 					<Label text="Account Type"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<ComboBox fx:id="roleBox"
                               promptText="Select your role"
                               maxWidth="1.7976931348623157E308"/>
@@ -42,7 +41,7 @@
 				<!-- Full Name -->
 				<VBox spacing="4">
 					<Label text="Full Name"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<TextField fx:id="nameField"
                                promptText="Enter your full name"/>
 				</VBox>
@@ -50,7 +49,7 @@
 				<!-- Email -->
 				<VBox spacing="4">
 					<Label text="Email Address"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<TextField fx:id="emailField"
                                promptText="Enter your email address"/>
 				</VBox>
@@ -58,7 +57,7 @@
 				<!-- Password -->
 				<VBox spacing="4">
 					<Label text="Password"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<PasswordField fx:id="passField"
                                   promptText="Minimum 6 characters"/>
 					<Label fx:id="passStrengthLabel"
@@ -69,7 +68,7 @@
 				<!-- Confirm Password -->
 				<VBox spacing="4">
 					<Label text="Confirm Password"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<PasswordField fx:id="passConfirmField"
                                   promptText="Re-enter your password"/>
 				</VBox>
@@ -77,7 +76,7 @@
 				<!-- Security Question -->
 				<VBox spacing="4">
 					<Label text="Security Question"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<ComboBox fx:id="securityQuestionBox"
                               promptText="Choose a security question"
                               maxWidth="1.7976931348623157E308"/>
@@ -86,7 +85,7 @@
 				<!-- Security Answer -->
 				<VBox spacing="4">
 					<Label text="Security Answer"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<TextField fx:id="securityAnswerField"
                                promptText="Your answer (used for password reset)"/>
 				</VBox>
@@ -94,7 +93,7 @@
 				<!-- Registration Code -->
 				<VBox spacing="4">
 					<Label text="Registration Code"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<TextField fx:id="codeField"
                                promptText="Enter the registration code provided by your school"/>
 					<!-- FIX: No longer shows actual codes publicly -->
@@ -105,7 +104,7 @@
 				<!-- Phone Contact (Priority 2 no.10 - ALL roles) -->
 				<VBox spacing="4">
 					<Label text="Phone Type"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<ComboBox fx:id="phoneTypeBox"
                               promptText="Personal / Parent / Guardian"
                               maxWidth="1.7976931348623157E308"/>
@@ -113,7 +112,7 @@
 
 				<VBox spacing="4">
 					<Label text="Preferred Contact Method"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<ComboBox fx:id="contactMethodBox"
                               promptText="Call / WhatsApp / Both"
                               maxWidth="1.7976931348623157E308"/>
@@ -123,11 +122,11 @@
 
 				<!-- Student Fields -->
 				<Label text="Student Information (Students Only)"
-                       style="-fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+                       style="-fx-font-weight:bold"/>
 
 				<!-- Surname -->
 				<VBox spacing="4">
-					<Label text="Surname" style="-fx-font-weight:bold;"/>
+					<Label text="Surname" style="-fx-font-weight:bold"/>
 					<TextField fx:id="surnameField"
                                promptText="Enter your surname / last name"/>
 				</VBox>
@@ -135,7 +134,7 @@
 				<!-- Admission No -->
 				<VBox spacing="4">
 					<Label text="Admission Number"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<HBox spacing="6">
 						<TextField fx:id="admissionField"
                                    promptText="e.g. KLC/SS2/045"
@@ -147,7 +146,7 @@
 
 				<!-- Class -->
 				<VBox spacing="4">
-					<Label text="Class" style="-fx-font-weight:bold;"/>
+					<Label text="Class" style="-fx-font-weight:bold"/>
 					<ComboBox fx:id="classBox"
                               promptText="Select your class"
                               maxWidth="1.7976931348623157E308"/>
@@ -155,7 +154,7 @@
 
 				<!-- Arm -->
 				<VBox spacing="4">
-					<Label text="Arm / Stream" style="-fx-font-weight:bold;"/>
+					<Label text="Arm / Stream" style="-fx-font-weight:bold"/>
 					<ComboBox fx:id="armBox"
                               promptText="Select your arm"
                               maxWidth="1.7976931348623157E308"/>
@@ -163,7 +162,7 @@
 
 				<!-- Gender -->
 				<VBox spacing="4">
-					<Label text="Gender" style="-fx-font-weight:bold;"/>
+					<Label text="Gender" style="-fx-font-weight:bold"/>
 					<ComboBox fx:id="genderBox"
                               promptText="Select gender"
                               maxWidth="1.7976931348623157E308"/>
@@ -172,7 +171,7 @@
 				<!-- Parent Phone -->
 				<VBox spacing="4">
 					<Label text="Phone Number (Parent / Guardian for Students)"
-                           style="-fx-font-weight:bold;"/>
+                           style="-fx-font-weight:bold"/>
 					<TextField fx:id="parentPhoneField"
                                promptText="e.g. 08012345678"/>
 				</VBox>
@@ -181,7 +180,7 @@
 
 				<!-- Teacher Fields -->
 				<Label text="Teacher Information (Staff Only)"
-                       style="-fx-font-weight:bold; -fx-text-fill:#0f1f3c;"/>
+                       style="-fx-font-weight:bold"/>
 				<Label text="Select the subjects you teach:"
                        styleClass="small-muted"/>
 				<VBox fx:id="subjectCheckBoxContainer" spacing="5"/>
@@ -198,18 +197,16 @@
 				<Label fx:id="statusLabel"
                        textFill="#c0392b"
                        wrapText="true"
-                       style="-fx-font-size:13px;"/>
+                       style="-fx-font-size:13px"/>
 
 				<Hyperlink text="Already have an account? Back to Login"
                            onAction="#backLogin"/>
 
 				<!-- FIX: General info only, no secret codes shown -->
 				<VBox spacing="3"
-                      style="-fx-background-color:#f8f9fa;
-                             -fx-background-radius:8;
-                             -fx-padding:10;">
+                      style="-fx-background-color:#f8f9fa; -fx-background-radius:8; -fx-padding:10">
 					<Label text="Registration Information"
-                           style="-fx-font-weight:bold; -fx-font-size:12px;"/>
+                           style="-fx-font-weight:bold; -fx-font-size:12px"/>
 					<Label text="- Students: Use the code provided by your school"
                            styleClass="small-muted"/>
 					<Label text="- Teachers / Staff: Contact the administrator for your code"
@@ -229,10 +226,9 @@
 			<!-- Passport Photo Panel -->
 			<VBox styleClass="card" spacing="10" prefWidth="260">
 				<Label text="Student Passport Photo"
-                       style="-fx-font-weight:bold; -fx-font-size:14px;"/>
+                       style="-fx-font-weight:bold; -fx-font-size:14px"/>
 
-				<StackPane style="-fx-background-color:#eef2f9;
-                                  -fx-background-radius:8;"
+				<StackPane style="-fx-background-color:#eef2f9; -fx-background-radius:8"
                            prefHeight="180">
 					<ImageView fx:id="passportPreview"
                                fitWidth="140" fitHeight="160"

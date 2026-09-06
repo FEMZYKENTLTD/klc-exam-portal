@@ -7,6 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
@@ -30,7 +31,7 @@ public class ExamManagerController {
     @FXML private Spinner<Integer>  startHour, startMin, endHour, endMin,
                                     questionCountSpinner;
     @FXML private CheckBox          practiceCheck, feeGateCheck,
-                                    negativeMarkCheck;
+                                    negativeMarkCheck, mockCheck;
     @FXML private Label             status, statusLabel;
 
     private final ObservableList<ExamRow> data = FXCollections.observableArrayList();
@@ -89,6 +90,7 @@ public class ExamManagerController {
         setupSpinner(questionCountSpinner, 1, 200, 40);
 
         loadSubjectsIntoBox();
+        com.femzyk.klc.util.ComboSearch.enable(subjectBox);
         loadExams();
         startRealtimeListener();
     }
@@ -123,7 +125,7 @@ public class ExamManagerController {
              PreparedStatement ps = c.prepareStatement(
                  "SELECT e.id, e.title, s.subject_name, e.class_level, " +
                  "e.term, e.duration_minutes, e.is_active, " +
-                 "e.is_practice, e.start_at, e.end_at " +
+                 "e.is_practice, e.is_mock, e.start_at, e.end_at " +
                  "FROM exams e " +
                  "JOIN subjects s ON s.id = e.subject_id " +
                  "ORDER BY e.created_at DESC LIMIT 100")) {
@@ -132,7 +134,9 @@ public class ExamManagerController {
             while (rs.next()) {
                 boolean isActive   = rs.getBoolean("is_active");
                 boolean isPractice = rs.getBoolean("is_practice");
-                String statusStr   = (isPractice ? "[PRACTICE] " : "") +
+                boolean isMock     = rs.getBoolean("is_mock");
+                String statusStr   = (isPractice ? "[PRACTICE] "
+                                       : isMock ? "[MOCK] " : "") +
                     (isActive ? "Active" : "Inactive");
 
                 String sch = "";
@@ -208,6 +212,11 @@ public class ExamManagerController {
                 && negativeMarkCheck.isSelected() ? 0.25 : 0.0;
             boolean practice = practiceCheck != null
                 && practiceCheck.isSelected();
+            boolean mock     = mockCheck != null && mockCheck.isSelected();
+            if (practice && mock) {
+                setStatus("An exam cannot be Practice AND Mock - choose one", true);
+                return;
+            }
             boolean feeGate  = feeGateCheck != null
                 && feeGateCheck.isSelected();
             int     qCount   = questionCountSpinner == null
@@ -223,9 +232,9 @@ public class ExamManagerController {
             try (PreparedStatement ps = c.prepareStatement(
                     "INSERT INTO exams(id, subject_id, class_level, arm, " +
                     "term, session, title, instructions, duration_minutes, " +
-                    "start_at, end_at, attempt_limit, is_practice, fee_gate, " +
-                    "negative_marking, is_active, created_by) " +
-                    "VALUES(?,?,?,NULL,?,?,?,?,?,?,?,1,?,?,?,TRUE,?)")) {
+                    "start_at, end_at, attempt_limit, is_practice, is_mock, " +
+                    "fee_gate, negative_marking, is_active, created_by) " +
+                    "VALUES(?,?,?,NULL,?,?,?,?,?,?,?,1,?,?,?,?,TRUE,?)")) {
                 ps.setString(1, examId);
                 ps.setString(2, subjectId);
                 ps.setString(3, cls);
@@ -238,9 +247,10 @@ public class ExamManagerController {
                 ps.setTimestamp(9, startTs);
                 ps.setTimestamp(10, endTs);
                 ps.setBoolean(11, practice);
-                ps.setBoolean(12, feeGate);
-                ps.setDouble(13, negMark);
-                ps.setString(14, AuthService.Session.userId);
+                ps.setBoolean(12, mock);
+                ps.setBoolean(13, feeGate);
+                ps.setDouble(14, negMark);
+                ps.setString(15, AuthService.Session.userId);
                 ps.executeUpdate();
             }
 
@@ -387,12 +397,12 @@ public class ExamManagerController {
             try (PreparedStatement ps = c.prepareStatement(
                     "INSERT INTO exams(id, subject_id, class_level, arm, " +
                     "term, session, title, instructions, duration_minutes, " +
-                    "attempt_limit, is_practice, fee_gate, negative_marking, " +
-                    "is_active, created_by) " +
+                    "attempt_limit, is_practice, is_mock, fee_gate, " +
+                    "negative_marking, is_active, created_by) " +
                     "SELECT ?, subject_id, class_level, arm, " +
                     "term, session, title || ' (Copy)', instructions, " +
-                    "duration_minutes, attempt_limit, is_practice, fee_gate, " +
-                    "negative_marking, FALSE, created_by " +
+                    "duration_minutes, attempt_limit, is_practice, is_mock, " +
+                    "fee_gate, negative_marking, FALSE, created_by " +
                     "FROM exams WHERE id = ?")) {
                 ps.setString(1, newId);
                 ps.setString(2, r.id);
@@ -418,6 +428,112 @@ public class ExamManagerController {
     private void refreshExams() {
         loadSubjectsIntoBox();
         loadExams();
+    }
+
+    /**
+     * Exam Calendar view (directive F6): holiday-aware window of the next
+     * {@value #CAL_WINDOW_DAYS} days - which days are school days, how many
+     * exams are scheduled per day, and which days are overloaded - plus the
+     * ordered list of scheduled exams.
+     */
+    private static final int CAL_WINDOW_DAYS = 42;
+
+    @FXML
+    private void openExamCalendar() {
+        try (Connection c = DatabaseManager.getConnection()) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.util.List<com.femzyk.klc.util.ExamCalendar.ExamOn> exams
+                = new java.util.ArrayList<>();
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT e.id, e.title, " +
+                    "  s.subject_name || ' - ' || e.class_level AS sc, " +
+                    "  COALESCE(e.start_at, e.end_at) AS d " +
+                    "FROM exams e JOIN subjects s ON s.id = e.subject_id " +
+                    "WHERE (e.start_at IS NOT NULL OR e.end_at IS NOT NULL) " +
+                    "  AND COALESCE(e.is_practice,FALSE) = FALSE " +
+                    "  AND COALESCE(e.is_mock,FALSE) = FALSE " +
+                    "  AND COALESCE(e.start_at, e.end_at) >= ? " +
+                    "  AND COALESCE(e.start_at, e.end_at) < ? " +
+                    "ORDER BY d")) {
+                ps.setTimestamp(1, Timestamp.valueOf(
+                    today.atStartOfDay()));
+                ps.setTimestamp(2, Timestamp.valueOf(
+                    today.plusDays(CAL_WINDOW_DAYS).atStartOfDay()));
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    Timestamp ts = rs.getTimestamp(4);
+                    if (ts == null) continue;
+                    exams.add(new com.femzyk.klc.util.ExamCalendar.ExamOn(
+                        rs.getString(1), rs.getString(2), rs.getString(3),
+                        ts.toLocalDateTime().toLocalDate()));
+                }
+            }
+
+            String extraHolidays =
+                com.femzyk.klc.util.ConfigService.get("calendar.holidays", "");
+            java.util.List<String> extras = new java.util.ArrayList<>();
+            if (extraHolidays != null && !extraHolidays.isBlank())
+                for (String h : extraHolidays.split(",")) extras.add(h);
+            com.femzyk.klc.util.SchoolHolidays sh =
+                new com.femzyk.klc.util.SchoolHolidays(true, extras);
+            java.util.List<com.femzyk.klc.util.ExamCalendar.DaySlot> slots =
+                com.femzyk.klc.util.ExamCalendar.buildWindow(
+                    today, CAL_WINDOW_DAYS, sh, exams, 2);
+
+            StringBuilder strip = new StringBuilder("Next "
+                + CAL_WINDOW_DAYS + " days:   ");
+            for (com.femzyk.klc.util.ExamCalendar.DaySlot s : slots) {
+                strip.append(s.holiday ? "[\u2717]"
+                    : s.overloaded ? "[" + s.examCount + "!\u26a0]"
+                    : s.examCount > 0 ? "[" + s.examCount + "]"
+                    : "[\u00b7]");
+            }
+            strip.append("\n").append("[n]=exams that day  "
+                + "[\u26a0]=more than 2 (overload)  [\u2717]=holiday/closed");
+
+            TableView<com.femzyk.klc.util.ExamCalendar.ExamOn> tv
+                = new TableView<>();
+            TableColumn<com.femzyk.klc.util.ExamCalendar.ExamOn, String> cDate
+                = new TableColumn<>("Date");
+            cDate.setCellValueFactory(cc -> new javafx.beans.property
+                .SimpleStringProperty(cc.getValue().date.toString()));
+            TableColumn<com.femzyk.klc.util.ExamCalendar.ExamOn, String> cExam
+                = new TableColumn<>("Exam");
+            cExam.setCellValueFactory(cc -> new javafx.beans.property
+                .SimpleStringProperty(cc.getValue().title));
+            TableColumn<com.femzyk.klc.util.ExamCalendar.ExamOn, String> cSc
+                = new TableColumn<>("Subject / Class");
+            cSc.setCellValueFactory(cc -> new javafx.beans.property
+                .SimpleStringProperty(cc.getValue().subjectClass));
+            cDate.setPrefWidth(110); cExam.setPrefWidth(320);
+            cSc.setPrefWidth(200);
+            tv.getColumns().addAll(cDate, cExam, cSc);
+            tv.getItems().addAll(
+                com.femzyk.klc.util.ExamCalendar.sorted(exams));
+
+            Label head = new Label(strip.toString());
+            head.setWrapText(true);
+            head.setStyle("-fx-font-family:monospace; -fx-font-size:12px;");
+            Label note = new Label("Holidays: Sundays + statutory Nigerian "
+                + "public holidays + extra dates from calendar.holidays in "
+                + "config.properties.  Upcoming exams listed below.");
+            note.setWrapText(true);
+            note.setStyle("-fx-text-fill:#64748b; -fx-font-size:11px;");
+
+            VBox box = new VBox(10, head, tv, note);
+            box.setPrefSize(760, 520);
+            Dialog<ButtonType> dlg = new Dialog<>();
+            dlg.setTitle("Exam Calendar");
+            dlg.setHeaderText("Holiday-aware exam timetable (next "
+                + CAL_WINDOW_DAYS + " days)");
+            dlg.getDialogPane().setContent(box);
+            dlg.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+            dlg.getDialogPane().setPrefWidth(780);
+            dlg.initOwner(table.getScene().getWindow());
+            dlg.showAndWait();
+        } catch (Exception e) {
+            setStatus("Exam calendar error: " + e.getMessage(), true);
+        }
     }
 
     private void clearForm() {

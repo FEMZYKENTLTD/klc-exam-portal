@@ -42,6 +42,7 @@ public class AdminHomeController {
     @FXML private Label lblStudents, lblExams, lblTeachers, lblQuestions;
     @FXML private Label lblLiveExams, lblNewRegistrations, lblMalpractice, lblHealth;
     @FXML private Label lastUpdatedLabel;
+    @FXML private Button themeBtn;
     @FXML private Circle liveDot;
     @FXML private Label liveStatusLabel;
 
@@ -56,6 +57,15 @@ public class AdminHomeController {
             FXCollections.observableArrayList();
     private final ObservableList<SubjectQRow> subjectQData =
             FXCollections.observableArrayList();
+
+
+    @FXML
+    private void toggleTheme() {
+        com.femzyk.klc.util.ThemeService.toggle(
+            themeBtn.getScene());
+        themeBtn.setText(com.femzyk.klc.util.ThemeService.isDark()
+            ? "\u2600 Light" : "\uD83C\uDF19 Dark");
+    }
 
     private Timeline autoRefresh;
     private ExecutorService bg;
@@ -91,6 +101,10 @@ public class AdminHomeController {
 
     @FXML
     public void initialize() {
+        if (themeBtn != null) themeBtn.setText(
+            com.femzyk.klc.util.ThemeService.isDark()
+            ? "\u2600 Light" : "\uD83C\uDF19 Dark");
+
         colRegName.setCellValueFactory(c ->
             new javafx.beans.property.SimpleStringProperty(c.getValue().getName()));
         colRegRole.setCellValueFactory(c ->
