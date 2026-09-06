@@ -54,17 +54,30 @@
                        style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
 			</VBox>
 
-			<VBox styleClass="card" prefWidth="240" spacing="12">
-				<Label text="Restore Information"
+			<VBox styleClass="card" prefWidth="260" spacing="12">
+				<Label text="Restore &amp; USB Recovery"
                        style="-fx-font-size:15px; -fx-font-weight:bold;
                               -fx-text-fill:#0f1f3c;"/>
-				<Button text="How to Restore"
-                        onAction="#restoreInfo"
+				<Button text="Restore from Backup…"
+                        onAction="#restoreBackup"
+                        maxWidth="1.7976931348623157E308"
+                        styleClass="btn-primary"
+                        style="-fx-font-size:13px; -fx-padding:10 0;
+                               -fx-cursor:hand;"/>
+				<Button text="Export USB Recovery Pack…"
+                        onAction="#exportToUsb"
                         maxWidth="1.7976931348623157E308"
                         style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8;
                                -fx-border-radius:8; -fx-background-radius:8;
                                -fx-padding:10 0; -fx-cursor:hand;"/>
-				<Label text="Supabase Cloud Pro: Dashboard point-in-time restore. Free tier: CSV import restore."
+				<Button text="Restore Options Explained"
+                        onAction="#restoreInfo"
+                        maxWidth="1.7976931348623157E308"
+                        style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8;
+                               -fx-border-radius:8; -fx-background-radius:8;
+                               -fx-padding:8 0; -fx-cursor:hand;
+                               -fx-font-size:11px;"/>
+				<Label text="Restore reloads every table in one transaction (full rollback on error). USB pack = backup + SHA-256 checksum + restore manual."
                        wrapText="true"
                        style="-fx-text-fill:#667085; -fx-font-size:11px;"/>
 			</VBox>

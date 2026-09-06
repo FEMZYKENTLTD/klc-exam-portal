@@ -47,14 +47,15 @@ class ExamCalendarTest {
     }
 
     @Test
-    void nextSchoolDaysSkipsWeekendsAndHolidays() {
-        // Friday 2026-09-04 -> school days: Fri 4, Mon 7, Tue 8 (skips
-        // weekend); add extra holiday Mon 2026-09-07? not configured here.
+    void nextSchoolDaysSkipsSundaysAndHolidays() {
+        // Friday 2026-09-04 -> default calendar: Fri 4, Sat 5 (schools
+        // with Saturday sessions), Sun 6 closed, Mon 7. Extra holidays are
+        // configurable (not configured in this window).
         List<LocalDate> days = holidays.nextSchoolDays(
             LocalDate.of(2026, 9, 4), 3);
         assertEquals(LocalDate.of(2026, 9, 4), days.get(0));
-        assertEquals(LocalDate.of(2026, 9, 7), days.get(1));
-        assertEquals(LocalDate.of(2026, 9, 8), days.get(2));
+        assertEquals(LocalDate.of(2026, 9, 5), days.get(1));
+        assertEquals(LocalDate.of(2026, 9, 7), days.get(2));
     }
 
     @Test
