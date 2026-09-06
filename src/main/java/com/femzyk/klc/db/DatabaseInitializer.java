@@ -899,7 +899,6 @@ public class DatabaseInitializer {
             }
 
             String[][] subjects = SUBJECT_CATALOG;
-           };
 
             int inserted = 0;
             for (String[] sub : subjects) {
