@@ -177,9 +177,14 @@
 							style="-fx-background-color:#f59e0b; -fx-text-fill:#0f1f3c;
                                -fx-font-weight:bold; -fx-background-radius:8;
                                -fx-padding:10 14; -fx-cursor:hand;"/>
-					<Button text="Clone Exam"
-							onAction="#cloneExam"
-							style="-fx-background-color:#8b5cf6; -fx-text-fill:white;
+				<Button text="Clone Exam"
+						onAction="#cloneExam"
+						style="-fx-background-color:#8b5cf6; -fx-text-fill:white;
+                               -fx-font-weight:bold; -fx-background-radius:8;
+                               -fx-padding:10 14; -fx-cursor:hand;"/>
+					<Button text="📅 Exam Calendar"
+							onAction="#openExamCalendar"
+							style="-fx-background-color:#0e7490; -fx-text-fill:white;
                                -fx-font-weight:bold; -fx-background-radius:8;
                                -fx-padding:10 14; -fx-cursor:hand;"/>
 				</HBox>

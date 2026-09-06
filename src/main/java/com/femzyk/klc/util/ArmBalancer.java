@@ -47,6 +47,8 @@ public final class ArmBalancer {
         }
     }
 
+    private static String nn(String s) { return s == null ? "" : s; }
+
     /** One proposed arm reassignment (to be reviewed by the administrator). */
     public static final class Move {
         public final String userId;
@@ -61,6 +63,13 @@ public final class ArmBalancer {
             this.admissionNo = admissionNo;
             this.fromArm = fromArm;
             this.toArm = toArm;
+        }
+
+        /** Value-based rendering - makes plan() output deterministic to
+         *  compare (two independent runs yield equal strings). */
+        @Override public String toString() {
+            return nn(name) + "(" + nn(admissionNo) + ") "
+                + nn(fromArm) + "->" + nn(toArm);
         }
     }
 

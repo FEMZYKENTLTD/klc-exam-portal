@@ -23,6 +23,13 @@
           <TableColumn fx:id="colTeacher" text="Class Teacher" prefWidth="180"/>
         </columns>
       </TableView>
+      <HBox spacing="8" alignment="CENTER_LEFT">
+        <Label text="Arm Balancing:" style="-fx-font-weight:bold;"/>
+        <Label text="uses the Class + Session boxes above"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Preview Arm Balance" onAction="#previewBalance" styleClass="btn-primary"/>
+        <Button text="Apply Balance" onAction="#applyBalance"/>
+      </HBox>
       <Label fx:id="cStatus" textFill="#0f7a3a"/>
       <Label text="Classes: JSS1, JSS2, JSS3, SS1, SS2, SS3 | Arms: A, B, C, Science, Art, Commercial – fully editable, add custom arms" wrapText="true" styleClass="small-muted"/>
     </VBox>

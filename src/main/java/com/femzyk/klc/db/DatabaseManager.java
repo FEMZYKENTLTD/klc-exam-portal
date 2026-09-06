@@ -171,7 +171,7 @@ public class DatabaseManager {
     private static String effectiveH2Url() {
         if (!h2Aes) return h2Url;
         if (h2Url.toUpperCase().contains("CIPHER=")) return h2Url;
-        return h2Url + (h2Url.contains(";") ? "" : ";") + "CIPHER=AES";
+        return h2Url + (h2Url.endsWith(";") ? "" : ";") + "CIPHER=AES";
     }
 
     /**
