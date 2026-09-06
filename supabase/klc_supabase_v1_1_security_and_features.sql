@@ -627,6 +627,17 @@ BEGIN
     v_n := v_n + 1;
   END LOOP;
 
+  IF v_n > 0 THEN
+    INSERT INTO audit_logs(id, user_id, action, entity_type, entity_id,
+                           details)
+    VALUES (uuid_generate_v4(), v_user,
+            'WEB_QUESTION_UPLOAD', 'questions', v_subject,
+            v_n || ' question(s) queued for approval (code '
+              || upper(btrim(p_subject_code)) || ', class '
+              || coalesce(btrim(p_class_level), 'any')
+              || ', browser upload)');
+  END IF;
+
   RETURN v_n;
 END $$;
 GRANT EXECUTE ON FUNCTION staff_upload_questions(TEXT, TEXT, TEXT, TEXT,
