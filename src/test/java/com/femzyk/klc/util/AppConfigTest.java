@@ -66,18 +66,23 @@ class AppConfigTest {
 
     @Test
     void packagedJarAddsJarDirAndParentCandidates() throws Exception {
-        List<File> candidates = AppConfig.externalCandidates(
-            new URL("file:/C:/KLC/KLC-CBT-Suite/app/klc.jar"),
+        URL jarUrl = new URL("file:/C:/KLC/KLC-CBT-Suite/app/klc.jar");
+        // Derive expectations from the same URI construction the code uses,
+        // so the assertions hold on every OS (on POSIX an absolute file:
+        // URI gains a leading '/').
+        File jarDir = new File(jarUrl.toURI()).getParentFile();
+
+        List<File> candidates = AppConfig.externalCandidates(jarUrl,
             "C:/workdir");
 
         assertEquals(3, candidates.size());
         assertEquals(new File("C:/workdir", "config.properties"),
             candidates.get(0));
-        assertEquals(new File("C:/KLC/KLC-CBT-Suite/app",
-            "config.properties"), candidates.get(1));
+        assertEquals(new File(jarDir, "config.properties"),
+            candidates.get(1));
         // The folder ABOVE app/ is where the launcher .exe lives - the
         // strongest override for a jpackage app image.
-        assertEquals(new File("C:/KLC/KLC-CBT-Suite",
+        assertEquals(new File(jarDir.getParentFile(),
             "config.properties"), candidates.get(2));
     }
 
