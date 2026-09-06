@@ -13,8 +13,8 @@ public class SmsService {
     private static final Gson gson = new Gson();
     static {
         try{
-            Properties p = new Properties();
-            try(var in = SmsService.class.getResourceAsStream("/config.properties")){ if(in!=null) p.load(in); }
+            // Merged embedded (classpath) + external overrides (AppConfig).
+            Properties p = AppConfig.properties();
             provider = p.getProperty("sms.provider","").toLowerCase();
             apiKey = p.getProperty("sms.api_key","");
         }catch(Exception ignored){}

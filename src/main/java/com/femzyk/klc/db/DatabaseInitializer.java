@@ -41,11 +41,8 @@ public class DatabaseInitializer {
 
     private static synchronized String seedPassword() {
         if (saPassword != null) return saPassword;
-        java.util.Properties p = new java.util.Properties();
-        try (java.io.InputStream in = DatabaseInitializer.class
-                .getResourceAsStream("/config.properties")) {
-            if (in != null) p.load(in);
-        } catch (Exception ignored) {}
+        // Merged embedded (classpath) + external overrides (AppConfig).
+        java.util.Properties p = com.femzyk.klc.util.AppConfig.properties();
         String fromCfg = p.getProperty("app.superadmin.password", "");
         saPassword = fromCfg.isBlank()
             ? "KLC-" + UUID.randomUUID().toString().substring(0, 13)
@@ -649,11 +646,8 @@ public class DatabaseInitializer {
                 if (rs.next() && rs.getInt(1) > 0) return;
             }
 
-            java.util.Properties p = new java.util.Properties();
-            try (java.io.InputStream in = DatabaseInitializer.class
-                    .getResourceAsStream("/config.properties")) {
-                if (in != null) p.load(in);
-            }
+            // Merged embedded (classpath) + external overrides (AppConfig).
+            java.util.Properties p = com.femzyk.klc.util.AppConfig.properties();
             String email = p.getProperty("app.superadmin.email", "");
             String pass  = p.getProperty("app.superadmin.password", "");
             if (email.isBlank() || pass.isBlank()) {

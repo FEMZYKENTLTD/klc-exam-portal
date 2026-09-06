@@ -42,11 +42,8 @@ public class StorageService {
 
     private static void loadConfig() {
         if (baseUrl != null) return;
-        java.util.Properties p = new java.util.Properties();
-        try (java.io.InputStream in =
-                 StorageService.class.getResourceAsStream("/config.properties")) {
-            if (in != null) p.load(in);
-        } catch (Exception ignored) {}
+        // Merged embedded (classpath) + external overrides (AppConfig).
+        java.util.Properties p = AppConfig.properties();
         baseUrl = p.getProperty("supabase.url", "").trim();
         if (baseUrl.endsWith("/")) {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);

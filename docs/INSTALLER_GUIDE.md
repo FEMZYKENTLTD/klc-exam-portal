@@ -20,7 +20,11 @@ zero-JDK Windows bundle via `jpackage`.
 1. Copy `KLC-CBT-Suite-win.zip` to the PC (USB is fine — it **is** the
    portable version).
 2. Extract anywhere (e.g. `C:\KLC`).
-3. Put `config.properties` (school values) next to the exe/JAR.
+3. Optional per-PC configuration: drop a `config.properties` with the
+   school's values **beside `KLC-CBT-Suite.exe`** (i.e. `C:\KLC\`) to
+   override the embedded defaults (see "How configuration is resolved"
+   below). No file needed when the repo secrets already match the school —
+   the CI-built JAR embeds them.
 4. Run `KLC-CBT-Suite.exe` (or the JAR with the bundled runtime).
 
 ## Building x86 (32-bit) installers
@@ -57,10 +61,24 @@ jpackage --type app-image --name KLC-CBT-Suite-x86 --input target ^
 ```
 
 ### Why the app-image is the professional distribution
-The Windows zip bundles: the launcher exe, the application JAR, the Java
-runtime (no JDK/JRE install), and `config.properties` sits beside the exe
-so each lab PC gets the school's own configuration. For a true `.exe`
-installer run the same CI job on a Windows machine and add
+The Windows zip bundles: the launcher exe, the application JAR, and the
+Java runtime (no JDK/JRE install). The application JAR embeds the school
+configuration built from repo secrets, and an optional external
+`config.properties` beside the exe overrides it per PC — so every lab PC
+gets the school's own configuration without reinstalling. For a true
+`.exe` installer run the same CI job on a Windows machine and add
 `--type exe --win-menu` (or use `--type msi`); CI currently publishes the
 portable app-image + fat JAR, which covers the "clean install, no IDE /
 Maven / JDK required" requirement.
+
+### How configuration is resolved (implemented in `util/AppConfig`)
+Effective config = embedded classpath `config.properties` overlaid by the
+first external files found, later wins:
+1. `./config.properties` (current working folder — classic `java -jar`);
+2. `<folder of the JAR>/config.properties`;
+3. `<folder ABOVE the JAR>/config.properties` — the `KLC-CBT-Suite` folder
+   holding the launcher exe inside the app image.
+An external file with only some keys leaves the embedded values for the
+rest. External lookup only happens for a packaged `*.jar`; during
+`mvn test`/IDE runs (exploded `target/classes`) no jar-folder candidates
+are used, so the test classpath configuration stays authoritative.

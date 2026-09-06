@@ -1,6 +1,5 @@
 package com.femzyk.klc.db;
 
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -62,13 +61,8 @@ public class DatabaseManager {
     // =========================================================================
     public static void init() {
         try {
-            Properties p = new Properties();
-            try (InputStream in = DatabaseManager.class
-                    .getResourceAsStream("/config.properties")) {
-                if (in != null) p.load(in);
-                else System.err.println("[DB] config.properties not found!");
-            }
-            applyConfig(p);
+            // Merged embedded (classpath) + external overrides (AppConfig).
+            applyConfig(com.femzyk.klc.util.AppConfig.properties());
         } catch (Exception e) {
             System.err.println("[DB] Init error: " + e.getMessage());
             e.printStackTrace();
