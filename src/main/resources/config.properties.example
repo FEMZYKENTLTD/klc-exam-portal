@@ -42,9 +42,16 @@ social.allow_student_staff_dm=false
 social.allow_student_attachments=false
 
 # ── Offline cache (H2) ──────────────────────────────────────────────────────
+# h2.encryption: off | aes  (aes = the offline cache file is encrypted at rest)
+# When aes: h2.cipher.filePassword MUST be set (>=16 chars, unique per school,
+# NEVER committed). Existing plaintext caches migrate automatically ONCE on
+# the first AES startup. Missing/weak key = the app refuses the cache with a
+# clear error instead of silently creating a plaintext fallback.
 h2.url=jdbc:h2:file:./klc_cache/klc_local;AUTO_SERVER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;MODE=PostgreSQL
 h2.user=sa
 h2.password=
+h2.encryption=off
+h2.cipher.filePassword=YOUR_16PLUS_CHAR_FILE_KEY
 
 # ── Email (Brevo SMTP) ──────────────────────────────────────────────────────
 smtp.host=smtp-relay.brevo.com
