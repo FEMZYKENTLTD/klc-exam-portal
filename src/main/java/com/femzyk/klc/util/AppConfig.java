@@ -84,7 +84,8 @@ public final class AppConfig {
             }
         }
         if (!present.isEmpty()) {
-            base.putAll(merge(new Properties(), present));
+            // merge() copies, so the embedded base is not mutated.
+            base = merge(base, present);
             System.out.println("[cfg] external config.properties overrides "
                 + "embedded defaults: " + present);
         }
@@ -96,23 +97,26 @@ public final class AppConfig {
     }
 
     /**
-     * Pure overlay helper: loads every existing file over {@code base} in
-     * list order (later files win). Files that do not exist are skipped.
-     * Package-private for unit tests.
+     * Pure overlay helper: returns a copy of {@code base} with every
+     * existing file loaded over it in list order (later files win). The
+     * caller's {@code base} is never mutated. Files that do not exist are
+     * skipped. Package-private for unit tests.
      */
     static Properties merge(Properties base, List<File> files) {
+        Properties out = new Properties();
+        out.putAll(base);
         for (File f : files) {
             if (f == null || !f.isFile()) {
                 continue;
             }
             try (InputStream in = new java.io.FileInputStream(f)) {
-                base.load(in);
+                out.load(in);
             } catch (IOException e) {
                 System.err.println("[cfg] could not read external "
                     + "config.properties " + f + ": " + e.getMessage());
             }
         }
-        return base;
+        return out;
     }
 
     /**
