@@ -480,3 +480,154 @@ FROM (VALUES
   ('YORUBA LANGUAGE','YRB-SS3','SS3')
 ) AS v(name, code, klass)
 WHERE NOT EXISTS (SELECT 1 FROM subjects s WHERE s.subject_code = v.code);
+
+-- ---------------------------------------------------------------------------
+-- INVIGILATOR LIVE ROOM (directive F6: invigilator mobile monitor web page)
+-- Read-only room view for invigilators on phones/tablets: every attempt
+-- currently in progress for OFFICIAL exams (practice/mock excluded), with
+-- elapsed time and malpractice strikes. Credentials re-checked per call.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION staff_live_room(
+  p_email TEXT, p_password TEXT, p_minutes INT DEFAULT 240)
+RETURNS TABLE(admission_no VARCHAR, student VARCHAR, subject_code VARCHAR,
+              class_level VARCHAR, arm VARCHAR, exam_title VARCHAR,
+              started_at TIMESTAMP, elapsed_min NUMERIC,
+              strike_count INT, status VARCHAR)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  PERFORM staff_check(p_email, p_password);
+  RETURN QUERY
+  SELECT sp.admission_no,
+         sp.surname || ' ' || COALESCE(sp.other_names,''),
+         s.subject_code, e.class_level, COALESCE(sp.arm,''),
+         COALESCE(e.title,''),
+         ea.started_at,
+         ROUND(EXTRACT(EPOCH FROM (now() - ea.started_at)) / 60.0)::NUMERIC,
+         ea.strike_count, ea.status
+  FROM exam_attempts ea
+  JOIN exams e            ON e.id = ea.exam_id
+  JOIN subjects s         ON s.id = e.subject_id
+  JOIN student_profiles sp ON sp.user_id = ea.student_id
+  WHERE ea.status NOT IN ('SUBMITTED','MALPRACTICE',
+                          'PRACTICE_SUBMITTED','MOCK_SUBMITTED')
+    AND COALESCE(e.is_practice,FALSE) = FALSE
+    AND COALESCE(e.is_mock,FALSE)     = FALSE
+    AND ea.started_at >= now()
+        - make_interval(mins => LEAST(COALESCE(p_minutes,240), 1440))
+  ORDER BY ea.started_at DESC
+  LIMIT 500;
+END $$;
+GRANT EXECUTE ON FUNCTION staff_live_room(TEXT, TEXT, INT) TO anon;
+
+-- ---------------------------------------------------------------------------
+-- WEB QUESTION UPLOAD (directive F6: web-admin question upload)
+-- Staff paste/upload questions from a browser. Credentials verified; a
+-- TEACHER may only upload for subjects assigned to them in
+-- teacher_subjects; EXAM_OFFICER/PRINCIPAL_ADMIN/SUPER_ADMIN may upload to
+-- any active subject. Questions are inserted is_approved = FALSE so the
+-- existing approval workflow still gates what reaches students.
+--
+-- p_questions JSONB example:
+--   [{"q":"2 + 2 = ?","type":"MCQ","topic":"Addition","source":"KLC bank",
+--     "opts":[{"label":"A","text":"4","correct":true},
+--             {"label":"B","text":"22","correct":false}]}]
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION staff_upload_questions(
+  p_email TEXT, p_password TEXT,
+  p_subject_code TEXT, p_class_level TEXT,
+  p_questions JSONB)
+RETURNS INT  -- number of questions inserted
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_role VARCHAR;
+  v_user uuid;
+  v_subject uuid;
+  v_owns BOOLEAN;
+  v_q JSONB;
+  v_opt JSONB;
+  v_qid uuid;
+  v_type VARCHAR(20);
+  v_n INT := 0;
+  v_opts_ok INT;
+BEGIN
+  PERFORM staff_check(p_email, p_password);
+
+  SELECT id, role INTO v_user, v_role
+  FROM users
+  WHERE lower(email) = lower(trim(p_email)) AND is_active
+  LIMIT 1;
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Invalid credentials'; END IF;
+
+  IF p_subject_code IS NULL OR btrim(p_subject_code) = '' THEN
+    RAISE EXCEPTION 'Subject is required';
+  END IF;
+  SELECT id INTO v_subject
+  FROM subjects
+  WHERE upper(subject_code) = upper(btrim(p_subject_code))
+    AND is_active
+  LIMIT 1;
+  IF v_subject IS NULL THEN
+    RAISE EXCEPTION 'Unknown or inactive subject code: %', p_subject_code;
+  END IF;
+
+  IF v_role = 'TEACHER' THEN
+    SELECT EXISTS (
+      SELECT 1 FROM teacher_subjects
+      WHERE teacher_id = v_user AND subject_id = v_subject)
+    INTO v_owns;
+    IF NOT v_owns THEN
+      RAISE EXCEPTION 'You may only upload questions for subjects assigned to you';
+    END IF;
+  END IF;
+
+  IF jsonb_typeof(p_questions) <> 'array'
+     OR jsonb_array_length(p_questions) = 0 THEN
+    RAISE EXCEPTION 'No questions supplied';
+  END IF;
+
+  FOR v_q IN SELECT * FROM jsonb_array_elements(p_questions) LOOP
+    IF v_q->>'q' IS NULL
+       OR length(btrim(coalesce(v_q->>'q',''))) < 5 THEN
+      CONTINUE;  -- skip empty question text
+    END IF;
+    v_type := upper(coalesce(v_q->>'type','MCQ'));
+    IF v_type NOT IN ('MCQ','TRUE_FALSE','IMAGE') THEN v_type := 'MCQ'; END IF;
+
+    v_qid := uuid_generate_v4();
+    INSERT INTO questions(id, subject_id, class_level, topic,
+                          question_text, question_type, source,
+                          marks, is_approved, created_by)
+    VALUES (v_qid, v_subject,
+            NULLIF(btrim(coalesce(p_class_level,'')), ''),
+            NULLIF(btrim(coalesce(v_q->>'topic','')), ''),
+            btrim(v_q->>'q'), v_type,
+            NULLIF(btrim(coalesce(v_q->>'source','')), ''),
+            1, FALSE, v_user);
+
+    v_opts_ok := 0;
+    IF jsonb_typeof(v_q->'opts') = 'array' THEN
+      FOR v_opt IN SELECT * FROM jsonb_array_elements(v_q->'opts') LOOP
+        IF coalesce(v_opt->>'text','') = ''
+           OR coalesce(v_opt->>'label','') NOT IN ('A','B','C','D','E') THEN
+          CONTINUE;
+        END IF;
+        INSERT INTO question_options(id, question_id, option_label,
+                                     option_text, is_correct)
+        VALUES (uuid_generate_v4(), v_qid, v_opt->>'label',
+                btrim(v_opt->>'text'),
+                coalesce((v_opt->>'correct')::boolean, FALSE));
+        v_opts_ok := v_opts_ok + 1;
+      END LOOP;
+    END IF;
+    IF v_type = 'MCQ' AND v_opts_ok < 2 THEN
+      -- an MCQ needs real options; discard this malformed question
+      DELETE FROM questions WHERE id = v_qid;
+      CONTINUE;
+    END IF;
+    v_n := v_n + 1;
+  END LOOP;
+
+  RETURN v_n;
+END $$;
+GRANT EXECUTE ON FUNCTION staff_upload_questions(TEXT, TEXT, TEXT, TEXT,
+                                                 JSONB) TO anon;

@@ -251,6 +251,8 @@ public class DatabaseManager {
                 h2FilePassword = null;
                 return;
             }
+            System.out.println("[DB] AES migration stage 1: plaintext cache "
+                + "dumped to script OK.");
             String tmpUrl = h2Url.replace(base.getPath(), tmpBase.getPath())
                 + ";CIPHER=AES";
             try (Connection ec = DriverManager.getConnection(
@@ -268,13 +270,27 @@ public class DatabaseManager {
                 if (!vrs.next()) throw new IllegalStateException(
                     "encrypted cache verification produced no schema");
             }
-            for (String suffix : new String[]{".mv.db", ".trace.db"}) {
+            System.out.println("[DB] AES migration stage 2: encrypted cache "
+                + "built and verified OK.");
+            for (String suffix : new String[]{".mv.db", ".trace.db",
+                    ".lock.db"}) {
                 java.io.File f = new java.io.File(base.getPath() + suffix);
-                if (f.exists() && !f.delete()) {
+                boolean gone = !f.exists();
+                for (int attempt = 0; !gone && attempt < 5; attempt++) {
+                    if (attempt > 0) {
+                        Thread.sleep(200L * attempt);
+                        System.gc(); // release any lingering file handles
+                    }
+                    gone = f.delete();
+                }
+                if (!gone) {
                     throw new IllegalStateException(
-                        "could not delete plaintext cache file " + f);
+                        "could not delete plaintext cache file " + f
+                        + " after 5 attempts");
                 }
             }
+            System.out.println("[DB] AES migration stage 3: plaintext files "
+                + "removed.");
             for (String suffix : new String[]{".mv.db", ".trace.db"}) {
                 java.io.File f = new java.io.File(tmpBase.getPath() + suffix);
                 if (f.exists()) {
@@ -284,12 +300,15 @@ public class DatabaseManager {
                         java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 }
             }
+            System.out.println("[DB] AES migration stage 4: encrypted cache "
+                + "moved onto the live base name.");
             System.out.println("[DB] H2 offline cache migrated to AES "
                 + "encryption at rest (plaintext removed).");
         } catch (Exception e) {
             System.err.println("[DB] H2 AES migration FAILED ("
                 + e.getMessage() + "). Existing cache was kept unchanged; AES "
                 + "disabled for this run. Fix the configuration and restart.");
+            e.printStackTrace();
             h2Aes = false;
             h2ConfigErr = false;
             h2FilePassword = null;

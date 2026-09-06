@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>LIVE EXAM ROOM — KNOWLEDGE LAND COLLEGE CBT</title>
+<link rel="stylesheet" href="style.css"/>
+<script src="config.js"></script>
+<style>
+  .pill { display:inline-block; padding:2px 9px; border-radius:999px;
+    font-size:11px; font-weight:700; }
+  .pill.live { background:#dcfce7; color:#166534; }
+  .pill.strike { background:#fef3c7; color:#92400e; }
+  .pill.flag { background:#fee2e2; color:#b91c1c; }
+  .statbar { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:6px;
+    font-size:13px; }
+  .statbar b { color:#0f1f3c; }
+  td.long { max-width: 220px; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="school">KNOWLEDGE LAND COLLEGE</div>
+    <div class="tag">Live Exam Room — invigilator mobile monitor</div>
+  </div>
+  <nav><a href="index.html">Staff Portal</a><a href="parent.html">Parent Checker</a></nav>
+</header>
+
+<main>
+  <section class="card" id="loginCard">
+    <h1>Invigilator / Staff Login</h1>
+    <p class="muted">Teacher, Exam Officer, Principal Admin or Super Admin
+      account from the KLC CBT desktop app.</p>
+    <form id="loginForm">
+      <label>Email <input id="email" type="email" required/></label>
+      <label>Password <input id="password" type="password" required/></label>
+      <button class="btn gold" type="submit">LOGIN</button>
+      <div id="loginError" class="error" hidden></div>
+    </form>
+  </section>
+
+  <section id="room" hidden>
+    <div class="card">
+      <h1 id="who"></h1>
+      <div class="statbar">
+        <span>Students writing now: <b id="liveCount">0</b></span>
+        <span>Refresh: <b id="nextRefresh">15s</b></span>
+        <span id="roomMsg" class="muted" style="margin:0"></span>
+      </div>
+      <div class="actions">
+        <button class="btn" id="refreshBtn">⟳ Refresh now</button>
+        <button class="btn subtle" id="logout">Logout</button>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto">
+      <h1>Official exams in progress</h1>
+      <p class="muted">Practice and MOCK runs are hidden — this page only
+        shows live OFFICIAL attempts (never recorded mocks or practice).</p>
+      <table>
+        <thead><tr><th>Student</th><th>Admission</th><th>Exam</th>
+          <th>Class</th><th>Arm</th><th>Started</th><th>Elapsed</th>
+          <th>Strikes</th><th>Status</th></tr></thead>
+        <tbody id="roomBody">
+          <tr><td colspan="9">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>Staff web tools — KNOWLEDGE LAND COLLEGE CBT Suite</footer>
+<script src="invigilator.js"></script>
+</body>
+</html>

@@ -363,6 +363,14 @@ public class BackupService {
                 }
             }
             target.commit();
+            if (tables == 0) {
+                // A valid-looking backup with no restorable table data must
+                // not silently "succeed" - refuse loudly instead (this also
+                // turns corrupt/non-KLC files into a clear failure).
+                throw new IllegalArgumentException(
+                    "No restorable table data found in " + backupFile.getName()
+                    + " - is this a KLC .klcbackup file?");
+            }
         } catch (Exception e) {
             try { target.rollback(); } catch (Exception ignored) {}
             throw e;
@@ -480,17 +488,22 @@ public class BackupService {
             "fees_ledger", "result_pins", "results", "audit_logs",
             "announcements", "study_materials", "messages",
             "notification_queue", "user_profiles", "result_appeals");
-        Set<String> names = new LinkedHashSet<>(preferred);
+        // Only tables that ACTUALLY exist in this database are backed up:
+        // a schema may legitimately lack some of the preferred names.
+        Set<String> present = new LinkedHashSet<>();
         try (ResultSet rs = c.getMetaData().getTables(null, null, "%",
                 new String[]{"TABLE"})) {
-            while (rs.next()) names.add(rs.getString(3));
+            while (rs.next()) {
+                String n = rs.getString(3);
+                if (n != null) present.add(n);
+            }
         }
-        names.removeAll(SKIP_TABLES);
+        present.removeAll(SKIP_TABLES);
         // keep known application tables first, any extras after
         List<String> out = new ArrayList<>();
         for (String p : preferred)
-            if (names.contains(p)) { out.add(p); names.remove(p); }
-        out.addAll(names);
+            if (present.contains(p)) { out.add(p); present.remove(p); }
+        out.addAll(present);
         return out;
     }
 

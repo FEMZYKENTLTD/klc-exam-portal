@@ -318,9 +318,20 @@ jobs:
             echo "Build/tests failed on commit \`${GITHUB_SHA:0:7}\`."
             echo
             echo '```'
-            tail -c 12000 mvn_build.log 2>/dev/null || true
+            tail -c 14000 mvn_build.log 2>/dev/null || true
             echo '```'
           } > /tmp/klc_fail_body.md
+          # The start of the log often carries the first meaningful error
+          # (compile diagnostics, [DB] init lines) - keep it too.
+          if [ "$(wc -c < mvn_build.log 2>/dev/null || echo 0)" -gt 20000 ]; then
+            {
+              echo
+              echo '### Head of build log'
+              echo '```'
+              head -c 8000 mvn_build.log
+              echo '```'
+            } >> /tmp/klc_fail_body.md
+          fi
           if ls target/surefire-reports/*.txt >/dev/null 2>&1; then
             {
               echo

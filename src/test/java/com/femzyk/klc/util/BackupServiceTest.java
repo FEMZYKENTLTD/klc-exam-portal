@@ -24,10 +24,10 @@ class BackupServiceTest {
     @TempDir
     static File tmp;
 
-    private static final String SRC = "jdbc:h2:mem:klc_src;MODE=PostgreSQL;"
-        + "DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
-    private static final String DST = "jdbc:h2:mem:klc_dst;MODE=PostgreSQL;"
-        + "DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
+    private static String mem(String name) {
+        return "jdbc:h2:mem:" + name + ";MODE=PostgreSQL;"
+            + "DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
+    }
     private static final String TRICKY =
         "He said \"hello, world\" then\nmoved to a new line";
 
@@ -69,8 +69,10 @@ class BackupServiceTest {
 
     @Test
     void backupRestoreRoundTripPreservesRowsAndValues() throws Exception {
-        try (Connection src = DriverManager.getConnection(SRC, "sa", "");
-             Connection dst = DriverManager.getConnection(DST, "sa", "")) {
+        String srcUrl = mem("klc_src_" + System.nanoTime());
+        String dstUrl = mem("klc_dst_" + System.nanoTime());
+        try (Connection src = DriverManager.getConnection(srcUrl, "sa", "");
+             Connection dst = DriverManager.getConnection(dstUrl, "sa", "")) {
             createSchema(src, new String[]{});
             createSchema(dst, new String[]{});
             seed(src);
@@ -127,8 +129,7 @@ class BackupServiceTest {
             "this is not a zip file at all - clearly corrupt"
                 .getBytes(java.nio.charset.StandardCharsets.UTF_8));
         try (Connection dst = DriverManager.getConnection(
-                "jdbc:h2:mem:klc_dst2;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
-                + ";DB_CLOSE_DELAY=-1", "sa", "")) {
+                mem("klc_dst2_" + System.nanoTime()), "sa", "")) {
             createSchema(dst, new String[]{});
             seed(dst); // dst has data
             boolean threw = false;
@@ -147,7 +148,10 @@ class BackupServiceTest {
     void exportUsbPackWritesBackupChecksumAndManual() throws Exception {
         File dir = new File(tmp, "usb");
         assertTrue(dir.mkdirs());
-        try (Connection src = DriverManager.getConnection(SRC, "sa", "")) {
+        try (Connection src = DriverManager.getConnection(
+                mem("klc_src_" + System.nanoTime()), "sa", "")) {
+            createSchema(src, new String[]{});
+            seed(src);
             BackupService.UsbPackResult pack =
                 BackupService.exportUsbPackTo(src, null, dir);
             assertTrue(pack.files.size() >= 3,
