@@ -80,15 +80,6 @@ Locally: `mvn clean package` (JDK 17).
 
 ---
 
-## EDUCATOR TESTIMONIALS
-> *"Adopting Knowledge Land CBT, our exam malpractice rate would drop to nearly zero. Now it would run short of results completely."* — **Principal, Lagos**
-
-> *"The offline capability is a lifesaver. Our network goes down, but exams continue smoothly. Auto-sync works like magic every time."* — **ICT Director, Enugu**
-
-> *"We used to spend 3 weeks marking and compiling. Now report cards go home the same or next day after exams end. Our teachers would absolutely love it."* — **Vice Principal, Abuja**
-
----
-
 ## SUPER ADMIN & REGISTRATION CODES
 For security, **no credentials are published in this repository.**
 
