@@ -426,6 +426,11 @@ public class KlcShotHarness {
     private static String reg(String fullName, String email, String password, String role,
                               String regCode, String admissionNo, String classLevel,
                               String arm, String surname) throws Exception {
+        String existing = idByEmail(email);
+        if (existing != null) {
+            System.out.println("[harness] " + email + " already exists (seeded) - reusing");
+            return existing;
+        }
         String r = AuthService.register(fullName, email, password, role, regCode,
             admissionNo, classLevel, arm, surname, null, "First pet?", "Cat");
         if (r != null && r.startsWith("OK:")) {
