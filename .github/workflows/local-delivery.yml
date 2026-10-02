@@ -65,9 +65,11 @@ jobs:
           mv jar.part-* delivered.sha256 delivery_build_tail.txt ship/
           # Headless glass driver (Monocle) - used only by the offline
           # screenshot harness, never part of the shipped JAR.
-          if mvn -B -ntp dependency:get -Dartifact=org.testfx:openjfx-monocle:21.0.2:jar:linux; then
-            find ~/.m2/repository/org/testfx -name "*.jar" | head -5
-            find ~/.m2/repository/org/testfx -name "*linux*.jar" -exec cp -v {} ship/monocle-linux.jar \;
+          if mvn -B -ntp dependency:get -Dartifact=org.testfx:openjfx-monocle:21.0.2; then
+            find ~/.m2/repository/org/testfx -name "*linux*.jar" -exec cp -v {} ship/monocle-linux.jar \; || true
+            if [ ! -f ship/monocle-linux.jar ]; then
+              cp -v ~/.m2/repository/org/testfx/openjfx-monocle/21.0.2/openjfx-monocle-21.0.2.jar ship/monocle-linux.jar
+            fi
             echo "monocle: shipped" >> ship/delivery_status.txt
           else
             echo "monocle: RESOLUTION FAILED (harness will lack headless glass)" >> ship/delivery_status.txt
