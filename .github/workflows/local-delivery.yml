@@ -93,7 +93,7 @@ jobs:
           git checkout --orphan tmp-delivery
           git rm -rf --cached . -q || true
           rm -rf src supabase docs tools klc-web-admin .github target bundle
-          git add -A ship/
+          git add -A -f ship/
           git commit -m "delivery: fat JAR + JDK17 + Maven + m2 cache $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -f origin tmp-delivery:local-delivery
           echo "Pushed to local-delivery."
