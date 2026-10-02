@@ -60,25 +60,27 @@ jobs:
       # app headless and iterate on builds locally.
       - name: Courier JDK 17 + Maven + Maven repo cache
         run: |
-          mkdir -p bundle
-          cd bundle
+          mkdir -p ship
+          mv jar.part-* delivered.sha256 delivery_build_tail.txt ship/
+          mkdir -p bundle && cd bundle
           curl -fsSL -o jdk.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
           curl -fsSL -o maven.tar.gz "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz"
           tar czf m2repo.tar.gz -C "$HOME" .m2/repository
           for f in jdk.tar.gz maven.tar.gz m2repo.tar.gz; do
-            sha256sum "$f" >> ../delivered.sha256
-            split -b 48m -d "$f" "${f%.tar.gz}.tgz.part-"
+            sha256sum "$f" >> ../ship/delivered.sha256
+            split -b 48m -d "$f" "../ship/${f%.tar.gz}.tgz.part-"
           done
-          ls -la . | head -20
+          cd ..
+          ls -la ship | head -20
 
       - name: Push chunks to local-delivery branch
         run: |
           git config user.name  "klc-delivery-bot"
           git config user.email "actions@github.com"
           git checkout --orphan tmp-delivery
-          git rm -rf --cached . -q
+          git rm -rf --cached . -q || true
           rm -rf src supabase docs tools klc-web-admin .github target bundle
-          git add jar.part-* *.tgz.part-* delivered.sha256 delivery_build_tail.txt
+          git add -A ship/
           git commit -m "delivery: fat JAR + JDK17 + Maven + m2 cache $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -f origin tmp-delivery:local-delivery
           echo "Pushed to local-delivery."
