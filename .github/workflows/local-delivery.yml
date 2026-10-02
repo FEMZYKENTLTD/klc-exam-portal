@@ -77,14 +77,12 @@ jobs:
           # Native text-layout stack (Debian 12 bookworm - matches the glibc
           # of the offline sandbox): JavaFX's pango font shaper needs these.
           mkdir -p debtext && cd debtext
-          echo "deb [trusted=yes] http://deb.debian.org/debian bookworm main" > /tmp/bookworm.list
-          apt-get -qq -o Dir::Etc::sourcelist=/tmp/bookworm.list \
-                     -o Dir::Etc::sourceparts=/dev/null \
-                     -o APT::Get::List-Cleanup=0 update >/dev/null 2>&1 || true
-          for p in libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libthai0 libdatrie1 libgraphite2-3 libcairo2 libfribidi0; do
-            apt-get -qq -o Dir::Etc::sourcelist=/tmp/bookworm.list \
-                       -o Dir::Etc::sourceparts=/dev/null download "$p" >> ../ship/delivery_status.txt 2>&1 || echo "deb $p FAILED" >> ../ship/delivery_status.txt
-          done
+          curl -fsSL http://deb.debian.org/debian/dists/bookworm/main/binary-amd64/Packages.xz -o P.xz
+          xz -dc P.xz | awk -v RS= '
+            /^Package: (libpango-1.0-0|libpangoft2-1.0-0|libpangocairo-1.0-0|libharfbuzz0b|libthai0|libdatrie1|libgraphite2-3|libfribidi0)$/ { print }' \
+            | grep '^Filename: ' | awk '{print $2}' > urls.txt
+          wc -l urls.txt >> ../ship/delivery_status.txt
+          while read -r u; do curl -fsSL "http://deb.debian.org/debian/$u" || echo "deb dl failed: $u" >> ../ship/delivery_status.txt; done < urls.txt
           mkdir -p ../ship/textlibs
           for d in *.deb; do dpkg -x "$d" ../ship/textlibs/; done
           find ../ship/textlibs -name "*.so*" | wc -l >> ../ship/delivery_status.txt
