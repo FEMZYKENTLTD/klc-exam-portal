@@ -74,6 +74,21 @@ jobs:
           else
             echo "monocle: RESOLUTION FAILED (harness will lack headless glass)" >> ship/delivery_status.txt
           fi
+          # Native text-layout stack (Debian 12 bookworm - matches the glibc
+          # of the offline sandbox): JavaFX's pango font shaper needs these.
+          mkdir -p debtext && cd debtext
+          echo "deb [trusted=yes] http://deb.debian.org/debian bookworm main" > /tmp/bookworm.list
+          apt-get -qq -o Dir::Etc::sourcelist=/tmp/bookworm.list \
+                     -o Dir::Etc::sourceparts=/dev/null \
+                     -o APT::Get::List-Cleanup=0 update >/dev/null 2>&1 || true
+          for p in libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libthai0 libdatrie1 libgraphite2-3 libcairo2 libfribidi0; do
+            apt-get -qq -o Dir::Etc::sourcelist=/tmp/bookworm.list \
+                       -o Dir::Etc::sourceparts=/dev/null download "$p" >> ../ship/delivery_status.txt 2>&1 || echo "deb $p FAILED" >> ../ship/delivery_status.txt
+          done
+          mkdir -p ../ship/textlibs
+          for d in *.deb; do dpkg -x "$d" ../ship/textlibs/; done
+          find ../ship/textlibs -name "*.so*" | wc -l >> ../ship/delivery_status.txt
+          cd ..
           mkdir -p bundle && cd bundle
           curl -fsSL -o jdk.tar.gz "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse" \
             || curl -fsSL -o jdk.tar.gz "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jdk_x64_linux_hotspot_21.0.5_11.tar.gz"
