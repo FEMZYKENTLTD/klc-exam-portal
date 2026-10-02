@@ -15,10 +15,18 @@
       <Label fx:id="timerLabel" text="00:00:00" styleClass="exam-timer"/>
     </HBox>
     <ToolBar>
-      <Button text="A-" onAction="#decreaseFont" tooltip="Decrease Font"/>
-      <Button text="A+" onAction="#increaseFont" tooltip="Increase Font"/>
-      <Button text="◐ Contrast" onAction="#toggleContrast" tooltip="High Contrast Mode"/>
-      <Button text="Aa Dyslexic" onAction="#toggleDyslexic" tooltip="Dyslexic-friendly font"/>
+      <Button text="A-" onAction="#decreaseFont">
+        <tooltip><Tooltip text="Decrease Font"/></tooltip>
+      </Button>
+      <Button text="A+" onAction="#increaseFont">
+        <tooltip><Tooltip text="Increase Font"/></tooltip>
+      </Button>
+      <Button text="◐ Contrast" onAction="#toggleContrast">
+        <tooltip><Tooltip text="High Contrast Mode"/></tooltip>
+      </Button>
+      <Button text="Aa Dyslexic" onAction="#toggleDyslexic" >
+        <tooltip><Tooltip text="Dyslexic-friendly font"/></tooltip>
+      </Button>
       <Separator/>
       <Button fx:id="calcBtn" text="🧮 Calculator" onAction="#openCalculator"/>
       <Button fx:id="formulaBtn" text="📐 Formula Sheet" onAction="#openFormulaSheet"/>
