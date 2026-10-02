@@ -34,14 +34,18 @@ public class ResultsViewController {
     private WebSocket webSocket;
 
     public static class ResultRow {
-        String student, admission, subject, score, grade, position, date;
+        String userId, student, admission, subject, score, grade, position,
+               date, term, session;
 
-        ResultRow(String s, String adm, String sub,
-                  String sc, String g, String pos, String d) {
-            student = s; admission = adm; subject = sub;
+        ResultRow(String userId, String s, String adm, String sub,
+                  String sc, String g, String pos, String d,
+                  String term, String session) {
+            this.userId = userId; student = s; admission = adm; subject = sub;
             score = sc; grade = g; position = pos; date = d;
+            this.term = term; this.session = session;
         }
 
+        public String getUserId()     { return userId; }
         public String getStudent()    { return student; }
         public String getAdmission()  { return admission == null ? "-" : admission; }
         public String getSubject()    { return subject; }
@@ -49,6 +53,8 @@ public class ResultsViewController {
         public String getGrade()      { return grade; }
         public String getPosition()   { return position; }
         public String getDate()       { return date; }
+        public String getTerm()       { return term == null || term.isBlank() ? "1st" : term; }
+        public String getSession()    { return session == null || session.isBlank() ? "" : session; }
     }
 
     @FXML
@@ -101,8 +107,9 @@ public class ResultsViewController {
 
         try (java.sql.Connection c = DatabaseManager.getConnection();
              PreparedStatement ps = c.prepareStatement(
-                 "SELECT u.full_name, sp.admission_no, s.subject_name, " +
-                 "r.percentage, r.grade, r.position, r.created_at " +
+                 "SELECT u.id, u.full_name, sp.admission_no, s.subject_name, " +
+                 "r.percentage, r.grade, r.position, r.created_at, " +
+                 "e.term, e.session " +
                  "FROM results r " +
                  "JOIN users u ON u.id = r.student_id " +
                  "LEFT JOIN student_profiles sp ON sp.user_id = u.id " +
@@ -112,16 +119,19 @@ public class ResultsViewController {
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                Timestamp ts = rs.getTimestamp(7);
+                Timestamp ts = rs.getTimestamp(8);
                 ResultRow row = new ResultRow(
                     rs.getString(1),
                     rs.getString(2),
                     rs.getString(3),
-                    String.format("%.1f%%", rs.getDouble(4)),
-                    rs.getString(5) == null ? "-" : rs.getString(5),
+                    rs.getString(4),
+                    String.format("%.1f%%", rs.getDouble(5)),
                     rs.getString(6) == null ? "-" : rs.getString(6),
+                    rs.getString(7) == null ? "-" : rs.getString(7),
                     ts == null ? "-"
-                        : ts.toLocalDateTime().toLocalDate().toString()
+                        : ts.toLocalDateTime().toLocalDate().toString(),
+                    rs.getString(9),
+                    rs.getString(10)
                 );
                 data.add(row);
                 allData.add(row);
@@ -154,7 +164,9 @@ public class ResultsViewController {
     }
 
     // =========================================================================
-    //  EXPORT / NOTIFY - stub implementations (full PDF in ReportCardService)
+    //  EXPORT / NOTIFY - real implementations (ReportCardService, PDF
+    //  generators and EmailService). Every action reports the produced file
+    //  path or a precise error.
     // =========================================================================
     @FXML
     private void exportReportCard() {
@@ -163,37 +175,116 @@ public class ResultsViewController {
             showInfo("Select a student result row first.");
             return;
         }
-        showInfo("Report Card PDF generation for:\n" + r.getStudent() +
-                 "\nSubject: " + r.getSubject() +
-                 "\nScore: " + r.getScore() +
-                 "\n\nFull PDF generation is available in the " +
-                 "Report Card Generator section.");
+        // "All" carries no single term - use the term the exam was written in.
+        String term = "All".equals(termBox.getValue())
+                    ? r.getTerm() : termBox.getValue();
+        String session = r.getSession();
+        try {
+            String pdfPath = com.femzyk.klc.util.ReportCardService
+                .generateReportCard(r.getUserId(), term, session);
+            if (pdfPath != null) {
+                showInfo("Report Card generated:\n" + pdfPath);
+            } else {
+                showError("Report Card could not be generated for "
+                    + r.getStudent()
+                    + " (" + term + " term"
+                    + (session.isBlank() ? "" : ", " + session)
+                    + ").\nHas this student got published results in that term?");
+            }
+        } catch (Exception e) {
+            showError("Report Card export failed: " + e.getMessage());
+        }
     }
 
     @FXML
     private void exportTranscript() {
         ResultRow r = table.getSelectionModel().getSelectedItem();
         if (r == null) { showInfo("Select a student first."); return; }
-        showInfo("Full JSS1-SS3 Transcript for:\n" + r.getStudent() +
-                 "\n\nFull transcript PDF is in the Report Card Generator.");
+        try {
+            String pdfPath = com.femzyk.klc.util.ReportCardService
+                .generateTranscript(r.getUserId());
+            if (pdfPath != null) {
+                showInfo("Full transcript PDF generated:\n" + pdfPath);
+            } else {
+                showError("Transcript could not be generated for "
+                    + r.getStudent() + ".");
+            }
+        } catch (Exception e) {
+            showError("Transcript export failed: " + e.getMessage());
+        }
     }
 
     @FXML
     private void exportGraduation() {
-        showInfo("Graduation Certificate generation is available for SS3 completers.\n" +
-                 "Go to: Report Card Generator → Graduation Certificate.");
+        ResultRow r = table.getSelectionModel().getSelectedItem();
+        if (r == null) { showInfo("Select an SS3 student result row first."); return; }
+        try {
+            // Confirm the student is actually in SS3 before issuing a
+            // graduation certificate.
+            String cls = null;
+            try (java.sql.Connection c = DatabaseManager.getConnection();
+                 PreparedStatement ps = c.prepareStatement(
+                     "SELECT class_level FROM student_profiles WHERE user_id = ?")) {
+                ps.setString(1, r.getUserId());
+                java.sql.ResultSet rs = ps.executeQuery();
+                if (rs.next()) cls = rs.getString(1);
+            }
+            if (cls == null || !cls.toUpperCase().contains("SS3")) {
+                showError("Graduation certificates are issued to SS3 completers only.\n"
+                    + r.getStudent() + " is in "
+                    + (cls == null ? "an unknown class" : cls) + ".");
+                return;
+            }
+            String out = com.femzyk.klc.util.GraduationCertificatePdf
+                .generate(r.getUserId(), null);
+            showInfo("Graduation certificate generated:\n" + out);
+        } catch (Exception e) {
+            showError("Graduation certificate export failed: " + e.getMessage());
+        }
     }
 
     @FXML
     private void notifyResult() {
         ResultRow r = table.getSelectionModel().getSelectedItem();
         if (r == null) { showInfo("Select a student result to notify."); return; }
-        showInfo("Result notification queued for:\n" + r.getStudent() +
-                 "\nConfigure SMTP in config.properties for email delivery.");
+        try {
+            String email = null;
+            try (java.sql.Connection c = DatabaseManager.getConnection();
+                 PreparedStatement ps = c.prepareStatement(
+                     "SELECT email FROM users WHERE id = ?")) {
+                ps.setString(1, r.getUserId());
+                java.sql.ResultSet rs = ps.executeQuery();
+                if (rs.next()) email = rs.getString(1);
+            }
+            if (email == null || email.isBlank()) {
+                showError("No email address on file for " + r.getStudent() + ".");
+                return;
+            }
+            double score;
+            try {
+                score = Double.parseDouble(
+                    r.getScore().replace("%", "").trim());
+            } catch (NumberFormatException nfe) { score = 0; }
+            com.femzyk.klc.util.EmailService.sendResultNotification(
+                email, r.getStudent(), r.getSubject(), score);
+            showInfo("Result notification sent to:\n" + email
+                + "\n\nSubject: " + r.getSubject()
+                + "   Score: " + r.getScore());
+        } catch (Exception e) {
+            showError("Result notification failed: " + e.getMessage()
+                + "\n\nSMTP must be configured (smtp.* in config.properties).");
+        }
     }
 
     private void showInfo(String msg) {
         Alert a = new Alert(Alert.AlertType.INFORMATION, msg);
+        a.setTitle("KLC CBT");
+        a.getDialogPane().setPrefWidth(420);
+        a.showAndWait();
+    }
+
+    private void showError(String msg) {
+        Alert a = new Alert(Alert.AlertType.WARNING, msg);
         a.setTitle("KLC CBT");
         a.getDialogPane().setPrefWidth(420);
         a.showAndWait();

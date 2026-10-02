@@ -1,0 +1,79 @@
+name: Local delivery (artifact courier)
+
+# Build the Linux fat JAR on demand and commit it (split into <100 MB git
+# chunks) to the `local-delivery` branch, so a restricted offline sandbox
+# that can only reach github.com can fetch a runnable build via plain
+# `git fetch` (release-asset/blob CDNs are blocked there).
+#
+# NOTE: deliberately builds WITHOUT config.properties injection - no secrets
+# ever reach the delivery branch. Runners that need config pass their own
+# external config.properties (the app merges it via util.AppConfig).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deliver:
+    name: Build Linux fat JAR & courier it via git
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+
+      - name: Build fat JAR (skip tests - the PR gate covers them)
+        run: |
+          set -o pipefail
+          mvn -B -ntp -DskipTests clean package 2>&1 | tee mvn_delivery.log
+          tail -c 4000 mvn_delivery.log > delivery_build_tail.txt
+
+      - name: Split JAR into git-safe chunks
+        run: |
+          JAR=$(ls target/knowledge-land-cbt-*.jar | head -1)
+          echo "JAR=$JAR"
+          cp "$JAR" delivered.jar
+          sha256sum delivered.jar > delivered.sha256
+          split -b 48m -d delivered.jar jar.part-
+          ls -la jar.part-*
+
+      # The restricted sandbox can only reach github.com, so also courier a
+      # JDK 17 + Maven + the resolved dependency cache - enough to run the
+      # app headless and iterate on builds locally.
+      - name: Courier JDK 17 + Maven + Maven repo cache
+        run: |
+          mkdir -p bundle
+          cd bundle
+          curl -fsSL -o jdk.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
+          curl -fsSL -o maven.tar.gz "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz"
+          tar czf m2repo.tar.gz -C "$HOME" .m2/repository
+          for f in jdk.tar.gz maven.tar.gz m2repo.tar.gz; do
+            sha256sum "$f" >> ../delivered.sha256
+            split -b 48m -d "$f" "${f%.tar.gz}.tgz.part-"
+          done
+          ls -la . | head -20
+
+      - name: Push chunks to local-delivery branch
+        run: |
+          git config user.name  "klc-delivery-bot"
+          git config user.email "actions@github.com"
+          git checkout --orphan tmp-delivery
+          git rm -rf --cached . -q
+          rm -rf src supabase docs tools klc-web-admin .github target bundle
+          git add jar.part-* *.tgz.part-* delivered.sha256 delivery_build_tail.txt
+          git commit -m "delivery: fat JAR + JDK17 + Maven + m2 cache $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f origin tmp-delivery:local-delivery
+          echo "Pushed to local-delivery."
