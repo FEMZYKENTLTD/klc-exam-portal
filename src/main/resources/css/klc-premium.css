@@ -203,8 +203,29 @@
     -fx-background-color: #f8fafc;
 }
 
+/* KLC v1.1.0 FIX: table rows rendered white-on-white on the striped
+   (light) rows - data was present but invisible. Pin row backgrounds and
+   cell text explicitly; the dark theme sheet appends later and wins. */
+.table-row-cell {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #1e293b;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #eef2f8;
+    -fx-text-fill: #1e293b;
+}
+
+.table-view .table-cell {
+    -fx-text-fill: #1e293b;
+}
+
 .table-row-cell:selected {
     -fx-background-color: #dbeafe;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #0f1f3c;
 }
 
 /* ====== SIDEBAR ====== */

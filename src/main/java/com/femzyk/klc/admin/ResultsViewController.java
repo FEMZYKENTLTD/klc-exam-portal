@@ -267,9 +267,20 @@ public class ResultsViewController {
             } catch (NumberFormatException nfe) { score = 0; }
             com.femzyk.klc.util.EmailService.sendResultNotification(
                 email, r.getStudent(), r.getSubject(), score);
-            showInfo("Result notification sent to:\n" + email
-                + "\n\nSubject: " + r.getSubject()
-                + "   Score: " + r.getScore());
+            if (com.femzyk.klc.util.EmailService.isEnabled()) {
+                showInfo("Result notification sent to:\n" + email
+                    + "\n\nSubject: " + r.getSubject()
+                    + "   Score: " + r.getScore());
+            } else {
+                // SMTP not configured - send() auto-queued it in
+                // notification_queue for the next flush (Notification screen).
+                showInfo("SMTP is not configured on this PC, so the "
+                    + "notification was QUEUED for automatic delivery:\n"
+                    + email + "\n\nSubject: " + r.getSubject()
+                    + "   Score: " + r.getScore()
+                    + "\n\nQueue: Notifications screen / notification_queue "
+                    + "(flushes when SMTP is set).");
+            }
         } catch (Exception e) {
             showError("Result notification failed: " + e.getMessage()
                 + "\n\nSMTP must be configured (smtp.* in config.properties).");

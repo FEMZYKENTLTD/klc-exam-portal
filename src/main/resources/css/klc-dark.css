@@ -129,6 +129,9 @@
 .table-view .table-row-cell:selected {
     -fx-background-color: #2a3b63;
 }
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: #ffffff;
+}
 .table-view .table-cell {
     -fx-text-fill: #e6ebf5;
     -fx-border-color: transparent transparent #1c2a44 transparent;

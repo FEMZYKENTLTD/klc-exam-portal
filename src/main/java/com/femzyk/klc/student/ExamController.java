@@ -17,6 +17,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -37,7 +38,10 @@ public class ExamController {
     @FXML private Button audioBtn;
     @FXML private Label progressLabel;
     @FXML private ImageView questionImageView, webcamThumb;
-    @FXML private VBox examRoot;
+    // KLC v1.1.0 FIX: exam.fxml's root is a BorderPane - the field used to
+    // be declared VBox, which made every exam load throw
+    // "Can not set ... examRoot to javafx.scene.layout.BorderPane".
+    @FXML private BorderPane examRoot;
 
     // ─── State ────────────────────────────────────────────────────────────────
     private String attemptId, examId;

@@ -11,6 +11,11 @@ name: Local delivery (artifact courier)
 
 on:
   workflow_dispatch:
+  # Push-trigger escape hatch: commit/touch .delivery/trigger on any branch
+  # to courier that ref's JAR (used where workflow_dispatch is not
+  # permissioned, e.g. restricted CI integrations).
+  push:
+    paths: ['.delivery/trigger']
 
 permissions:
   contents: write
@@ -55,25 +60,63 @@ jobs:
       # app headless and iterate on builds locally.
       - name: Courier JDK 17 + Maven + Maven repo cache
         run: |
-          mkdir -p bundle
-          cd bundle
-          curl -fsSL -o jdk.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
+          set -x
+          mkdir -p ship
+          mv jar.part-* delivered.sha256 delivery_build_tail.txt ship/
+          # Headless glass driver (Monocle) - used only by the offline
+          # screenshot harness, never part of the shipped JAR.
+          if mvn -B -ntp dependency:get -Dartifact=org.testfx:openjfx-monocle:21.0.2; then
+            find ~/.m2/repository/org/testfx -name "*linux*.jar" -exec cp -v {} ship/monocle-linux.jar \; || true
+            if [ ! -f ship/monocle-linux.jar ]; then
+              cp -v ~/.m2/repository/org/testfx/openjfx-monocle/21.0.2/openjfx-monocle-21.0.2.jar ship/monocle-linux.jar
+            fi
+            echo "monocle: shipped" >> ship/delivery_status.txt
+          else
+            echo "monocle: RESOLUTION FAILED (harness will lack headless glass)" >> ship/delivery_status.txt
+          fi
+          # Native text-layout stack (Debian 12 bookworm - matches the glibc
+          # of the offline sandbox): JavaFX's pango font shaper needs these.
+          # Fully non-fatal: diagnostics land in ship/delivery_status.txt.
+          mkdir -p debtext ../ship/textlibs && cd debtext
+          if curl -fsSL http://deb.debian.org/debian/dists/bookworm/main/binary-amd64/Packages.xz -o P.xz; then
+            xz -dc P.xz > P.txt || true
+            echo "Packages index lines: $(wc -l < P.txt)" >> ../ship/delivery_status.txt
+            grep -c "^Package: " P.txt >> ../ship/delivery_status.txt || true
+            for p in libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 libharfbuzz0b libthai0 libdatrie1 libgraphite2-3 libfribidi0; do
+              u=$(awk -v pkg="Package: $p" 'BEGIN{RS=""} index($0, pkg "\n") == 1 { split($0,L,"\n"); for (i=1;i<=length(L);i++) if (L[i] ~ /^Filename: /) { sub(/^Filename: /,"",L[i]); print L[i]; exit } }' P.txt)
+              if [ -n "$u" ]; then
+                curl -fsSL "http://deb.debian.org/debian/$u" -o pkg.deb && dpkg -x pkg.deb ../ship/textlibs/ \
+                  && echo "deb $p OK" >> ../ship/delivery_status.txt \
+                  || echo "deb $p DL/EXTRACT FAILED" >> ../ship/delivery_status.txt
+              else
+                echo "deb $p NOT FOUND in index" >> ../ship/delivery_status.txt
+              fi
+            done
+            find ../ship/textlibs -name "*.so*" | wc -l >> ../ship/delivery_status.txt
+          else
+            echo "Packages.xz unreachable" >> ../ship/delivery_status.txt
+          fi
+          cd ..
+          mkdir -p bundle && cd bundle
+          curl -fsSL -o jdk.tar.gz "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse" \
+            || curl -fsSL -o jdk.tar.gz "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jdk_x64_linux_hotspot_21.0.5_11.tar.gz"
           curl -fsSL -o maven.tar.gz "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz"
           tar czf m2repo.tar.gz -C "$HOME" .m2/repository
           for f in jdk.tar.gz maven.tar.gz m2repo.tar.gz; do
-            sha256sum "$f" >> ../delivered.sha256
-            split -b 48m -d "$f" "${f%.tar.gz}.tgz.part-"
+            sha256sum "$f" >> ../ship/delivered.sha256
+            split -b 48m -d "$f" "../ship/${f%.tar.gz}.tgz.part-"
           done
-          ls -la . | head -20
+          cd ..
+          ls -la ship | tee -a ship/delivery_status.txt | head -20
 
       - name: Push chunks to local-delivery branch
         run: |
           git config user.name  "klc-delivery-bot"
           git config user.email "actions@github.com"
           git checkout --orphan tmp-delivery
-          git rm -rf --cached . -q
+          git rm -rf --cached . -q || true
           rm -rf src supabase docs tools klc-web-admin .github target bundle
-          git add jar.part-* *.tgz.part-* delivered.sha256 delivery_build_tail.txt
+          git add -A -f ship/
           git commit -m "delivery: fat JAR + JDK17 + Maven + m2 cache $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -f origin tmp-delivery:local-delivery
           echo "Pushed to local-delivery."

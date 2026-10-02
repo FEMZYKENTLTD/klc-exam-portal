@@ -5,6 +5,9 @@
 <?import javafx.scene.layout.*?>
 <BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
   fx:id="examRoot" fx:controller="com.femzyk.klc.student.ExamController" prefWidth="1200" prefHeight="750">
+  <fx:define>
+    <ToggleGroup fx:id="optionsGroup"/>
+  </fx:define>
   <top>
     <VBox>
     <HBox styleClass="header" spacing="18" alignment="CENTER_LEFT">
@@ -15,10 +18,18 @@
       <Label fx:id="timerLabel" text="00:00:00" styleClass="exam-timer"/>
     </HBox>
     <ToolBar>
-      <Button text="A-" onAction="#decreaseFont" tooltip="Decrease Font"/>
-      <Button text="A+" onAction="#increaseFont" tooltip="Increase Font"/>
-      <Button text="◐ Contrast" onAction="#toggleContrast" tooltip="High Contrast Mode"/>
-      <Button text="Aa Dyslexic" onAction="#toggleDyslexic" tooltip="Dyslexic-friendly font"/>
+      <Button text="A-" onAction="#decreaseFont">
+        <tooltip><Tooltip text="Decrease Font"/></tooltip>
+      </Button>
+      <Button text="A+" onAction="#increaseFont">
+        <tooltip><Tooltip text="Increase Font"/></tooltip>
+      </Button>
+      <Button text="◐ Contrast" onAction="#toggleContrast">
+        <tooltip><Tooltip text="High Contrast Mode"/></tooltip>
+      </Button>
+      <Button text="Aa Dyslexic" onAction="#toggleDyslexic" >
+        <tooltip><Tooltip text="Dyslexic-friendly font"/></tooltip>
+      </Button>
       <Separator/>
       <Button fx:id="calcBtn" text="🧮 Calculator" onAction="#openCalculator"/>
       <Button fx:id="formulaBtn" text="📐 Formula Sheet" onAction="#openFormulaSheet"/>
@@ -49,10 +60,13 @@
       <ImageView fx:id="questionImageView" fitWidth="560" preserveRatio="true" visible="false" managed="false"/>
       <Label fx:id="questionLabel" wrapText="true" style="-fx-font-size:16px"/>
       <VBox spacing="8">
-        <RadioButton fx:id="optA" text="A"/><RadioButton fx:id="optB" text="B"/>
-        <RadioButton fx:id="optC" text="C"/><RadioButton fx:id="optD" text="D"/>
-        <RadioButton fx:id="optE" text="E"/>
-        <ToggleGroup fx:id="optionsGroup"/>
+        <!-- KLC v1.1.0 FIX: a ToggleGroup is not a Node - declaring it as a
+             child of the VBox threw "Unable to coerce ToggleGroup to Node"
+             and the ENTIRE exam screen failed to load. Declared in
+             fx:define and referenced by the radio buttons instead. -->
+        <RadioButton fx:id="optA" text="A" toggleGroup="$optionsGroup"/><RadioButton fx:id="optB" text="B" toggleGroup="$optionsGroup"/>
+        <RadioButton fx:id="optC" text="C" toggleGroup="$optionsGroup"/><RadioButton fx:id="optD" text="D" toggleGroup="$optionsGroup"/>
+        <RadioButton fx:id="optE" text="E" toggleGroup="$optionsGroup"/>
       </VBox>
       <HBox spacing="10">
         <Button text="◀ Previous (P)" onAction="#prev" fx:id="prevBtn"/>
