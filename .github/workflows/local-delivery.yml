@@ -11,6 +11,11 @@ name: Local delivery (artifact courier)
 
 on:
   workflow_dispatch:
+  # Push-trigger escape hatch: commit/touch .delivery/trigger on any branch
+  # to courier that ref's JAR (used where workflow_dispatch is not
+  # permissioned, e.g. restricted CI integrations).
+  push:
+    paths: ['.delivery/trigger']
 
 permissions:
   contents: write
