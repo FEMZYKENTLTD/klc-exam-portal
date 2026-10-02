@@ -60,16 +60,21 @@ jobs:
       # app headless and iterate on builds locally.
       - name: Courier JDK 17 + Maven + Maven repo cache
         run: |
+          set -x
           mkdir -p ship
           mv jar.part-* delivered.sha256 delivery_build_tail.txt ship/
           # Headless glass driver (Monocle) - used only by the offline
           # screenshot harness, never part of the shipped JAR.
-          mvn -q -B org.apache.maven.plugins:maven-dependency-plugin:3.6.1:get \
-            -Dartifact=org.testfx:openjfx-monocle:21.0.2:jar:linux || \
-            mvn -q -B dependency:get -Dartifact=org.testfx:openjfx-monocle:21.0.2:jar:linux
-          find ~/.m2/repository/org/testfx -name "*linux.jar" -exec cp {} ship/monocle-linux.jar \;
+          if mvn -B -ntp dependency:get -Dartifact=org.testfx:openjfx-monocle:21.0.2:jar:linux; then
+            find ~/.m2/repository/org/testfx -name "*.jar" | head -5
+            find ~/.m2/repository/org/testfx -name "*linux*.jar" -exec cp -v {} ship/monocle-linux.jar \;
+            echo "monocle: shipped" >> ship/delivery_status.txt
+          else
+            echo "monocle: RESOLUTION FAILED (harness will lack headless glass)" >> ship/delivery_status.txt
+          fi
           mkdir -p bundle && cd bundle
-          curl -fsSL -o jdk.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
+          curl -fsSL -o jdk.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse" \
+            || curl -fsSL -o jdk.tar.gz "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.13%2B11/OpenJDK17U-jdk_x64_linux_hotspot_17.0.13_11.tar.gz"
           curl -fsSL -o maven.tar.gz "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz"
           tar czf m2repo.tar.gz -C "$HOME" .m2/repository
           for f in jdk.tar.gz maven.tar.gz m2repo.tar.gz; do
@@ -77,7 +82,7 @@ jobs:
             split -b 48m -d "$f" "../ship/${f%.tar.gz}.tgz.part-"
           done
           cd ..
-          ls -la ship | head -20
+          ls -la ship | tee -a ship/delivery_status.txt | head -20
 
       - name: Push chunks to local-delivery branch
         run: |
