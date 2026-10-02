@@ -141,7 +141,12 @@ public class KlcShotHarness {
         show("parent_dashboard.fxml");
         shot("44_parent_portal");
 
-        // 9. Done.
+        // 9. Document exports - prove the PDF pipeline really generates
+        //    official documents from the seeded data (report card,
+        //    transcript, graduation certificate).
+        pdfExports();
+
+        // 10. Done.
         System.out.println("[harness] done - " + (failures == 0 ? "ALL CLEAN" : failures + " failures")
             + " - screenshots in " + outDir);
         Platform.exit();
@@ -443,6 +448,41 @@ public class KlcShotHarness {
         failures++;
         System.out.println("[harness] register FAILED for " + email + ": " + r);
         return idByEmail(email);
+    }
+
+    /** Generate the official PDF documents through the app's own services. */
+    private static void pdfExports() {
+        try {
+            String ss3 = idByEmail("student7@klc.test");   // Fatima Sule (SS3)
+            String jss1 = student1Id;                      // Chidera Okonkwo
+
+            String rc = com.femzyk.klc.util.ReportCardService
+                .generateReportCard(jss1, "1st", "2025/2026");
+            verdict("report card", rc != null, rc);
+
+            String tr = com.femzyk.klc.util.ReportCardService
+                .generateTranscript(jss1);
+            verdict("transcript", tr != null, tr);
+
+            String cert = com.femzyk.klc.util.GraduationCertificatePdf
+                .generate(ss3, outDir + "/sample_graduation_certificate.pdf");
+            verdict("graduation certificate", cert != null, cert);
+        } catch (Throwable t) {
+            failures++;
+            System.out.println("[harness] PDF export step FAILED: " + t);
+            err(t);
+        }
+    }
+
+    private static void verdict(String what, boolean ok, String path) {
+        if (ok) {
+            long len = path != null ? new File(path).length() : -1;
+            System.out.println("[harness] PDF " + what + " generated: " + path
+                + " (" + len + " bytes)");
+        } else {
+            failures++;
+            System.out.println("[harness] PDF " + what + " FAILED (null path)");
+        }
     }
 
     /** Load exam.fxml and start the seeded Mathematics exam via the real controller entry point. */
