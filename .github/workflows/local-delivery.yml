@@ -62,6 +62,12 @@ jobs:
         run: |
           mkdir -p ship
           mv jar.part-* delivered.sha256 delivery_build_tail.txt ship/
+          # Headless glass driver (Monocle) - used only by the offline
+          # screenshot harness, never part of the shipped JAR.
+          mvn -q -B org.apache.maven.plugins:maven-dependency-plugin:3.6.1:get \
+            -Dartifact=org.testfx:openjfx-monocle:21.0.2:jar:linux || \
+            mvn -q -B dependency:get -Dartifact=org.testfx:openjfx-monocle:21.0.2:jar:linux
+          find ~/.m2/repository/org/testfx -name "*linux.jar" -exec cp {} ship/monocle-linux.jar \;
           mkdir -p bundle && cd bundle
           curl -fsSL -o jdk.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
           curl -fsSL -o maven.tar.gz "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz"
