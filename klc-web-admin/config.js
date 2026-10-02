@@ -1,4 +1,4 @@
-// KLC CBT Suite v1.0 - Web Admin / Parent Checker configuration
+// KLC CBT Suite v1.1 - Web Admin / Parent Checker configuration
 // Replace with YOUR project values (Supabase Dashboard -> Settings -> API).
 // The anon key is safe to expose: data is only reachable through the
 // SECURITY DEFINER RPCs in supabase/klc_supabase_v1_1_security_and_features.sql.

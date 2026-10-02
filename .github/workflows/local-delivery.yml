@@ -23,6 +23,9 @@ permissions:
 jobs:
   deliver:
     name: Build Linux fat JAR & courier it via git
+    # Internal tooling: only the working branch couriers builds; main and
+    # version tags never run it (releases come from the release job).
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/heads/arena/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
