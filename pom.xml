@@ -6,7 +6,7 @@
 
 	<groupId>com.femzyk</groupId>
 	<artifactId>knowledge-land-cbt</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 
 	<name>KNOWLEDGE LAND CBT SUITE</name>
 	<description>
@@ -17,7 +17,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>17</maven.compiler.release>
-		<javafx.version>17.0.9</javafx.version>
+		<javafx.version>21.0.12</javafx.version>
 		<main.class>com.femzyk.klc.MainApp</main.class>
 	</properties>
 
@@ -49,22 +49,12 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>42.7.3</version>
+			<version>42.7.13</version>
 		</dependency>
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<version>2.2.224</version>
-		</dependency>
-		<dependency>
-			<groupId>org.hibernate.orm</groupId>
-			<artifactId>hibernate-core</artifactId>
-			<version>6.4.4.Final</version>
-		</dependency>
-		<dependency>
-			<groupId>jakarta.persistence</groupId>
-			<artifactId>jakarta.persistence-api</artifactId>
-			<version>3.1.0</version>
+			<version>2.5.252</version>
 		</dependency>
 
 		<!-- Security -->
@@ -83,47 +73,47 @@
 		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>
-			<version>3.0.1</version>
+			<version>3.0.8</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
-			<version>5.2.5</version>
+			<version>5.5.1</version>
 		</dependency>
 
 		<!-- PDF Export - iText 8 -->
 		<dependency>
 			<groupId>com.itextpdf</groupId>
 			<artifactId>itext-core</artifactId>
-			<version>8.0.3</version>
+			<version>8.0.5</version>
 			<type>pom</type>
 		</dependency>
 		<dependency>
 			<groupId>com.itextpdf</groupId>
 			<artifactId>kernel</artifactId>
-			<version>8.0.3</version>
+			<version>8.0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>com.itextpdf</groupId>
 			<artifactId>layout</artifactId>
-			<version>8.0.3</version>
+			<version>8.0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>com.itextpdf</groupId>
 			<artifactId>io</artifactId>
-			<version>8.0.3</version>
+			<version>8.0.5</version>
 		</dependency>
 
 		<!-- QR Code -->
 		<dependency>
 			<groupId>com.google.zxing</groupId>
 			<artifactId>core</artifactId>
-			<version>3.5.2</version>
+			<version>3.5.4</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.zxing</groupId>
 			<artifactId>javase</artifactId>
-			<version>3.5.2</version>
+			<version>3.5.4</version>
 		</dependency>
 
 		<!-- Email - Brevo SMTP -->
@@ -144,47 +134,47 @@
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.10.1</version>
+			<version>2.14.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>okhttp</artifactId>
-			<version>4.12.0</version>
+			<version>5.5.0</version>
 		</dependency>
 
 		<!-- CSV / Excel -->
 		<dependency>
 			<groupId>com.opencsv</groupId>
 			<artifactId>opencsv</artifactId>
-			<version>5.9</version>
+			<version>5.12.0</version>
 		</dependency>
 
 		<!-- Logging - Logback for SLF4J -->
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.4.14</version>
+			<version>1.5.16</version>
 		</dependency>
 
 		<!-- Log4j2 core - fixes Apache POI log4j2 warning -->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.21.1</version>
+			<version>2.25.4</version>
 		</dependency>
 
 		<!-- Utilities -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.14.0</version>
+			<version>3.20.0</version>
 		</dependency>
 
 		<!-- Tests -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>5.10.2</version>
+			<version>5.14.4</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -197,7 +187,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.2.5</version>
+				<version>3.5.6</version>
 				<configuration>
 					<!-- Business-logic tests are pure JVM/H2; JavaFX is never started. -->
 					<useModulePath>false</useModulePath>
@@ -208,7 +198,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.11.0</version>
+				<version>3.14.0</version>
 				<configuration>
 					<release>17</release>
 					<compilerArgs>
@@ -231,7 +221,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.5.1</version>
+				<version>3.6.2</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
