@@ -11,7 +11,7 @@
 
 	<!-- Page Header -->
 	<VBox style="-fx-background-color:#0f1f3c; -fx-padding:16 20; -fx-spacing:4">
-		<Label text="About KNOWLEDGE LAND COLLEGE CBT Suite v1.0"
+		<Label text="About KNOWLEDGE LAND COLLEGE CBT Suite v1.1"
                style="-fx-text-fill:white; -fx-font-size:20px; -fx-font-weight:bold"/>
 		<Label text="WAEC / NECO-Standard Examination Management for Nigerian Secondary Schools"
                style="-fx-text-fill:#94a3b8; -fx-font-size:12px"/>

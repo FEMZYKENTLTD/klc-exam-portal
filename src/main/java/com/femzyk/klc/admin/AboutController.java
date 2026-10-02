@@ -39,7 +39,7 @@ public class AboutController {
 
         if (versionLabel != null) {
             versionLabel.setText(
-                "Application:  KNOWLEDGE LAND COLLEGE CBT SUITE v1.0\n" +
+                "Application:  KNOWLEDGE LAND COLLEGE CBT SUITE v1.1\n" +
                 "Type:         Secondary School Enterprise\n" +
                 "Mode:         Cloud Online / Auto-Sync\n\n" +
                 "Database:     " + dbStatus + "\n" +
