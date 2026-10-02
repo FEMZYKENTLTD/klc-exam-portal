@@ -1,0 +1,32 @@
+monocle: shipped
+Packages index lines: 1168875
+63440
+deb libpango-1.0-0 OK
+deb libpangoft2-1.0-0 OK
+deb libpangocairo-1.0-0 OK
+deb libharfbuzz0b OK
+deb libthai0 OK
+deb libdatrie1 OK
+deb libgraphite2-3 OK
+deb libfribidi0 OK
+17
+total 444752
+drwxr-xr-x  3 runner runner     4096 Oct  2 20:01 .
+drwxr-xr-x 14 runner runner     4096 Oct  2 20:00 ..
+-rw-r--r--  1 runner runner      316 Oct  2 20:01 delivered.sha256
+-rw-r--r--  1 runner runner     4000 Oct  2 20:00 delivery_build_tail.txt
+-rw-r--r--  1 runner runner      226 Oct  2 20:00 delivery_status.txt
+-rw-r--r--  1 runner runner 50331648 Oct  2 20:00 jar.part-00
+-rw-r--r--  1 runner runner 50331648 Oct  2 20:00 jar.part-01
+-rw-r--r--  1 runner runner  6199437 Oct  2 20:00 jar.part-02
+-rw-r--r--  1 runner runner 50331648 Oct  2 20:01 jdk.tgz.part-00
+-rw-r--r--  1 runner runner 50331648 Oct  2 20:01 jdk.tgz.part-01
+-rw-r--r--  1 runner runner 50331648 Oct  2 20:01 jdk.tgz.part-02
+-rw-r--r--  1 runner runner 50331648 Oct  2 20:01 jdk.tgz.part-03
+-rw-r--r--  1 runner runner  6146755 Oct  2 20:01 jdk.tgz.part-04
+-rw-r--r--  1 runner runner 50331648 Oct  2 20:01 m2repo.tgz.part-00
+-rw-r--r--  1 runner runner 50331648 Oct  2 20:01 m2repo.tgz.part-01
+-rw-r--r--  1 runner runner 31031435 Oct  2 20:01 m2repo.tgz.part-02
+-rw-r--r--  1 runner runner  9102945 Oct  2 20:01 maven.tgz.part-00
+-rw-r--r--  1 runner runner   257923 Oct  2 20:00 monocle-linux.jar
+drwxr-xr-x  3 runner runner     4096 Apr  5  2022 textlibs
