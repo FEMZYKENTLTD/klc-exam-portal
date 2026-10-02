@@ -76,18 +76,26 @@ jobs:
           fi
           # Native text-layout stack (Debian 12 bookworm - matches the glibc
           # of the offline sandbox): JavaFX's pango font shaper needs these.
-          mkdir -p debtext && cd debtext
-          curl -fsSL http://deb.debian.org/debian/dists/bookworm/main/binary-amd64/Packages.xz -o P.xz
-          xz -dc P.xz | awk -v RS= 'BEGIN{
-              n=split("libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 libharfbuzz0b libthai0 libdatrie1 libgraphite2-3 libfribidi0",w," ");
-              for(i=1;i<=n;i++) want["Package: " w[i]]=1 }
-            { split($0,L,"\n"); if (L[1] in want) print }' \
-            | grep '^Filename: ' | sed 's/^Filename: //' > urls.txt
-          wc -l urls.txt >> ../ship/delivery_status.txt
-          while read -r u; do curl -fsSL "http://deb.debian.org/debian/$u" || echo "deb dl failed: $u" >> ../ship/delivery_status.txt; done < urls.txt
-          mkdir -p ../ship/textlibs
-          for d in *.deb; do dpkg -x "$d" ../ship/textlibs/; done
-          find ../ship/textlibs -name "*.so*" | wc -l >> ../ship/delivery_status.txt
+          # Fully non-fatal: diagnostics land in ship/delivery_status.txt.
+          mkdir -p debtext ../ship/textlibs && cd debtext
+          if curl -fsSL http://deb.debian.org/debian/dists/bookworm/main/binary-amd64/Packages.xz -o P.xz; then
+            xz -dc P.xz > P.txt || true
+            echo "Packages index lines: $(wc -l < P.txt)" >> ../ship/delivery_status.txt
+            grep -c "^Package: " P.txt >> ../ship/delivery_status.txt || true
+            for p in libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 libharfbuzz0b libthai0 libdatrie1 libgraphite2-3 libfribidi0; do
+              u=$(awk -v pkg="Package: $p" 'BEGIN{RS=""} index($0, pkg "\n") == 1 { split($0,L,"\n"); for (i=1;i<=length(L);i++) if (L[i] ~ /^Filename: /) { sub(/^Filename: /,"",L[i]); print L[i]; exit } }' P.txt)
+              if [ -n "$u" ]; then
+                curl -fsSL "http://deb.debian.org/debian/$u" -o pkg.deb && dpkg -x pkg.deb ../ship/textlibs/ \
+                  && echo "deb $p OK" >> ../ship/delivery_status.txt \
+                  || echo "deb $p DL/EXTRACT FAILED" >> ../ship/delivery_status.txt
+              else
+                echo "deb $p NOT FOUND in index" >> ../ship/delivery_status.txt
+              fi
+            done
+            find ../ship/textlibs -name "*.so*" | wc -l >> ../ship/delivery_status.txt
+          else
+            echo "Packages.xz unreachable" >> ../ship/delivery_status.txt
+          fi
           cd ..
           mkdir -p bundle && cd bundle
           curl -fsSL -o jdk.tar.gz "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse" \
