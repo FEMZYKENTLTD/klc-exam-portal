@@ -44,12 +44,28 @@ dependency lines, from the Hibernate removal.
   * *Export Transcript* → full JSS1–SS3 transcript PDF.
   * *Graduation Certificate* → issues the certificate PDF, gated to SS3
     students only (precise refusal otherwise).
-  * *Notify Result* → emails the student's registered email address through
-    the configured SMTP service.
+  * *Notify Result* → emails the student's registered email address;
+    when SMTP is not configured the message is auto-queued
+    (`notification_queue`) and the dialog says so honestly.
 * Screenshot/verification harness (`tools/screenshot-harness/`): boots the
   real application headless (Monocle software pipeline), seeds a demo school
   (staff, 7 students, parent, question bank, live exams, attempts, results,
-  CA scores, announcements, social graph) and captures every interface.
+  CA scores, announcements, social graph) and captures every interface —
+  plus verifies PDF document generation (see `docs/VERIFICATION-REPORT-V1.1.0.md`).
+
+## 2b. Shipped runtime bugs found by the harness (fixed)
+
+1. **The exam screen could never load** — `<ToggleGroup>` was declared as a
+   layout child (not a Node → FXMLLoader crash), and the controller's
+   `examRoot` field was a `VBox` while the FXML root is a `BorderPane`
+   (second, independent crash). Every student exam launch died before the
+   first question. Fixed both; `40_exam_screen.png` shows the live exam.
+2. **Exam Manager failed to load for admins** — five FXMLs used the invalid
+   `tooltip="text"` attribute (string → Tooltip coercion error).
+3. **Light-theme tables had invisible rows** (white text on white striped
+   rows) in Student Manager, Results, Audit, Broadsheet, etc.
+
+Full post-mortem: `docs/VERIFICATION-REPORT-V1.1.0.md`.
 
 ## 3. Interface verification — screenshots shipped
 
