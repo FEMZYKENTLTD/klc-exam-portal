@@ -122,6 +122,9 @@ public class KlcShotHarness {
         show("student_dashboard.fxml");
         shot("39_student_dashboard");
 
+        show("practice_exam.fxml");
+        shot("39b_practice_exam");
+
         startSeededExam();
         shot("40_exam_screen");
 
