@@ -283,6 +283,13 @@ public class ResultsViewController {
         a.showAndWait();
     }
 
+    private void showError(String msg) {
+        Alert a = new Alert(Alert.AlertType.WARNING, msg);
+        a.setTitle("KLC CBT");
+        a.getDialogPane().setPrefWidth(420);
+        a.showAndWait();
+    }
+
     private void startRealtimeListener() {
         try {
             // KLC v1.0 SECURITY FIX: project ref + anon key are no longer
