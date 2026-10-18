@@ -286,7 +286,7 @@ public class AuthService {
                         "INSERT INTO student_profiles(" +
                         "  id, user_id, admission_no, surname, other_names, " +
                         "  class_level, arm, session, result_pin) " +
-                        "VALUES(?, ?, ?, ?, ?, ?, ?, '2024/2025', ?)")) {
+                        "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                     setUuid(ps, 1, UUID.randomUUID().toString(), c);
                     setUuid(ps, 2, userId, c);
                     ps.setString(3, admissionNo);
@@ -297,7 +297,8 @@ public class AuthService {
                         "\\s*", "").trim());
                     ps.setString(6, safeClass);
                     ps.setString(7, arm == null ? "" : arm.trim());
-                    ps.setString(8, pin);
+                    ps.setString(8, com.femzyk.klc.util.ConfigService.sessionFor(c));
+                    ps.setString(9, pin);
                     ps.executeUpdate();
                 }
             }

@@ -107,6 +107,31 @@ public class ExamController {
                 MainApp.examInProgress = false;
                 return;
             }
+            // Attempt-limit enforcement (exams.attempt_limit, default 1):
+            // count prior SUBMITTED sittings for this student+exam.
+            if (!isPractice) {
+                int limit = 1; long submitted = 0;
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT attempt_limit FROM exams WHERE id = ?")) {
+                    AuthService.setUuid(ps, 1, examId, c);
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) { limit = rs.getInt(1); if (rs.wasNull()) limit = 1; }
+                }
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT COUNT(*) FROM exam_attempts WHERE exam_id = ? AND student_id = ? " +
+                        "AND status IN ('SUBMITTED','MALPRACTICE','MOCK_SUBMITTED')")) {
+                    AuthService.setUuid(ps, 1, examId, c);
+                    AuthService.setUuid(ps, 2, AuthService.Session.userId, c);
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) submitted = rs.getLong(1);
+                }
+                if (!com.femzyk.klc.util.AttemptPolicy.canStart(limit, submitted, false)) {
+                    MainApp.examInProgress = false;
+                    alert(com.femzyk.klc.util.AttemptPolicy.denialMessage(limit, submitted));
+                    AuthService.logAudit("EXAM_ATTEMPT_LIMIT_BLOCK", "exams", examId);
+                    return;
+                }
+            }
             attemptId = createAttempt(c);
             loadExamMeta(c);
             loadQuestions(c);

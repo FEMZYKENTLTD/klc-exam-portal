@@ -47,7 +47,7 @@ public class IdCardController {
         SRow r = table.getSelectionModel().getSelectedItem();
         if(r==null){ status.setText("Select a student"); return; }
         try{
-            String out = IdCardPdf.generate(r.admission, r.name, r.classLevel, "2024/2025");
+            String out = IdCardPdf.generate(r.admission, r.name, r.classLevel, com.femzyk.klc.util.ConfigService.getSession());
             status.setText("ID Card generated: "+out+" - with QR verification");
             new Alert(Alert.AlertType.INFORMATION, "ID Card saved: "+out).showAndWait();
         }catch(Exception e){ status.setText(e.getMessage()); e.printStackTrace();}
@@ -55,7 +55,7 @@ public class IdCardController {
     @FXML private void generateBulk(){
         int n=0;
         for(SRow r: data){
-            try{ IdCardPdf.generate(r.admission, r.name, r.classLevel, "2024/2025"); n++; }catch(Exception ignored){}
+            try{ IdCardPdf.generate(r.admission, r.name, r.classLevel, com.femzyk.klc.util.ConfigService.getSession()); n++; }catch(Exception ignored){}
         }
         status.setText("Bulk generated "+n+" ID cards - PDF files in app folder");
         new Alert(Alert.AlertType.INFORMATION, "Bulk ID Cards: "+n+" generated").showAndWait();

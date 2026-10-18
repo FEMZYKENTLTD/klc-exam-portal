@@ -112,3 +112,41 @@ question upload, schema inventory)
   `windows-x86-bundle` job (32-bit Zulu FX JDK 17 jpackage, tags/manual).
 - **Study materials now deliver via Supabase Storage** (cloud URL stored;
   honest local-only fallback status), instead of storing a local path.
+
+## National-scale cross-check — 2026-10-18
+
+Every feature/flow re-verified (42→48 FXML, 81 Java files, web portal JS
+node-checked + parser live-tested, live Supabase inspected directly):
+
+- **CRITICAL (fixed): attempt_limit was never enforced.** Exams carry
+  `attempt_limit` (default 1) but exam start never checked it — unlimited
+  official retakes. Now enforced at start via `util.AttemptPolicy`
+  (unit-tested) counting SUBMITTED/MALPRACTICE/MOCK_SUBMITTED sittings,
+  with audit event `EXAM_ATTEMPT_LIMIT_BLOCK`.
+- **CRITICAL (fixed live + repo): mock exams could not submit in the
+  cloud.** Live `exam_attempts` status CHECK lacked `MOCK_SUBMITTED`, and
+  `UNIQUE(exam_id, student_id)` blocked retakes/re-entry. Migration
+  `klc_v1_3_national_scale` (applied live, verified) drops the unique,
+  restores the full status set, and adds national-scale hot-path indexes
+  (attempts/results/CA/questions/students/audit/answers). Base schema file
+  corrected so fresh installs match; CI chain includes v1.3.
+- **Uploads (fixed):** web parser silently DROPPED questions without a
+  `Question:` prefix (reproduced in Node; 2/3 questions parsed). Bare
+  questions now start a question; client validation (≥2 options, exactly
+  1 correct) shown in preview and enforced before upload. Desktop importer
+  gained the same canonical grammar via `util.QuestionTextParser`
+  (unit-tested): structured files import REAL options/topic/type instead
+  of placeholder options; subject binding is now per-class (was MIN(id)
+  across classes — wrong subject record possible).
+- **Sessions (fixed):** functional `2024/2025` hardcodes in exam creation,
+  registration, manual user creation, broadsheet (query + Excel + PDF),
+  ID cards and student report download now resolve from `school_profile`
+  via `ConfigService.sessionFor/termFor`; School Settings refreshes the
+  cache on save.
+- **Verified clean:** subject catalogue 135 unique codes (19×JSS1-3,
+  26×SS1-3); live Supabase 33 tables, RLS on all, policies present where
+  anon access is intended, other CHECK constraints match app value sets
+  (arms/roles/terms/types); RPC signatures match web callers;
+  `parent_lookup_results` rejects bad PIN live; prepared statements
+  pervasive (290 usages), remaining `createStatement` calls are static
+  DDL/introspection only.

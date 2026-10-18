@@ -170,9 +170,8 @@ CREATE TABLE exam_attempts (
     malpractice_log TEXT,
     ip_address VARCHAR(45),
     pc_name VARCHAR(100),
-    status VARCHAR(20) DEFAULT 'IN_PROGRESS' CHECK (status IN ('IN_PROGRESS','SUBMITTED','MALPRACTICE','TIMED_OUT')),
-    synced BOOLEAN DEFAULT true,
-    UNIQUE(exam_id, student_id)
+    status VARCHAR(20) DEFAULT 'IN_PROGRESS' CHECK (status IN ('IN_PROGRESS','SUBMITTED','MALPRACTICE','TIMED_OUT','PRACTICE_SUBMITTED','MOCK_SUBMITTED')),
+    synced BOOLEAN DEFAULT true
 );
 
 CREATE TABLE attempt_answers (

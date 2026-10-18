@@ -26,6 +26,7 @@ public class QuestionImporterController {
     public void initialize() {
         classBox.getItems().addAll(
             "JSS1","JSS2","JSS3","SS1","SS2","SS3");
+        classBox.valueProperty().addListener((o, a, b) -> loadSubjects());
         loadSubjects();
 
         // Make preview editable so users can fix parsed questions
@@ -37,11 +38,17 @@ public class QuestionImporterController {
     }
 
     private void loadSubjects() {
+        // Subjects are per-class rows: always bind the chosen class so the
+        // imported questions land on the exact subject record (previously
+        // MIN(id) across classes could attach them to another class's row).
+        String cls = classBox == null ? null : classBox.getValue();
         try (Connection c = DatabaseManager.getConnection();
              PreparedStatement ps = c.prepareStatement(
-                 "SELECT MIN(CAST(id AS VARCHAR(36))) AS id, subject_name " +
+                 "SELECT CAST(id AS VARCHAR(36)) AS id, subject_name " +
                  "FROM subjects WHERE is_active = TRUE " +
-                 "GROUP BY subject_name ORDER BY subject_name")) {
+                 (cls == null ? "" : "AND class_level = ? ") +
+                 "ORDER BY subject_name")) {
+            if (cls != null) ps.setString(1, cls);
             ResultSet rs = ps.executeQuery();
             subjectBox.getItems().clear();
             subjectMap.clear();
@@ -77,24 +84,32 @@ public class QuestionImporterController {
             else
                 lines = parseTextFile(f);
 
-            // Show parsed questions in editable preview
-            // Format: 1. Question text
-            StringBuilder sb = new StringBuilder();
-            int n = 1;
-            for (String line : lines)
-                sb.append(n++).append(". ").append(line).append("\n");
-
+            // Show the file in the editable preview. Structured files
+            // (Question:/[x]/A. format) are kept verbatim so options and
+            // correct answers survive; plain files get numbered lines.
+            String rawText = String.join("\n", lines);
             if (previewArea != null) {
-                previewArea.setText(sb.toString());
+                previewArea.setText(
+                    com.femzyk.klc.util.QuestionTextParser.looksStructured(rawText)
+                        ? rawText
+                        : numbered(rawText));
                 previewArea.setEditable(true);
             }
 
             setStatus("Parsed " + lines.size() +
-                " questions. You can edit them above before importing.", false);
+                " lines. You can edit them above before importing.", false);
 
         } catch (Exception e) {
             setStatus("Parse error: " + e.getMessage(), true);
         }
+    }
+
+    private static String numbered(String rawText) {
+        StringBuilder sb = new StringBuilder();
+        int n = 1;
+        for (String line : rawText.split("\n"))
+            sb.append(n++).append(". ").append(line).append("\n");
+        return sb.toString();
     }
 
     private List<String> parseTextFile(File file) throws Exception {
@@ -129,6 +144,13 @@ public class QuestionImporterController {
 
     @FXML
     private void commitImport() {
+        // Structured format (Question:/[x]/A.+Answer:) imports REAL options
+        // and correct answers - no placeholder options to fix afterwards.
+        String previewText = previewArea == null ? "" : previewArea.getText();
+        if (com.femzyk.klc.util.QuestionTextParser.looksStructured(previewText)) {
+            commitStructured(previewText);
+            return;
+        }
         // Read from the (possibly edited) preview area
         List<String> questionsToImport = getQuestionsFromPreview();
 
@@ -223,6 +245,68 @@ public class QuestionImporterController {
             if (previewArea   != null) previewArea.clear();
             if (answerKeyArea != null) answerKeyArea.clear();
 
+        } catch (Exception e) {
+            setStatus("DB Error: " + e.getMessage(), true);
+            e.printStackTrace();
+        }
+    }
+
+    /** Import structured questions with their real options/topic/type. */
+    private void commitStructured(String previewText) {
+        String subjectName = subjectBox.getValue();
+        if (subjectName == null) { setStatus("Please select a Subject.", true); return; }
+        if (classBox.getValue() == null) { setStatus("Please select a Class Level.", true); return; }
+        var parsed = com.femzyk.klc.util.QuestionTextParser.parse(previewText);
+        List<String> problems = new ArrayList<>();
+        for (int i = 0; i < parsed.size(); i++) {
+            var q = parsed.get(i);
+            if (!q.hasOptions()) problems.add("Q" + (i + 1) + ": fewer than 2 options");
+            else if (q.correctCount() != 1) problems.add("Q" + (i + 1) + ": " + q.correctCount() + " correct options marked (exactly 1 required)");
+        }
+        if (parsed.isEmpty() || !problems.isEmpty()) {
+            setStatus(problems.isEmpty() ? "No structured questions found." :
+                "Fix before import: " + String.join(" · ", problems), true);
+            return;
+        }
+        try (Connection c = DatabaseManager.getConnection()) {
+            c.setAutoCommit(false);
+            String subjectId = subjectMap.get(subjectName);
+            int imported = 0;
+            for (var q : parsed) {
+                String qid = UUID.randomUUID().toString();
+                try (PreparedStatement ps = c.prepareStatement(
+                        "INSERT INTO questions(" +
+                        "  id, subject_id, class_level, question_text, topic, question_type, created_by, is_approved) " +
+                        "VALUES(?,?,?,?,?,?,?,FALSE)")) {
+                    AuthService.setUuid(ps, 1, qid, c);
+                    AuthService.setUuid(ps, 2, subjectId, c);
+                    ps.setString(3, classBox.getValue());
+                    ps.setString(4, q.text());
+                    ps.setString(5, q.topic().isBlank() ? null : q.topic());
+                    ps.setString(6, q.type());
+                    AuthService.setUuid(ps, 7, AuthService.Session.userId, c);
+                    ps.executeUpdate();
+                }
+                for (var opt : q.options()) {
+                    try (PreparedStatement ps = c.prepareStatement(
+                            "INSERT INTO question_options(" +
+                            "  question_id, option_label, option_text, is_correct) " +
+                            "VALUES(?,?,?,?)")) {
+                        AuthService.setUuid(ps, 1, qid, c);
+                        ps.setString(2, opt.label());
+                        ps.setString(3, opt.text());
+                        ps.setBoolean(4, opt.correct());
+                        ps.executeUpdate();
+                    }
+                }
+                imported++;
+            }
+            c.commit();
+            AuthService.logAudit("QUESTION_IMPORT_STRUCTURED", "questions", subjectId);
+            setStatus("Successfully imported " + imported +
+                " structured questions with real options. They are PENDING approval.", false);
+            if (previewArea != null) previewArea.clear();
+            if (answerKeyArea != null) answerKeyArea.clear();
         } catch (Exception e) {
             setStatus("DB Error: " + e.getMessage(), true);
             e.printStackTrace();

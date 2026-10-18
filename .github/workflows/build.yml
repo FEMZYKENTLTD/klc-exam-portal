@@ -127,6 +127,7 @@ jobs:
           psql --set ON_ERROR_STOP=1 -f supabase/klc_supabase_schema_v1_0_social.sql
           psql --set ON_ERROR_STOP=1 -f supabase/klc_supabase_v1_1_security_and_features.sql
           psql --set ON_ERROR_STOP=1 -f supabase/klc_supabase_v1_2_completion.sql
+          psql --set ON_ERROR_STOP=1 -f supabase/klc_supabase_v1_3_national_scale.sql
           echo "Supabase schema is up to date."
 
   schema-check:
@@ -181,7 +182,8 @@ jobs:
                    supabase/klc_supabase_schema_v6_3_final.sql \
                    supabase/klc_supabase_schema_v1_0_social.sql \
                    supabase/klc_supabase_v1_1_security_and_features.sql \
-                   supabase/klc_supabase_v1_2_completion.sql; do
+                   supabase/klc_supabase_v1_2_completion.sql \
+                   supabase/klc_supabase_v1_3_national_scale.sql; do
             echo "--- $f"
             psql -v ON_ERROR_STOP=1 -f "$f" >/dev/null 2>sql.err
             ec=$?

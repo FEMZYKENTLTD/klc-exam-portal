@@ -81,7 +81,8 @@ public class SchoolSettingsController {
                 Files.copy(f.toPath(), dest.toPath(),
                     StandardCopyOption.REPLACE_EXISTING);
                 logoPathField.setText(dest.getPath());
-                status.setText("Logo saved to " + dest.getPath());
+                com.femzyk.klc.util.ConfigService.reload();
+            status.setText("Logo saved to " + dest.getPath());
             } catch (Exception e) {
                 status.setText(e.getMessage());
             }
