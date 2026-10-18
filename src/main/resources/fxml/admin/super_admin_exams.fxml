@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="14" styleClass="screen-root" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.admin.SuperAdminExamController" style="-fx-padding:24">
+    <Label text="Exam Control (Super Admin)" style="-fx-font-size:20px; -fx-font-weight:bold"/>
+    <Label text="Every exam on the system. Dry-Run validates a paper is student-ready (questions attached, at least 2 options each, a correct answer each). Cancel deactivates an exam immediately."
+           style="-fx-text-fill:#64748b" wrapText="true"/>
+    <TableView fx:id="examTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colTitle" text="Title" prefWidth="240"/>
+            <TableColumn fx:id="colSubject" text="Subject" prefWidth="180"/>
+            <TableColumn fx:id="colClass" text="Class" prefWidth="90"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="90"/>
+            <TableColumn fx:id="colDuration" text="Duration" prefWidth="90"/>
+            <TableColumn fx:id="colActions" text="Actions" prefWidth="90"/>
+        </columns>
+    </TableView>
+    <HBox spacing="10">
+        <Button text="Dry-Run Validate Selected Exam" onAction="#testExam"/>
+        <Button text="Cancel Selected Exam" onAction="#cancelExam"/>
+        <Button text="Refresh" onAction="#refreshExams"/>
+    </HBox>
+    <Label fx:id="statusLabel" wrapText="true"/>
+</VBox>

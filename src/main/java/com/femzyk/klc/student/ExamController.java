@@ -38,7 +38,7 @@ public class ExamController {
     @FXML private Button audioBtn;
     @FXML private Label progressLabel;
     @FXML private ImageView questionImageView, webcamThumb;
-    // KLC v1.1.0 FIX: exam.fxml's root is a BorderPane - the field used to
+    // KLC v1.0 FIX: exam.fxml's root is a BorderPane - the field used to
     // be declared VBox, which made every exam load throw
     // "Can not set ... examRoot to javafx.scene.layout.BorderPane".
     @FXML private BorderPane examRoot;
@@ -132,6 +132,7 @@ public class ExamController {
 
         Stage st = (Stage) timerLabel.getScene().getWindow();
         st.setFullScreen(true);
+        if (!isPractice) com.femzyk.klc.util.KioskMode.arm(st);
 
         // Anti-Malpractice: Only enable 3-strike proctoring for official (non-practice) exams
         if (!isPractice && !isMock) {
@@ -1160,9 +1161,9 @@ public class ExamController {
             resultSummary = "Exam submitted. Score calculation pending.";
         }
 
-        // Exit fullscreen
+        // Exit fullscreen / release kiosk
         Stage st = (Stage) timerLabel.getScene().getWindow();
-        st.setFullScreen(false);
+        com.femzyk.klc.util.KioskMode.disarm(st);
 
         // FIX: Show result dialog THEN redirect to dashboard when OK clicked
         Alert resultAlert = new Alert(Alert.AlertType.INFORMATION);

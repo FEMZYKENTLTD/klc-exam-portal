@@ -590,3 +590,47 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             Write-Host ("Could not create diagnostics issue (exit {0})." -f $LASTEXITCODE)
           }
+
+  windows-x86-bundle:
+    name: Windows x86 bundle (32-bit, manual/tags)
+    # Alternative track for 32-bit Windows 10 PCs: same JAR, packaged with a
+    # 32-bit Zulu FX JDK 17. Runs on version tags and manual dispatch only -
+    # it is not part of the PR gate. Win7/8 are served by the web-portal
+    # legacy track (installer/legacy-win7/README.md).
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up 32-bit Zulu FX JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+          architecture: x86
+          java-package: jdk+fx
+      - name: Build fat JAR
+        shell: pwsh
+        run: |
+          mvn -B -ntp clean package -DskipTests
+          exit $LASTEXITCODE
+      - name: Bundle 32-bit Windows app image (jpackage)
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem "target/knowledge-land-cbt-*.jar" | Select-Object -First 1
+          jpackage --type app-image --name KLC-CBT-Suite --input target --dest dist-x86 `
+            --main-jar $jar.Name --java-options "-Xmx768m"
+          Compress-Archive -Path dist-x86/KLC-CBT-Suite -DestinationPath KLC-CBT-Suite-win-x86.zip
+      - name: Upload x86 bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: KLC-CBT-Suite-win-x86
+          path: KLC-CBT-Suite-win-x86.zip
+      - name: Attach to GitHub Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: KLC-CBT-Suite-win-x86.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

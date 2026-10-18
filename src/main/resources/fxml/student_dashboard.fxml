@@ -202,6 +202,7 @@
                             onAction="#downloadReport"
                             styleClass="btn-primary"
                             style="-fx-padding:8 14"/>
+                            <Button text="My Results &amp; Documents" onAction="#openResultViewer"/>
 					<Button text="Download Transcript"
                             onAction="#downloadTranscript"
                             style="-fx-background-color:#8b5cf6; -fx-text-fill:white; -fx-font-weight:bold; -fx-background-radius:8; -fx-padding:8 14; -fx-cursor:hand"/>

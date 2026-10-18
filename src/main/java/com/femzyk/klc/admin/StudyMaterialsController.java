@@ -49,21 +49,32 @@ public class StudyMaterialsController {
         FileChooser fc = new FileChooser();
         fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF / Docs","*.pdf","*.docx","*.pptx","*.mp4"));
         File f = fc.showOpenDialog(table.getScene().getWindow());
-        if(f!=null){ filePathField.setText(f.getAbsolutePath()); status.setText("File selected - upload to Supabase Storage for cloud delivery (path stored locally for now)"); }
+        if(f!=null){ filePathField.setText(f.getAbsolutePath()); status.setText("File selected - it will be uploaded to Supabase Storage on save (cloud URL stored, students can download it anywhere)."); }
     }
     @FXML private void upload(){
         if(subjectBox.getValue()==null){ status.setText("Pick subject"); return; }
         try(Connection c=DatabaseManager.getConnection();
             PreparedStatement ps=c.prepareStatement("INSERT INTO study_materials(id, subject_id, class_level, title, description, file_url, uploaded_by) VALUES(?,?,?,?,?,?,?)")){
-            ps.setObject(1, java.util.UUID.randomUUID());
-            ps.setObject(2, java.util.UUID.fromString(subjectMap.get(subjectBox.getValue())));
+            AuthService.setUuid(ps, 1, java.util.UUID.randomUUID().toString(), c);
+            AuthService.setUuid(ps, 2, subjectMap.get(subjectBox.getValue()), c);
             ps.setString(3, classBox.getValue());
             ps.setString(4, titleField.getText());
             ps.setString(5, descArea.getText());
-            ps.setString(6, filePathField.getText());
-            ps.setObject(7, java.util.UUID.fromString(AuthService.Session.userId));
+            // Cloud delivery: upload the real file to Supabase Storage and
+            // store its URL (a local path would be useless to students on
+            // other PCs). Falls back to the local path only when Storage is
+            // not configured / PC is offline - flagged in the status line.
+            String storedRef = filePathField.getText();
+            boolean localOnly = false;
+            java.io.File local = storedRef == null ? null : new java.io.File(storedRef);
+            if (local != null && local.isFile()) {
+                String url = com.femzyk.klc.util.StorageService.upload(local, "study-materials");
+                if (url != null && !url.isBlank()) storedRef = url; else localOnly = true;
+            }
+            ps.setString(6, storedRef);
+            AuthService.setUuid(ps, 7, AuthService.Session.userId, c);
             ps.executeUpdate();
-            status.setText("Study material uploaded - students see in Practice Mode / E-Library");
+            status.setText(localOnly ? "Saved with LOCAL file path (Storage offline/unconfigured) - students on this PC only. Re-upload when online for cloud delivery." : "Study material uploaded - students see in Practice Mode / E-Library");
             titleField.clear(); descArea.clear(); filePathField.clear();
             load();
         }catch(Exception e){ status.setText(e.getMessage()); }

@@ -60,7 +60,7 @@ public class AdminDashboardController {
                         secExams, secResults, secPeople, secSystem;
 
     // ── Sidebar buttons ──
-    @FXML private Button btnDashboard, btnLiveMonitor, btnAnalytics,
+    @FXML private Button btnDashboard, btnLiveMonitor, btnAnalytics, btnSuperExams,
                          btnSubjects, btnClassMgr, btnGrading,
                          btnQBank, btnQEditor, btnImporter, btnStudyMat,
                          btnExamMgr, btnCaScores,
@@ -116,7 +116,7 @@ public class AdminDashboardController {
         if ("SUPER_ADMIN".equals(role)) return; // sees everything
 
         if ("PRINCIPAL_ADMIN".equals(role)) {
-            hide(btnCreateUser);
+            hide(btnCreateUser); hide(btnSuperExams);
             return;
         }
 
@@ -127,7 +127,7 @@ public class AdminDashboardController {
             hide(btnAppeals);
             hide(secPeople); hide(btnStudents); hide(btnTeachers);
             hide(btnIdCards); hide(btnCreateUser);
-            hide(btnSettings); hide(btnAuditLogs); hide(btnBackup); hide(btnHealth);
+            hide(btnSettings); hide(btnAuditLogs); hide(btnBackup); hide(btnHealth); hide(btnSuperExams);
             return;
         }
 
@@ -138,6 +138,7 @@ public class AdminDashboardController {
             hide(btnBroadsheet); hide(btnAppeals);
             hide(btnTeachers); hide(btnIdCards); hide(btnCreateUser);
             hide(btnSettings); hide(btnAuditLogs); hide(btnBackup); hide(btnHealth);
+            hide(btnSuperExams);
             return;
         }
     }
@@ -169,8 +170,9 @@ public class AdminDashboardController {
                 -> "PRINCIPAL_ADMIN".equals(r);
             case "livemonitor", "analytics"
                 -> "PRINCIPAL_ADMIN".equals(r) || "EXAM_OFFICER".equals(r);
-            case "qbank", "exams", "cascores", "results", "notifications", "about"
+            case "qbank", "exams", "cascores", "caaggregation", "results", "reportcards", "notifications", "about"
                 -> true; // all staff roles reach here
+            case "superexams" -> false; // super admin only (guard below is authoritative)
             case "qeditor", "importer", "studymat", "students"
                 -> "PRINCIPAL_ADMIN".equals(r) || "TEACHER".equals(r);
             case "createuser" -> false; // super admin only
@@ -287,6 +289,9 @@ public class AdminDashboardController {
     @FXML private void showExams()          { if (allowed("exams"))        load("exam_manager.fxml");      else denied(); }
     @FXML private void showLiveMonitor()    { if (allowed("livemonitor"))  load("live_monitor.fxml");      else denied(); }
     @FXML private void showCaScores()       { if (allowed("cascores"))     load("ca_scores.fxml");         else denied(); }
+    @FXML private void showCaAggregation()  { if (allowed("caaggregation")) load("ca_aggregation.fxml");   else denied(); }
+    @FXML private void showReportCards()    { if (allowed("reportcards"))  load("report_card_generator.fxml"); else denied(); }
+    @FXML private void showSuperAdminExams(){ if ("SUPER_ADMIN".equals(AuthService.Session.role)) load("super_admin_exams.fxml"); else denied(); }
     @FXML private void showBroadsheet()     { if (allowed("broadsheet"))   load("broadsheet.fxml");        else denied(); }
     @FXML private void showResults()        { if (allowed("results"))      load("results_view.fxml");      else denied(); }
     @FXML private void showAppeals()        { if (allowed("appeals"))      load("appeals.fxml");           else denied(); }

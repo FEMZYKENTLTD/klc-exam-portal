@@ -1,5 +1,6 @@
 package com.femzyk.klc.admin;
 
+import com.femzyk.klc.auth.AuthService;
 import com.femzyk.klc.db.DatabaseManager;
 import com.opencsv.CSVReader;
 import javafx.collections.FXCollections;
@@ -33,6 +34,21 @@ public class CaScoreController {
     }
     ObservableList<CaRow> data = FXCollections.observableArrayList();
     private String subjectId;
+    private String session = currentSession();
+
+    /** Current academic session from school_profile, safe fallback. */
+    static String currentSession() {
+        try (Connection c = DatabaseManager.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                 "SELECT session_current FROM school_profile LIMIT 1");
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                String s = rs.getString(1);
+                if (s != null && !s.isBlank()) return s;
+            }
+        } catch (Exception ignored) {}
+        return "2024/2025";
+    }
 
     @FXML public void initialize(){
         colAdm.setCellValueFactory(c-> new javafx.beans.property.SimpleStringProperty(c.getValue().getAdmission()));
@@ -69,14 +85,15 @@ public class CaScoreController {
                        COALESCE(cs.total_score,0), cs.grade
                 FROM student_profiles sp
                 JOIN users u ON u.id=sp.user_id
-                LEFT JOIN ca_scores cs ON cs.student_id=u.id AND cs.subject_id=? AND cs.term=? AND cs.session='2024/2025'
+                LEFT JOIN ca_scores cs ON cs.student_id=u.id AND cs.subject_id=? AND cs.term=? AND cs.session=?
                 WHERE sp.class_level=? AND sp.status='ACTIVE'
                 ORDER BY sp.admission_no
             """;
             try(PreparedStatement ps=c.prepareStatement(sql)){
-                ps.setObject(1, UUID.fromString(subjectId));
+                AuthService.setUuid(ps, 1, subjectId, c);
                 ps.setString(2, termBox.getValue());
-                ps.setString(3, classBox.getValue());
+                ps.setString(3, session);
+                ps.setString(4, classBox.getValue());
                 ResultSet rs=ps.executeQuery();
                 while(rs.next()){
                     data.add(new CaRow(rs.getString(1), rs.getString(2), rs.getString(3),
@@ -109,13 +126,13 @@ public class CaScoreController {
                     ps.setString(1, admission); ResultSet rs=ps.executeQuery(); if(rs.next()) studentId = rs.getString(1); else continue;
                 }
                 try(PreparedStatement del=c.prepareStatement("DELETE FROM ca_scores WHERE student_id=? AND subject_id=? AND term=? AND session=?")){
-                    del.setObject(1, UUID.fromString(studentId)); del.setObject(2, UUID.fromString(subjectId));
-                    del.setString(3, termBox.getValue()); del.setString(4, "2024/2025"); del.executeUpdate();
+                    AuthService.setUuid(del, 1, studentId, c); AuthService.setUuid(del, 2, subjectId, c);
+                    del.setString(3, termBox.getValue()); del.setString(4, session); del.executeUpdate();
                 }
                 try(PreparedStatement ins=c.prepareStatement("INSERT INTO ca_scores(id, student_id, subject_id, class_level, term, session, ca1_score, ca2_score) VALUES(?,?,?,?,?,?,?,?)")){
-                    ins.setObject(1, UUID.randomUUID()); ins.setObject(2, UUID.fromString(studentId));
-                    ins.setObject(3, UUID.fromString(subjectId)); ins.setString(4, classBox.getValue());
-                    ins.setString(5, termBox.getValue()); ins.setString(6, "2024/2025");
+                    AuthService.setUuid(ins, 1, UUID.randomUUID().toString(), c); AuthService.setUuid(ins, 2, studentId, c);
+                    AuthService.setUuid(ins, 3, subjectId, c); ins.setString(4, classBox.getValue());
+                    ins.setString(5, termBox.getValue()); ins.setString(6, session);
                     ins.setDouble(7, ca1); ins.setDouble(8, ca2); ins.executeUpdate();
                     up++;
                 }
@@ -139,7 +156,7 @@ public class CaScoreController {
                 WHERE e.subject_id=? AND e.class_level=? AND e.term=?
             """;
             try(PreparedStatement ps=c.prepareStatement(sql)){
-                ps.setObject(1, UUID.fromString(subjectId));
+                AuthService.setUuid(ps, 1, subjectId, c);
                 ps.setString(2, classBox.getValue());
                 ps.setString(3, termBox.getValue());
                 ResultSet rs=ps.executeQuery();
@@ -147,21 +164,21 @@ public class CaScoreController {
                     String sid = rs.getString(1);
                     double examScore = rs.getDouble(2) * examWeight / 100.0;
                     double ca1=0, ca2=0;
-                    try(PreparedStatement ps2=c.prepareStatement("SELECT ca1_score, ca2_score FROM ca_scores WHERE student_id=? AND subject_id=? AND term=? AND session='2024/2025'")){
-                        ps2.setObject(1, UUID.fromString(sid)); ps2.setObject(2, UUID.fromString(subjectId)); ps2.setString(3, termBox.getValue());
+                    try(PreparedStatement ps2=c.prepareStatement("SELECT ca1_score, ca2_score FROM ca_scores WHERE student_id=? AND subject_id=? AND term=? AND session=?")){
+                        AuthService.setUuid(ps2, 1, sid, c); AuthService.setUuid(ps2, 2, subjectId, c); ps2.setString(3, termBox.getValue()); ps2.setString(4, session);
                         ResultSet rs2=ps2.executeQuery(); if(rs2.next()){ ca1=rs2.getDouble(1); ca2=rs2.getDouble(2); }
                     }
                     double total = ca1 + ca2 + examScore;
                     String grade = GradingScaleController.gradeFor(total, c);
-                    try(PreparedStatement up=c.prepareStatement("UPDATE ca_scores SET exam_score=?, total_score=?, grade=? WHERE student_id=? AND subject_id=? AND term=? AND session='2024/2025'")){
+                    try(PreparedStatement up=c.prepareStatement("UPDATE ca_scores SET exam_score=?, total_score=?, grade=? WHERE student_id=? AND subject_id=? AND term=? AND session=?")){
                         up.setDouble(1, examScore); up.setDouble(2, total); up.setString(3, grade);
-                        up.setObject(4, UUID.fromString(sid)); up.setObject(5, UUID.fromString(subjectId));
-                        up.setString(6, termBox.getValue());
+                        AuthService.setUuid(up, 4, sid, c); AuthService.setUuid(up, 5, subjectId, c);
+                        up.setString(6, termBox.getValue()); up.setString(7, session);
                         int n = up.executeUpdate();
                         if(n==0){
                             try(PreparedStatement ins=c.prepareStatement("INSERT INTO ca_scores(id, student_id, subject_id, class_level, term, session, ca1_score, ca2_score, exam_score, total_score, grade) VALUES(?,?,?,?,?,?,?,?,?,?,?)")){
-                                ins.setObject(1, UUID.randomUUID()); ins.setObject(2, UUID.fromString(sid)); ins.setObject(3, UUID.fromString(subjectId));
-                                ins.setString(4, classBox.getValue()); ins.setString(5, termBox.getValue()); ins.setString(6, "2024/2025");
+                                AuthService.setUuid(ins, 1, UUID.randomUUID().toString(), c); AuthService.setUuid(ins, 2, sid, c); AuthService.setUuid(ins, 3, subjectId, c);
+                                ins.setString(4, classBox.getValue()); ins.setString(5, termBox.getValue()); ins.setString(6, session);
                                 ins.setDouble(7, ca1); ins.setDouble(8, ca2); ins.setDouble(9, examScore); ins.setDouble(10, total); ins.setString(11, grade);
                                 ins.executeUpdate();
                             }
@@ -173,18 +190,18 @@ public class CaScoreController {
             // compute positions
             try(PreparedStatement ps=c.prepareStatement("""
                 SELECT student_id, total_score FROM ca_scores
-                WHERE subject_id=? AND class_level=? AND term=? AND session='2024/2025'
+                WHERE subject_id=? AND class_level=? AND term=? AND session=?
                 ORDER BY total_score DESC
             """)){
-                ps.setObject(1, UUID.fromString(subjectId)); ps.setString(2, classBox.getValue()); ps.setString(3, termBox.getValue());
+                AuthService.setUuid(ps, 1, subjectId, c); ps.setString(2, classBox.getValue()); ps.setString(3, termBox.getValue()); ps.setString(4, session);
                 ResultSet rs=ps.executeQuery();
                 java.util.List<String> sids=new java.util.ArrayList<>(); java.util.List<Double> scores=new java.util.ArrayList<>();
                 while(rs.next()){ sids.add(rs.getString(1)); scores.add(rs.getDouble(2)); }
                 java.util.List<Integer> positions=com.femzyk.klc.util.Ranking.positions(scores);
                 for(int i=0;i<sids.size();i++){
-                    try(PreparedStatement up=c.prepareStatement("UPDATE ca_scores SET position=? WHERE student_id=? AND subject_id=? AND term=? AND session='2024/2025'")){
-                        up.setInt(1, positions.get(i)); up.setObject(2, UUID.fromString(sids.get(i)));
-                        up.setObject(3, UUID.fromString(subjectId)); up.setString(4, termBox.getValue()); up.executeUpdate();
+                    try(PreparedStatement up=c.prepareStatement("UPDATE ca_scores SET position=? WHERE student_id=? AND subject_id=? AND term=? AND session=?")){
+                        up.setInt(1, positions.get(i)); AuthService.setUuid(up, 2, sids.get(i), c);
+                        AuthService.setUuid(up, 3, subjectId, c); up.setString(4, termBox.getValue()); up.setString(5, session); up.executeUpdate();
                     }
                 }
             }

@@ -88,3 +88,27 @@ question upload, schema inventory)
 - **Schema parity fix (audit-found bug):** `student_profiles.updated_at` was UPDATEd by ClassManager but existed in no DDL — added to H2 DDL, PostgreSQL ensure-list, new `supabase/klc_supabase_v1_2_completion.sql`, and **applied live to the `klc-cbt` Supabase project** (verified: column + `question_versions` table present). `question_versions` also added to H2.
 - **Web portal live:** `klc-web-admin/config.js` now points at the real `klc-cbt` project (publishable key; all data still gated by bcrypt-verifying SECURITY DEFINER RPCs — verified present live: staff_check, staff_recent_results, staff_broadsheet, staff_subjects, staff_live_room, staff_upload_questions, parent_lookup_results).
 - Remaining audit_sql note (`information_schema` in DatabaseManager) is intentional runtime introspection, not a missing table.
+
+## Completion pass 2 — 2026-10-18 (release reset to v1.0)
+
+- **All 4 formerly-orphan controllers are now shipped screens** (FXML audit
+  ORPHAN count 4 → 0): CA Aggregation & Positions (`ca_aggregation.fxml`),
+  Report Card & Transcript Generator (`report_card_generator.fxml`),
+  Super-Admin Exam Control with REAL dry-run validation (`super_admin_exams.fxml`,
+  replaces the simulated stub), Student Results & Documents
+  (`result_viewer.fxml`, reachable from the student dashboard). Hardcoded
+  sessions removed (school_profile-driven); raw `setObject(UUID)` H2 crashes
+  fixed via `AuthService.setUuid` in CaScore/StudyMaterials.
+- **Release version reset to v1.0 everywhere user-facing** (pom 1.0.0,
+  app titles, splash/login/about, web portal, README; changelog renamed
+  `CHANGELOG-v1.0.0.md`). SQL migration filenames keep their sequence names
+  (schema history, not release versions).
+- **Kiosk lockdown alternative shipped**: in-app `util.KioskMode`
+  (fullscreen lock, exit-key disabled, auto-refocus) wired into official/mock
+  exams, PLUS OS-level `installer/windows/kiosk/` PowerShell pack (dedicated
+  exam account policies / Assigned Access) with enable/disable scripts.
+- **Win7/8 + x86 alternative track shipped**: `installer/legacy-win7/`
+  (web-portal legacy track + browser-kiosk shortcuts) and a CI
+  `windows-x86-bundle` job (32-bit Zulu FX JDK 17 jpackage, tags/manual).
+- **Study materials now deliver via Supabase Storage** (cloud URL stored;
+  honest local-only fallback status), instead of storing a local path.

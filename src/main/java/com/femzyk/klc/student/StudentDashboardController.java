@@ -236,6 +236,10 @@ public class StudentDashboardController {
         if (mainTabs != null) mainTabs.getSelectionModel().selectFirst();
     }
 
+    @FXML private void openResultViewer() throws Exception {
+        MainApp.setRoot("result_viewer.fxml", null);
+    }
+
     private void loadProfile() {
         try (Connection c = DatabaseManager.getConnection();
              PreparedStatement ps = c.prepareStatement(

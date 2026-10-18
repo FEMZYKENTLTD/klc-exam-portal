@@ -203,7 +203,7 @@
     -fx-background-color: #f8fafc;
 }
 
-/* KLC v1.1.0 FIX: table rows rendered white-on-white on the striped
+/* KLC v1.0 FIX: table rows rendered white-on-white on the striped
    (light) rows - data was present but invisible. Pin row backgrounds and
    cell text explicitly; the dark theme sheet appends later and wins. */
 .table-row-cell {

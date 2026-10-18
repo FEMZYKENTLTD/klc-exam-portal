@@ -121,6 +121,11 @@ public class ResultViewerController {
     }
 
     @FXML
+    private void goToDashboard() throws Exception {
+        com.femzyk.klc.MainApp.setRoot("student_dashboard.fxml", null);
+    }
+
+    @FXML
     private void downloadReport() {
         try {
             String term = termBox != null && termBox.getValue() != null

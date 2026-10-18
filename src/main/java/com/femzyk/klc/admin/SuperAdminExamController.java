@@ -85,7 +85,7 @@ public class SuperAdminExamController {
              PreparedStatement ps = c.prepareStatement(
                      "UPDATE exams SET is_active = false WHERE id = ?")) {
 
-            ps.setObject(1, java.util.UUID.fromString(selected.id));
+            AuthService.setUuid(ps, 1, selected.id, c);
             ps.executeUpdate();
 
             statusLabel.setText("Exam cancelled successfully!");
@@ -109,11 +109,37 @@ public class SuperAdminExamController {
             return;
         }
 
-        // Launch exam in test mode (simulated for now)
-        statusLabel.setText("Exam test mode activated for: " + selected.title);
-        
-        // In a full implementation, this would launch the exam engine in test mode
-        // with the current logged-in Super Admin as the test student
+        // REAL exam dry-run validation (replaces the old simulated stub):
+        // verifies the paper is student-ready before it is published.
+        try (Connection c = DatabaseManager.getConnection()) {
+            int questions = 0, broken = 0, noCorrect = 0;
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT q.id FROM exam_questions eq JOIN questions q ON q.id = eq.question_id WHERE eq.exam_id = ?")) {
+                AuthService.setUuid(ps, 1, selected.id, c);
+                ResultSet rs = ps.executeQuery();
+                java.util.List<String> qids = new java.util.ArrayList<>();
+                while (rs.next()) qids.add(rs.getString(1));
+                questions = qids.size();
+                for (String qid : qids) {
+                    try (PreparedStatement po = c.prepareStatement(
+                            "SELECT COUNT(*), SUM(CASE WHEN is_correct = TRUE THEN 1 ELSE 0 END) FROM question_options WHERE question_id = ?")) {
+                        AuthService.setUuid(po, 1, qid, c);
+                        ResultSet ro = po.executeQuery();
+                        if (ro.next()) {
+                            if (ro.getInt(1) < 2) broken++;
+                            if (ro.getInt(2) < 1) noCorrect++;
+                        }
+                    }
+                }
+            }
+            if (questions == 0)      statusLabel.setText("DRY-RUN FAIL: '" + selected.title + "' has NO questions attached.");
+            else if (broken > 0 || noCorrect > 0)
+                statusLabel.setText("DRY-RUN FAIL: " + questions + " questions, " + broken + " with <2 options, " + noCorrect + " with no correct option - fix in Question Editor.");
+            else statusLabel.setText("DRY-RUN PASS: '" + selected.title + "' is student-ready (" + questions + " questions, every question has options + a correct answer).");
+            AuthService.logAudit("EXAM_DRY_RUN", "exams", selected.id);
+        } catch (Exception e) {
+            statusLabel.setText("Dry-run error: " + e.getMessage());
+        }
     }
 
     @FXML

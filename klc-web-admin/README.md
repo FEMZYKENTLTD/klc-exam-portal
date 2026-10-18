@@ -29,7 +29,7 @@ Static web portal for **KNOWLEDGE LAND COLLEGE CBT Suite** — spec deliverable
   - verify staff email + **bcrypt password** against `public.users` on every
     call (`staff_check`) and refuse non-staff roles.
 - v1 tradeoff (honest): staff credentials are re-sent per call from
-  `sessionStorage`. For v1.1, migrate staff to **Supabase Auth** (auth.users)
+  `sessionStorage`. For a future release, migrate staff to **Supabase Auth** (auth.users)
   and switch RPCs to `auth.uid()`-based checks for token-based sessions.
 - Parent PINs are the access secret — keep regenerating them per term
   (Super Admin → Student Manager → Regenerate PIN).
