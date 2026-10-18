@@ -177,10 +177,13 @@ public class CaScoreController {
                 ORDER BY total_score DESC
             """)){
                 ps.setObject(1, UUID.fromString(subjectId)); ps.setString(2, classBox.getValue()); ps.setString(3, termBox.getValue());
-                ResultSet rs=ps.executeQuery(); int pos=1;
-                while(rs.next()){
+                ResultSet rs=ps.executeQuery();
+                java.util.List<String> sids=new java.util.ArrayList<>(); java.util.List<Double> scores=new java.util.ArrayList<>();
+                while(rs.next()){ sids.add(rs.getString(1)); scores.add(rs.getDouble(2)); }
+                java.util.List<Integer> positions=com.femzyk.klc.util.Ranking.positions(scores);
+                for(int i=0;i<sids.size();i++){
                     try(PreparedStatement up=c.prepareStatement("UPDATE ca_scores SET position=? WHERE student_id=? AND subject_id=? AND term=? AND session='2024/2025'")){
-                        up.setInt(1, pos++); up.setObject(2, UUID.fromString(rs.getString(1)));
+                        up.setInt(1, positions.get(i)); up.setObject(2, UUID.fromString(sids.get(i)));
                         up.setObject(3, UUID.fromString(subjectId)); up.setString(4, termBox.getValue()); up.executeUpdate();
                     }
                 }

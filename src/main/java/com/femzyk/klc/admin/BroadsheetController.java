@@ -92,11 +92,9 @@ public class BroadsheetController {
                 rows.add(row);
                 totals.add(new StudentTotal(rows.size()-1, sum));
             }
-            totals.sort((a,b)-> Double.compare(b.total, a.total));
-            int pos=1;
-            for(StudentTotal t: totals){
-                ObservableList<String> row = rows.get(t.rowIdx);
-                row.set(row.size()-1, String.valueOf(pos++));
+            for(var ranked : com.femzyk.klc.util.Ranking.rankDescending(totals, t -> t.total)){
+                ObservableList<String> row = rows.get(ranked.key().rowIdx);
+                row.set(row.size()-1, com.femzyk.klc.util.Ranking.ordinal(ranked.position()));
             }
             table.setItems(rows);
             status.setText("Broadsheet loaded: "+students.size()+" students, "+subjects.size()+" subjects - "+classBox.getValue()+" "+termBox.getValue()+" Term");

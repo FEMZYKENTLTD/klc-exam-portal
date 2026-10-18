@@ -131,9 +131,24 @@ public class DatabaseInitializer {
             "  result_pin    VARCHAR(40)  UNIQUE NOT NULL," +
             "  fee_status    VARCHAR(20)  DEFAULT 'PAID'," +
             "  status        VARCHAR(20)  DEFAULT 'ACTIVE'," +
-            "  created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP" +
+            "  created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP," +
+            "  updated_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP" +
             ")"
         );
+
+        // Question version history (was cloud-only; offline parity)
+        try {
+            s.execute(
+                "CREATE TABLE IF NOT EXISTS question_versions (" +
+                "  id            VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
+                "  question_id   VARCHAR(36) NOT NULL," +
+                "  version_no    INT DEFAULT 1," +
+                "  question_text TEXT," +
+                "  changed_by    VARCHAR(36)," +
+                "  change_note   VARCHAR(300)," +
+                "  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                ")");
+        } catch (Exception ignored) {}
 
         s.execute(
             "CREATE TABLE IF NOT EXISTS school_classes (" +
@@ -607,6 +622,15 @@ public class DatabaseInitializer {
             "ALTER TABLE questions ADD COLUMN IF NOT EXISTS question_audio_url TEXT",
             // KLC v1.0: multi-campus profile field
             "ALTER TABLE school_profile ADD COLUMN IF NOT EXISTS campus_name VARCHAR(120)",
+            "ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now()",
+            "CREATE TABLE IF NOT EXISTS question_versions (" +
+                "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +
+                "question_id UUID REFERENCES questions(id)," +
+                "version_no INT DEFAULT 1," +
+                "question_text TEXT," +
+                "changed_by UUID," +
+                "change_note VARCHAR(300)," +
+                "created_at TIMESTAMP DEFAULT now())",
             // KLC v1.0: parent portal
             "CREATE TABLE IF NOT EXISTS parent_profiles (" +
                 "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +

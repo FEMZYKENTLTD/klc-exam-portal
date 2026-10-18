@@ -80,3 +80,11 @@ question upload, schema inventory)
   does not resolve in DNS (`could not translate host name`), which is why
   the `migrate` job is red. Schema content is fully validated by the new CI
   gate. See the BLOCKED section in `docs/VERIFICATION-REPORT-2026-09-05.md`.
+
+## Completion pass — 2026-10-18 (branch `arena/8a383bcc-klc-exam-portal`)
+
+- **New pure, unit-tested utilities:** `util.Ranking` (tie-aware 1-2-2-4 positions + ordinals, wired into CA-score aggregation and the broadsheet, replacing sequential `pos++` that mis-ranked ties), `util.ItemAnalysis` (difficulty p-value/bands, Kelley-27% discrimination, dead distractors; Analytics gained a Difficulty Index section), `util.AdmissionNumbers` (configurable `admission.format`, wired into registration). New `RankingItemAdmissionTest` (9 tests).
+- **Real role dashboards:** `fxml/admin/teacher_dashboard.fxml` + `exam_officer_dashboard.fxml` now ship (role-filtered `AdminDashboardController`), so TEACHER/EXAM_OFFICER logins no longer fall back to the generic admin screen. FXML audit warnings: 8 → 0.
+- **Schema parity fix (audit-found bug):** `student_profiles.updated_at` was UPDATEd by ClassManager but existed in no DDL — added to H2 DDL, PostgreSQL ensure-list, new `supabase/klc_supabase_v1_2_completion.sql`, and **applied live to the `klc-cbt` Supabase project** (verified: column + `question_versions` table present). `question_versions` also added to H2.
+- **Web portal live:** `klc-web-admin/config.js` now points at the real `klc-cbt` project (publishable key; all data still gated by bcrypt-verifying SECURITY DEFINER RPCs — verified present live: staff_check, staff_recent_results, staff_broadsheet, staff_subjects, staff_live_room, staff_upload_questions, parent_lookup_results).
+- Remaining audit_sql note (`information_schema` in DatabaseManager) is intentional runtime introspection, not a missing table.

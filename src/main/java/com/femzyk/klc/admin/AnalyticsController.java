@@ -164,6 +164,28 @@ public class AnalyticsController {
                     sb.append("  No exam data yet. Take some exams first.\n");
             }
 
+            // ── ITEM ANALYSIS: Difficulty index (p-value) per question ──
+            sb.append("\nItem Analysis - Difficulty Index (p = fraction correct; target 0.30-0.80):\n");
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT q.id, COUNT(aa.id), " +
+                    "SUM(CASE WHEN aa.selected_option = o.option_label THEN 1 ELSE 0 END) " +
+                    "FROM attempt_answers aa " +
+                    "JOIN questions q ON q.id = aa.question_id " +
+                    "LEFT JOIN question_options o ON o.question_id = q.id AND o.is_correct = TRUE " +
+                    "GROUP BY q.id ORDER BY 3")) {
+                ResultSet rs = ps.executeQuery();
+                int shown = 0;
+                while (rs.next() && shown < 15) {
+                    int att = rs.getInt(2), cor = rs.getInt(3);
+                    double pv = com.femzyk.klc.util.ItemAnalysis.difficulty(cor, att);
+                    sb.append(String.format("  p=%.2f  [%s]  %s%n", pv,
+                        com.femzyk.klc.util.ItemAnalysis.difficultyBand(pv),
+                        questionLabel(c, rs.getString(1))));
+                    shown++;
+                }
+                if (shown == 0) sb.append("  Needs exam data (attempt + answer rows).\n");
+            }
+
             // ── ITEM ANALYSIS (KLC v1.0 spec 7.6 - psychometrics) ──
             // Discrimination Index: correct-rate of TOP scorers minus
             // correct-rate of BOTTOM scorers per question (quartile method).

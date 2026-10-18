@@ -36,7 +36,7 @@ sections (2026-09-01/02 passes).
 | Teachers edit only their assigned subjects; Super Admin any | 🟡 | Permission checks exist in question screens (teacher→own `teacher_subjects`); role matrix enforced in controllers. Not headless-tested. |
 | Exam Officer approves questions | ✅ | `questions.is_approved`; `QuestionBankController.canApprove()` + approve action (Exam Officer/Super Admin) |
 | Student registration fields (admission, DOB, gender, passport upload/webcam, parent contacts, address…) | ✅ | `register.fxml` full field set; `RegisterController.captureWebcam` (real capture via reflection); passport upload |
-| Auto admission-number generator `KLC/{CLASS}/{#}` | 🟠 | `suggestAdmissionNo()` present (auto-suggest); full configurable-format generator + bulk CSV import exist in `StudentManagerController`/`TeacherBulkImportController`; format string is fixed in code, not configurable per school |
+| Auto admission-number generator `KLC/{CLASS}/{#}` | ✅ | `util.AdmissionNumbers` (unit-tested): school-configurable `admission.format` with {CLASS}/{ARM}/{SESSION}/{YY}/{SEQ:n} tokens, default `KLC/{CLASS}/{SEQ:3}`; wired into `RegisterController.suggestAdmissionNo`; bulk CSV import in `StudentManagerController`/`TeacherBulkImportController` |
 | Result PIN `SURNAME+CLASS`, collision → `+last3 of admission` | ✅ | `AuthService.register` + **test-verified** (`AuthServiceTest.resultPinCollisionGetsNumericSuffix`) |
 | Super Admin regenerate/customize PINs | 🟡 | `regeneratePin` present in student management; UI verified only statically |
 | Lifetime profile JSS1→SS3 | 🟠 | `student_profiles` + `class_level`/`status` (REPEATING/GRADUATED/WITHDRAWN) + promotion code paths; archive depth depends on sessions being added |
@@ -88,7 +88,7 @@ sections (2026-09-01/02 passes).
 | Topic/sub-topic, difficulty, Bloom, year, source | ✅ | `questions.topic/difficulty/bloom/exam_year/source` columns + editor fields |
 | Answer-key separate upload with count validation | 🟡 | Answer-key upload/count-match validation in importer flow (code + docs) |
 | Preview/edit before commit, explanation field | 🟡 | editor + `questions.explanation` |
-| Version history | 🟠 | Cloud only: `question_versions` table + version column; H2 offline lacks the table (app only writes current row) |
+| Version history | ✅ | `question_versions` table now created on BOTH H2 offline (`DatabaseInitializer`) and cloud (`klc_supabase_v1_2_completion.sql`, applied live 2026-10-18) |
 | Approval workflow upload→approve→live | ✅ | `is_approved` + `canApprove()`; exam creation lists approved questions |
 | Search/filter by subject/class/term/topic/difficulty/author/date | 🟡 | `QuestionBankController` filters present |
 | Bulk delete/activate/export | 🟡 | present in QuestionBankController |
@@ -141,7 +141,7 @@ sections (2026-09-01/02 passes).
 | Spec item | Status | Evidence |
 |---|---|---|
 | Auto-grading instant + per-topic breakdown | ✅ | Scoring helper `ExamScoring` (unit-tested); topic breakdown in result summary |
-| CA+Exam aggregation & class position | 🟠 | CA aggregation + grading verified; **position/ranking arithmetic not extracted for tests** (controller code) |
+| CA+Exam aggregation & class position | ✅ | CA aggregation + grading verified; position arithmetic extracted to `util.Ranking` (tie-aware competition ranking + ordinals, unit-tested) and wired into CA aggregation + broadsheet |
 | Result slip PDF + QR verification | 🟠 | QR utils + results_view; `results.qr_verify_code` column on cloud only; full slip+QR flow desktop-only |
 | Term report card PDF (logo/photo/scores/positions/remarks/signature) | 🟡 | `ReportCardPdf`/`ReportCardService` |
 | Class broadsheet (Excel/PDF) | 🟡 | `BroadsheetController` |
@@ -153,7 +153,7 @@ sections (2026-09-01/02 passes).
 | PIN/scratch-card mode | 🟠 | `result_pins` table + pin regeneration; scratch-card physical flow not present |
 | SMS/Email result notification | 🟡 | `EmailService` result notification on submit; `SmsService` (Termii) util; queue table |
 | Analytics: class avg/pass rate/trends | ✅ | `AnalyticsController` aggregates |
-| Item analysis: difficulty/discrimination/distractor | 🟠 | Analytics builds Discrimination + Distractor sections; no Difficulty-index column; arithmetic not unit-tested |
+| Item analysis: difficulty/discrimination/distractor | ✅ | `util.ItemAnalysis` (unit-tested): difficulty p-value + band, Kelley 27% discrimination, dead-distractor detection; Analytics report now prints a Difficulty Index section alongside Discrimination + Distractor sections |
 | Teacher workload report / malpractice summary | 🟠 | partial aggregates in Analytics/LiveMonitor; no dedicated report |
 | Export analytics Excel/PDF/CSV/JSON | 🟠 | analytics text export; Excel/JSON breadth unclear |
 
