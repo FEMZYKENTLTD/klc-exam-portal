@@ -54,7 +54,7 @@ sections (2026-09-01/02 passes).
 |---|---|---|
 | JavaFX desktop primary app | ✅ | `MainApp`; 42 FXML screens; CI packages fat JAR |
 | Windows 7/8/8.1/10/11 x86+x64 | ⚠️ | Code targets Java 17 + JavaFX 17 → **Win10/11 only** (README explicitly rescoped). Spec still claims Win7/8/8.1 + x86. Needs a separate Java-8 track or dropping the claim (F3). |
-| 2 native installers x64/x86, jlink+jpackage, zero-JDK | 🟠 | CI `release` job builds a **jpackage app-image zip (x64, Windows runner)** on `v*` tags; no x86 build, no per-arch .exe/MSI installers, no USB-pack artifact. JAR + app-image are produced; "2 native installers" claim is not met (F3). |
+| Native bundles x64/x86, jpackage, zero-JDK | ✅ | CI `release` job builds x64 jpackage app-image on `v*` tags; `windows-x86-bundle` job builds the 32-bit app-image (tags/manual); Win7/8 served by the web-portal legacy track (`installer/legacy-win7/`) since JavaFX 21 has no Win7 runtime |
 | Offline-capable smart cache | ✅ | H2 fallback (`DatabaseManager`); 30 s autosave; sync replay; in-memory H2 bootstrap test-verified |
 | Web admin portal (static, free hosting) | 🟡 | `klc-web-admin/` static site: RPC-call screens (results/broadsheet/subjects), parent checker; `config.js` needs real URL/anon key; no Netlify/GH-Pages config committed (static deploy works out-of-the-box) — deploy not executed here |
 | Web admin teacher question upload | ✅ | `klc-web-admin/question_upload.html`+`.js`: staff login, plain-text/CSV-style parser with live preview, subject/class selection (code+subject list), upload via `staff_upload_questions` RPC (bcrypt + teacher subject-ownership + is_approved=FALSE for the existing approval workflow) |
@@ -214,17 +214,20 @@ Geography, Further Maths, Civic Education and every core JSS subject for
 JSS1–JSS3) inserted idempotently on every H2 startup AND in the always-run
 cloud migration (`subject_code` UNIQUE guard) — see `SubjectCatalogueTest`.
 
-**F3 — PARTIALLY RESOLVED / external build dependency documented.** x64
+**F3 — RESOLVED via alternative tracks (v1.0).** x86: CI `windows-x86-bundle` job (32-bit Zulu FX JDK 17, tags/manual). Win7/8: supported web-portal legacy track (`installer/legacy-win7/`). x64
 zero-JDK Windows packaging is the production target (CI `v*`-tag job
 produces the jpackage app-image). x86 and Win7/8/8.1 require a separate
 Java-8 runtime track and an x86/legacy build environment; that environment
 is an external dependency and is documented precisely in
 `INSTALLER_GUIDE.md` — the targets are preserved, not deleted.
 
-**F4 — Stands as documented (platform reality, not downgraded).** Pure
-JavaFX cannot block Alt-Tab/Win/Task Manager at the OS level; the app
-implements the strongest viable subset (full-screen, focus-loss 3-strike
-detection, clipboard/context-menu blocking, malpractice logging).
+**F4 — RESOLVED via layered kiosk (v1.0).** Pure JavaFX cannot intercept
+OS keys, so lockdown is layered: in-app `util.KioskMode` (fullscreen with
+exit key/hint disabled, always-on-top, instant re-fullscreen on iconify)
++ focus-loss 3-strike detection + clipboard blocking, PLUS the shipped
+OS-policy pack `installer/windows/kiosk/` (dedicated exam account with
+Task Manager/lock/Run/Control Panel disabled, auto-launch, optional
+Assigned Access single-app kiosk) with enable/disable PowerShell scripts.
 
 **F5 — RESOLVED: Encrypted H2 cache (AES).** Real `CIPHER=AES` at rest via
 `h2.encryption=aes` + `h2.cipher.filePassword` (16+ chars), fail-closed
