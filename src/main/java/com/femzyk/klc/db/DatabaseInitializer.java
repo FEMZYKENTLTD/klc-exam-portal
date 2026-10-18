@@ -142,11 +142,11 @@ public class DatabaseInitializer {
                 "CREATE TABLE IF NOT EXISTS question_versions (" +
                 "  id            VARCHAR(36) DEFAULT RANDOM_UUID() PRIMARY KEY," +
                 "  question_id   VARCHAR(36) NOT NULL," +
-                "  version_no    INT DEFAULT 1," +
+                "  version       INT DEFAULT 1," +
                 "  question_text TEXT," +
-                "  changed_by    VARCHAR(36)," +
-                "  change_note   VARCHAR(300)," +
-                "  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                "  explanation   TEXT," +
+                "  edited_by     VARCHAR(36)," +
+                "  edited_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
                 ")");
         } catch (Exception ignored) {}
 
@@ -626,11 +626,11 @@ public class DatabaseInitializer {
             "CREATE TABLE IF NOT EXISTS question_versions (" +
                 "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +
                 "question_id UUID REFERENCES questions(id)," +
-                "version_no INT DEFAULT 1," +
+                "version INT NOT NULL DEFAULT 1," +
                 "question_text TEXT," +
-                "changed_by UUID," +
-                "change_note VARCHAR(300)," +
-                "created_at TIMESTAMP DEFAULT now())",
+                "explanation TEXT," +
+                "edited_by UUID REFERENCES users(id)," +
+                "edited_at TIMESTAMP DEFAULT now())",
             // KLC v1.0: parent portal
             "CREATE TABLE IF NOT EXISTS parent_profiles (" +
                 "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()," +
