@@ -38,7 +38,7 @@ public final class QuestionTextParser {
     private static final Pattern Q_PREFIX   = Pattern.compile("^(?:Question\\s*:|Q\\s*\\d*\\s*[:.)])\\s*", Pattern.CASE_INSENSITIVE);
     private static final Pattern NUMBERING  = Pattern.compile("^\\d{1,4}\\s*[.)]\\s+");
     private static final Pattern TOPIC      = Pattern.compile("^Topic\\s*:\\s*(.*)$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern MARKED_OPT = Pattern.compile("^\\[(x| )\\]\\s*(.*)$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern MARKED_OPT = Pattern.compile("^\\[(x| )\\]\\s*(.*)$", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
     private static final Pattern LETTER_OPT = Pattern.compile("^([A-E])\\s*[.)]\\s+(.*)$");
     private static final Pattern ANSWER     = Pattern.compile("^Answer\\s*:\\s*([A-E])\\b.*$", Pattern.CASE_INSENSITIVE);
 
