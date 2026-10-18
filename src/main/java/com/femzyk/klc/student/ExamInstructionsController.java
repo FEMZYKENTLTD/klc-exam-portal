@@ -16,6 +16,9 @@ public class ExamInstructionsController {
     @FXML private Label examTitleLabel, subjectLabel, durationLabel, questionsLabel, rulesLabel;
     @FXML private CheckBox acceptCheck;
     @FXML private Button startBtn;
+    @FXML private TextField admissionField;
+    @FXML private Label identityStatus;
+    private String expectedAdmission = "";
     @FXML private ImageView photoView;
 
     private String examId;
@@ -26,6 +29,9 @@ public class ExamInstructionsController {
         if(variant != null) this.variant = variant;
         loadExam();
         loadStudentPhoto();
+        if (admissionField != null)
+            admissionField.textProperty().addListener((o, a, b) -> validateIdentity());
+        validateIdentity();
     }
 
     /** KLC v1.0 (spec 5.3): photo verification popup - show the
@@ -34,10 +40,11 @@ public class ExamInstructionsController {
         if (photoView == null) return;
         try(Connection c = DatabaseManager.getConnection();
             PreparedStatement ps = c.prepareStatement(
-                "SELECT passport_url FROM student_profiles WHERE user_id=?")){
+                "SELECT passport_url, admission_no FROM student_profiles WHERE user_id=?")){
             AuthService.setUuid(ps, 1, AuthService.Session.userId, c);
             ResultSet rs = ps.executeQuery();
             if(rs.next()){
+                expectedAdmission = rs.getString(2) == null ? "" : rs.getString(2).trim();
                 String p = rs.getString(1);
                 if(p != null && !p.isBlank()){
                     File f = new File(p);
@@ -87,12 +94,32 @@ public class ExamInstructionsController {
         }catch(Exception e){ e.printStackTrace(); }
     }
 
-    @FXML private void onAcceptChanged(){
-        startBtn.setDisable(!acceptCheck.isSelected());
+    @FXML private void onAcceptChanged(){ validateIdentity(); }
+
+    /** Identity re-check: candidate must re-enter their admission number. */
+    @FXML private void onIdentityTyped(){
+        validateIdentity();
+    }
+
+    private void validateIdentity(){
+        boolean accepted = acceptCheck != null && acceptCheck.isSelected();
+        boolean idOk = expectedAdmission.isEmpty()
+            || (admissionField != null && admissionField.getText() != null
+                && admissionField.getText().trim().equalsIgnoreCase(expectedAdmission));
+        if (identityStatus != null) {
+            if (expectedAdmission.isEmpty()) identityStatus.setText("");
+            else if (admissionField == null || admissionField.getText() == null || admissionField.getText().isBlank())
+                identityStatus.setText("Enter your admission number to confirm your identity.");
+            else identityStatus.setText(idOk ? "✔ Identity confirmed." : "✘ Admission number does not match your registered record.");
+            identityStatus.setStyle(idOk ? "-fx-text-fill:#0f7a3a; -fx-font-weight:bold" : "-fx-text-fill:#c0392b; -fx-font-weight:bold");
+        }
+        if (startBtn != null) startBtn.setDisable(!(accepted && idOk));
     }
 
     @FXML private void startExam() throws Exception {
         if(!acceptCheck.isSelected()) return;
+        validateIdentity();
+        if(startBtn != null && startBtn.isDisabled()) return;
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/exam.fxml"));
         Scene scene = new Scene(loader.load(), 1200, 750);
         scene.getStylesheets().add(getClass().getResource("/css/klc-premium.css").toExternalForm());

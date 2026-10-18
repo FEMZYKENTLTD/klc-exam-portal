@@ -164,6 +164,28 @@ public class AnalyticsController {
                     sb.append("  No exam data yet. Take some exams first.\n");
             }
 
+            // ── ITEM ANALYSIS: Difficulty index (p-value) per question ──
+            sb.append("\nItem Analysis - Difficulty Index (p = fraction correct; target 0.30-0.80):\n");
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT q.id, COUNT(aa.id), " +
+                    "SUM(CASE WHEN aa.selected_option = o.option_label THEN 1 ELSE 0 END) " +
+                    "FROM attempt_answers aa " +
+                    "JOIN questions q ON q.id = aa.question_id " +
+                    "LEFT JOIN question_options o ON o.question_id = q.id AND o.is_correct = TRUE " +
+                    "GROUP BY q.id ORDER BY 3")) {
+                ResultSet rs = ps.executeQuery();
+                int shown = 0;
+                while (rs.next() && shown < 15) {
+                    int att = rs.getInt(2), cor = rs.getInt(3);
+                    double pv = com.femzyk.klc.util.ItemAnalysis.difficulty(cor, att);
+                    sb.append(String.format("  p=%.2f  [%s]  %s%n", pv,
+                        com.femzyk.klc.util.ItemAnalysis.difficultyBand(pv),
+                        questionLabel(c, rs.getString(1))));
+                    shown++;
+                }
+                if (shown == 0) sb.append("  Needs exam data (attempt + answer rows).\n");
+            }
+
             // ── ITEM ANALYSIS (KLC v1.0 spec 7.6 - psychometrics) ──
             // Discrimination Index: correct-rate of TOP scorers minus
             // correct-rate of BOTTOM scorers per question (quartile method).
@@ -285,6 +307,20 @@ public class AnalyticsController {
                 if (!any) sb.append("  No staff records yet.\n");
             }
 
+            // ── MALPRACTICE SUMMARY ──
+            sb.append("\nMalpractice Summary (official exams):\n");
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT COUNT(*) total, " +
+                    "SUM(CASE WHEN status = 'MALPRACTICE' THEN 1 ELSE 0 END) malpractice, " +
+                    "SUM(COALESCE(strike_count,0)) strikes " +
+                    "FROM exam_attempts WHERE status IN ('SUBMITTED','MALPRACTICE','TIMED_OUT')")) {
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    sb.append(String.format("  Submitted sittings: %d | Malpractice auto-submits: %d | Total proctoring strikes: %d%n",
+                        rs.getInt(1), rs.getInt(2), rs.getInt(3)));
+                }
+            } catch (Exception ex) { sb.append("  (unavailable)\n"); }
+
             sb.append("\nMore analytics:\n");
             sb.append("  - Item Analysis: Question Bank -> filter by topic\n");
             sb.append("  - Broadsheet: Results -> Export Excel\n");
@@ -341,6 +377,57 @@ public class AnalyticsController {
             if (reportArea != null)
                 reportArea.appendText("\n[Export failed: "
                     + e.getMessage() + "]");
+        }
+    }
+
+    @FXML
+    private void exportJson() {
+        if (reportArea == null || reportArea.getText().isBlank()) return;
+        try {
+            javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+            fc.setTitle("Export Analytics (JSON)");
+            fc.setInitialFileName("klc-analytics-" + java.time.LocalDate.now() + ".json");
+            fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("JSON", "*.json"));
+            java.io.File f = fc.showSaveDialog(reportArea.getScene().getWindow());
+            if (f == null) return;
+            StringBuilder json = new StringBuilder("{\"generated\":\"")
+                .append(java.time.LocalDate.now()).append("\",\"lines\":[");
+            String[] lines = reportArea.getText().split("\n");
+            for (int i = 0; i < lines.length; i++) {
+                if (i > 0) json.append(",");
+                json.append("\"").append(lines[i].replace("\\", "\\\\").replace("\"", "\\\"")).append("\"");
+            }
+            json.append("]}");
+            java.nio.file.Files.writeString(f.toPath(), json.toString());
+            reportArea.appendText("\n\n[Exported JSON to " + f.getAbsolutePath() + "]");
+        } catch (Exception e) {
+            reportArea.appendText("\n[JSON export failed: " + e.getMessage() + "]");
+        }
+    }
+
+    @FXML
+    private void exportExcel() {
+        if (reportArea == null || reportArea.getText().isBlank()) return;
+        try {
+            javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+            fc.setTitle("Export Analytics (Excel)");
+            fc.setInitialFileName("klc-analytics-" + java.time.LocalDate.now() + ".xlsx");
+            fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("Excel", "*.xlsx"));
+            java.io.File f = fc.showSaveDialog(reportArea.getScene().getWindow());
+            if (f == null) return;
+            try (var wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+                var sheet = wb.createSheet("KLC Analytics");
+                int r = 0;
+                for (String line : reportArea.getText().split("\n")) {
+                    var row = sheet.createRow(r++);
+                    row.createCell(0).setCellValue(line);
+                }
+                sheet.setColumnWidth(0, 14000);
+                try (var out = new java.io.FileOutputStream(f)) { wb.write(out); }
+            }
+            reportArea.appendText("\n\n[Exported Excel to " + f.getAbsolutePath() + "]");
+        } catch (Exception e) {
+            reportArea.appendText("\n[Excel export failed: " + e.getMessage() + "]");
         }
     }
 

@@ -58,5 +58,31 @@ public class ConfigService {
         }catch(Exception ignored){}
     }
     public static String getSession(){ return currentSession; }
+
+    /** Session straight from school_profile on an open connection (never stale). */
+    public static String sessionFor(Connection c) {
+        try (PreparedStatement ps = c.prepareStatement(
+                "SELECT session_current FROM school_profile LIMIT 1");
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                String s = rs.getString(1);
+                if (s != null && !s.isBlank()) { currentSession = s; return s; }
+            }
+        } catch (Exception ignored) {}
+        return currentSession;
+    }
+
+    /** Term straight from school_profile on an open connection (never stale). */
+    public static String termFor(Connection c) {
+        try (PreparedStatement ps = c.prepareStatement(
+                "SELECT term_current FROM school_profile LIMIT 1");
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                String s = rs.getString(1);
+                if (s != null && !s.isBlank()) { currentTerm = s; return s; }
+            }
+        } catch (Exception ignored) {}
+        return currentTerm;
+    }
     public static String getTerm(){ return currentTerm; }
 }

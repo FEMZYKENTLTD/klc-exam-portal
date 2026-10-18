@@ -239,7 +239,7 @@ public class ExamManagerController {
                 ps.setString(2, subjectId);
                 ps.setString(3, cls);
                 ps.setString(4, term);
-                ps.setString(5, "2024/2025");
+                ps.setString(5, com.femzyk.klc.util.ConfigService.getSession());
                 ps.setString(6, title);
                 ps.setString(7, instructionsArea == null
                     ? "" : instructionsArea.getText());

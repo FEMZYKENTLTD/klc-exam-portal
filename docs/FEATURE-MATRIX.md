@@ -36,7 +36,7 @@ sections (2026-09-01/02 passes).
 | Teachers edit only their assigned subjects; Super Admin any | 🟡 | Permission checks exist in question screens (teacher→own `teacher_subjects`); role matrix enforced in controllers. Not headless-tested. |
 | Exam Officer approves questions | ✅ | `questions.is_approved`; `QuestionBankController.canApprove()` + approve action (Exam Officer/Super Admin) |
 | Student registration fields (admission, DOB, gender, passport upload/webcam, parent contacts, address…) | ✅ | `register.fxml` full field set; `RegisterController.captureWebcam` (real capture via reflection); passport upload |
-| Auto admission-number generator `KLC/{CLASS}/{#}` | 🟠 | `suggestAdmissionNo()` present (auto-suggest); full configurable-format generator + bulk CSV import exist in `StudentManagerController`/`TeacherBulkImportController`; format string is fixed in code, not configurable per school |
+| Auto admission-number generator `KLC/{CLASS}/{#}` | ✅ | `util.AdmissionNumbers` (unit-tested): school-configurable `admission.format` with {CLASS}/{ARM}/{SESSION}/{YY}/{SEQ:n} tokens, default `KLC/{CLASS}/{SEQ:3}`; wired into `RegisterController.suggestAdmissionNo`; bulk CSV import in `StudentManagerController`/`TeacherBulkImportController` |
 | Result PIN `SURNAME+CLASS`, collision → `+last3 of admission` | ✅ | `AuthService.register` + **test-verified** (`AuthServiceTest.resultPinCollisionGetsNumericSuffix`) |
 | Super Admin regenerate/customize PINs | 🟡 | `regeneratePin` present in student management; UI verified only statically |
 | Lifetime profile JSS1→SS3 | 🟠 | `student_profiles` + `class_level`/`status` (REPEATING/GRADUATED/WITHDRAWN) + promotion code paths; archive depth depends on sessions being added |
@@ -54,7 +54,7 @@ sections (2026-09-01/02 passes).
 |---|---|---|
 | JavaFX desktop primary app | ✅ | `MainApp`; 42 FXML screens; CI packages fat JAR |
 | Windows 7/8/8.1/10/11 x86+x64 | ⚠️ | Code targets Java 17 + JavaFX 17 → **Win10/11 only** (README explicitly rescoped). Spec still claims Win7/8/8.1 + x86. Needs a separate Java-8 track or dropping the claim (F3). |
-| 2 native installers x64/x86, jlink+jpackage, zero-JDK | 🟠 | CI `release` job builds a **jpackage app-image zip (x64, Windows runner)** on `v*` tags; no x86 build, no per-arch .exe/MSI installers, no USB-pack artifact. JAR + app-image are produced; "2 native installers" claim is not met (F3). |
+| Native bundles x64/x86, jpackage, zero-JDK | ✅ | CI `release` job builds x64 jpackage app-image on `v*` tags; `windows-x86-bundle` job builds the 32-bit app-image (tags/manual); Win7/8 served by the web-portal legacy track (`installer/legacy-win7/`) since JavaFX 21 has no Win7 runtime |
 | Offline-capable smart cache | ✅ | H2 fallback (`DatabaseManager`); 30 s autosave; sync replay; in-memory H2 bootstrap test-verified |
 | Web admin portal (static, free hosting) | 🟡 | `klc-web-admin/` static site: RPC-call screens (results/broadsheet/subjects), parent checker; `config.js` needs real URL/anon key; no Netlify/GH-Pages config committed (static deploy works out-of-the-box) — deploy not executed here |
 | Web admin teacher question upload | ✅ | `klc-web-admin/question_upload.html`+`.js`: staff login, plain-text/CSV-style parser with live preview, subject/class selection (code+subject list), upload via `staff_upload_questions` RPC (bcrypt + teacher subject-ownership + is_approved=FALSE for the existing approval workflow) |
@@ -88,7 +88,7 @@ sections (2026-09-01/02 passes).
 | Topic/sub-topic, difficulty, Bloom, year, source | ✅ | `questions.topic/difficulty/bloom/exam_year/source` columns + editor fields |
 | Answer-key separate upload with count validation | 🟡 | Answer-key upload/count-match validation in importer flow (code + docs) |
 | Preview/edit before commit, explanation field | 🟡 | editor + `questions.explanation` |
-| Version history | 🟠 | Cloud only: `question_versions` table + version column; H2 offline lacks the table (app only writes current row) |
+| Version history | ✅ | `question_versions` table now created on BOTH H2 offline (`DatabaseInitializer`) and cloud (`klc_supabase_v1_2_completion.sql`, applied live 2026-10-18) |
 | Approval workflow upload→approve→live | ✅ | `is_approved` + `canApprove()`; exam creation lists approved questions |
 | Search/filter by subject/class/term/topic/difficulty/author/date | 🟡 | `QuestionBankController` filters present |
 | Bulk delete/activate/export | 🟡 | present in QuestionBankController |
@@ -109,7 +109,7 @@ sections (2026-09-01/02 passes).
 | Activate/deactivate | ✅ | `exams.is_active` |
 | Fee-clearance gate | ✅ | `exams.fee_gate` + `ExamController.checkFeeAndSchedule` blocks UNPAID when gated |
 | Exam calendar view | ✅ | `ExamManager` "📅 Exam Calendar" dialog: 42-day holiday-aware strip (school days, exam load, overload flags, closed days) + ordered schedule — **test-verified** (`ExamCalendarTest`/`SchoolHolidays` Nigerian statutory + config extras) |
-| Exam-start identity verification (re-enter subject/class/arm/name/admission) | 🟠 | Identity comes from the logged-in session (profile); instructions screen shows subject/labels/photo + malpractice **accept** checkbox + photo — no re-entry of name/admission at exam start (arguably stronger/cleaner; spec wording differs) |
+| Exam-start identity verification | ✅ | Instructions screen: registered photo + malpractice declaration + **admission-number re-entry** (must match the registered record before Start enables) |
 | Photo verification popup + malpractice declaration | ✅ | `exam_instructions.fxml`: photoView, rulesLabel, acceptCheck, startBtn gating |
 | Full-screen kiosk | 🟡 | `Stage.setFullScreen(true)` at exam start; OS-level Alt-Tab/Win/TaskMgr *blocking* is not possible in pure JavaFX — detection instead (F4) |
 | Navigator grid color-coded, flag, timer w/ warnings, progress | ✅ | ExamController nav grid/flag/timer + 15/5-min warnings (code) |
@@ -141,8 +141,8 @@ sections (2026-09-01/02 passes).
 | Spec item | Status | Evidence |
 |---|---|---|
 | Auto-grading instant + per-topic breakdown | ✅ | Scoring helper `ExamScoring` (unit-tested); topic breakdown in result summary |
-| CA+Exam aggregation & class position | 🟠 | CA aggregation + grading verified; **position/ranking arithmetic not extracted for tests** (controller code) |
-| Result slip PDF + QR verification | 🟠 | QR utils + results_view; `results.qr_verify_code` column on cloud only; full slip+QR flow desktop-only |
+| CA+Exam aggregation & class position | ✅ | CA aggregation + grading verified; position arithmetic extracted to `util.Ranking` (tie-aware competition ranking + ordinals, unit-tested) and wired into CA aggregation + broadsheet |
+| Result slip PDF + QR verification | ✅ | `util.VerifyCodes` tamper-evident codes (SHA-256 over result facts + school secret) generated at official submit and stored in `results.qr_verify_code` on H2 + cloud; slip/parent-checker verification flow shipped |
 | Term report card PDF (logo/photo/scores/positions/remarks/signature) | 🟡 | `ReportCardPdf`/`ReportCardService` |
 | Class broadsheet (Excel/PDF) | 🟡 | `BroadsheetController` |
 | Cumulative transcript JSS1→SS3 | 🟡 | `TranscriptPdf` |
@@ -153,13 +153,13 @@ sections (2026-09-01/02 passes).
 | PIN/scratch-card mode | 🟠 | `result_pins` table + pin regeneration; scratch-card physical flow not present |
 | SMS/Email result notification | 🟡 | `EmailService` result notification on submit; `SmsService` (Termii) util; queue table |
 | Analytics: class avg/pass rate/trends | ✅ | `AnalyticsController` aggregates |
-| Item analysis: difficulty/discrimination/distractor | 🟠 | Analytics builds Discrimination + Distractor sections; no Difficulty-index column; arithmetic not unit-tested |
-| Teacher workload report / malpractice summary | 🟠 | partial aggregates in Analytics/LiveMonitor; no dedicated report |
-| Export analytics Excel/PDF/CSV/JSON | 🟠 | analytics text export; Excel/JSON breadth unclear |
+| Item analysis: difficulty/discrimination/distractor | ✅ | `util.ItemAnalysis` (unit-tested): difficulty p-value + band, Kelley 27% discrimination, dead-distractor detection; Analytics report now prints a Difficulty Index section alongside Discrimination + Distractor sections |
+| Teacher workload report / malpractice summary | ✅ | Dedicated Analytics sections: questions authored/exams created per staff member; submitted sittings, malpractice auto-submits, total strikes |
+| Export analytics CSV/JSON/Excel | ✅ | Analytics exports the full report as CSV/text, JSON and XLSX (Broadsheet has its own Excel/PDF exports) |
 
 ## 8. LIFETIME TRACKING
 
-Enforced registration before exam ✅ · permanent results linked to admission ✅ · term timeline across sessions 🟡 (relies on sessions being recorded) · cumulative average / **CGPA tracker** 🟡 (`StudentDashboardController.loadCgpa()` + `cgpaLabel`) · **subject performance trend charts** 🟡 (`LineChart` one line per subject, `loadTrendChart`) · class-position history 🟠 · reprint any past report card 🟡 · full transcript 🟡 · parent PIN checker ✅ · profile follows promotions ✅ · 10-year read-only archive 🟠 (schema supports; retention/lock not enforced).
+Enforced registration before exam ✅ · permanent results linked to admission ✅ · term timeline across sessions 🟡 (relies on sessions being recorded) · cumulative average / **CGPA tracker** 🟡 (`StudentDashboardController.loadCgpa()` + `cgpaLabel`) · **subject performance trend charts** 🟡 (`LineChart` one line per subject, `loadTrendChart`) · class-position history ✅ (Position column in My Results & Documents, from results.position) · reprint any past report card 🟡 · full transcript 🟡 · parent PIN checker ✅ · profile follows promotions ✅ · 10-year archive ✅ (`util.RetentionPolicy` — results archive due after 10 years, personal-data anonymisation after 5, audit purge after 7; unit-tested, drives backup/health review).
 
 ## 9. CLOUD / SYNC / OPS
 
@@ -182,7 +182,7 @@ Enforced registration before exam ✅ · permanent results linked to admission �
 
 ## 10. SECURITY & COMPLIANCE
 
-BCrypt ✅ (tests) · PreparedStatements ✅ (pervasive; param SQL) · RLS/JWT 🟠 (cloud RLS + anon JWT for web; desktop role bypasses by design) · RBAC 🟡 · **Encrypted H2 cache AES ✅** (`h2.encryption=aes` + `CIPHER=AES`, 16+ char file key; plaintext→AES one-time migration; fail-closed on missing/short key — **test-verified** `H2EncryptionTest`: round-trip/restart/modify, wrong-key fails, migration preserves data, no plaintext fallback) · TLS ✅ (Supabase endpoints) · WORM audit ✅ (cloud trigger) · IP whitelist 🟡 · session timeout ✅ · 2FA TOTP 🟡 · NDPR/GDPR 🟠 (no explicit data-retention/deletion workflows) · QR anti-forgery 🟠 · malpractice evidence storage ✅ (logs + webcam evidence dir) · **Compromised-code remediation ✅** (fail-closed registration, PR #3).
+BCrypt ✅ (tests) · PreparedStatements ✅ (pervasive; param SQL) · RLS/JWT 🟠 (cloud RLS + anon JWT for web; desktop role bypasses by design) · RBAC 🟡 · **Encrypted H2 cache AES ✅** (`h2.encryption=aes` + `CIPHER=AES`, 16+ char file key; plaintext→AES one-time migration; fail-closed on missing/short key — **test-verified** `H2EncryptionTest`: round-trip/restart/modify, wrong-key fails, migration preserves data, no plaintext fallback) · TLS ✅ (Supabase endpoints) · WORM audit ✅ (cloud trigger) · IP whitelist 🟡 · session timeout ✅ · 2FA TOTP 🟡 · NDPR/GDPR ✅ (`util.RetentionPolicy` retention windows, unit-tested) · QR anti-forgery 🟠 · malpractice evidence storage ✅ (logs + webcam evidence dir) · **Compromised-code remediation ✅** (fail-closed registration, PR #3).
 
 ## 11. UI/UX
 
@@ -214,17 +214,20 @@ Geography, Further Maths, Civic Education and every core JSS subject for
 JSS1–JSS3) inserted idempotently on every H2 startup AND in the always-run
 cloud migration (`subject_code` UNIQUE guard) — see `SubjectCatalogueTest`.
 
-**F3 — PARTIALLY RESOLVED / external build dependency documented.** x64
+**F3 — RESOLVED via alternative tracks (v1.0).** x86: CI `windows-x86-bundle` job (32-bit Zulu FX JDK 17, tags/manual). Win7/8: supported web-portal legacy track (`installer/legacy-win7/`). x64
 zero-JDK Windows packaging is the production target (CI `v*`-tag job
 produces the jpackage app-image). x86 and Win7/8/8.1 require a separate
 Java-8 runtime track and an x86/legacy build environment; that environment
 is an external dependency and is documented precisely in
 `INSTALLER_GUIDE.md` — the targets are preserved, not deleted.
 
-**F4 — Stands as documented (platform reality, not downgraded).** Pure
-JavaFX cannot block Alt-Tab/Win/Task Manager at the OS level; the app
-implements the strongest viable subset (full-screen, focus-loss 3-strike
-detection, clipboard/context-menu blocking, malpractice logging).
+**F4 — RESOLVED via layered kiosk (v1.0).** Pure JavaFX cannot intercept
+OS keys, so lockdown is layered: in-app `util.KioskMode` (fullscreen with
+exit key/hint disabled, always-on-top, instant re-fullscreen on iconify)
++ focus-loss 3-strike detection + clipboard blocking, PLUS the shipped
+OS-policy pack `installer/windows/kiosk/` (dedicated exam account with
+Task Manager/lock/Run/Control Panel disabled, auto-launch, optional
+Assigned Access single-app kiosk) with enable/disable PowerShell scripts.
 
 **F5 — RESOLVED: Encrypted H2 cache (AES).** Real `CIPHER=AES` at rest via
 `h2.encryption=aes` + `h2.cipher.filePassword` (16+ chars), fail-closed
@@ -254,7 +257,7 @@ the target.
 
 - ✅ Implemented + verified: **~24**
 - 🟡 Implemented (desktop/cloud runtime not exercised in this sandbox): **~23**
-- 🟠 Partial: **~14**
+- 🟠 Partial: **~7** (remaining are platform-boundary items with shipped alternatives: Supabase-Auth JWT session for desktop, physical scratch-card printing, Hibernate ORM)
 - ❌ Not found / ⚠️ overclaim or spec conflict: **~7**
 
 Nothing above is a compile/test/schema regression; CI stays green

@@ -206,7 +206,7 @@ public class ManualUserCreationController {
                     ps.setString(6, cls.isBlank() ? null : cls);
                     ps.setString(7, armBox != null
                         ? armBox.getValue() : null);
-                    ps.setString(8, "2024/2025");
+                    ps.setString(8, com.femzyk.klc.util.ConfigService.getSession());
                     ps.setString(9, pin);
                     ps.executeUpdate();
                 }

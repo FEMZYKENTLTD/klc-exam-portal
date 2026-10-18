@@ -151,7 +151,7 @@
 				<!-- Options + Action Buttons -->
 				<HBox spacing="12" alignment="CENTER_LEFT">
 					<CheckBox fx:id="practiceCheck" text="Practice Mode"/>
-					<!-- KLC v1.1.0 FIX: `tooltip="text"` is not valid FXML (a string
+					<!-- KLC v1.0.0 FIX: `tooltip="text"` is not valid FXML (a string
 					     cannot be coerced to Tooltip) - the whole Exam Manager screen
 					     failed to load because of it. Use a <tooltip> element. -->
 					<CheckBox fx:id="mockCheck" text="Mock Exam (not recorded officially)">

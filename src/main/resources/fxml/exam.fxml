@@ -60,7 +60,7 @@
       <ImageView fx:id="questionImageView" fitWidth="560" preserveRatio="true" visible="false" managed="false"/>
       <Label fx:id="questionLabel" wrapText="true" style="-fx-font-size:16px"/>
       <VBox spacing="8">
-        <!-- KLC v1.1.0 FIX: a ToggleGroup is not a Node - declaring it as a
+        <!-- KLC v1.0.0 FIX: a ToggleGroup is not a Node - declaring it as a
              child of the VBox threw "Unable to coerce ToggleGroup to Node"
              and the ENTIRE exam screen failed to load. Declared in
              fx:define and referenced by the radio buttons instead. -->

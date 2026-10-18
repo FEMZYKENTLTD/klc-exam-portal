@@ -65,6 +65,9 @@ h2.password=
 h2.encryption=off
 h2.cipher.filePassword=YOUR_16PLUS_CHAR_FILE_KEY
 
+# Admission-number format: tokens {CLASS} {CLASS:lower} {ARM} {SESSION} {YY} {SEQ:n}
+admission.format=KLC/{CLASS}/{SEQ:3}
+
 # ── Email (Brevo SMTP) ──────────────────────────────────────────────────────
 smtp.host=smtp-relay.brevo.com
 smtp.port=587

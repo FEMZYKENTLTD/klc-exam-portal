@@ -17,10 +17,10 @@
 6. **Rotate everything that ever appeared in chat/git** (see
    SECURITY_CREDENTIALS.md).
 7. Create the Storage bucket if not auto-created: `klc-attachments`
-   (public read) — the v1.1 SQL does this.
+   (public read) — the v1.0 SQL does this.
 
 Notes: the desktop app talks to Postgres over JDBC (SSL); RLS is enabled for
 all anon/web paths; the desktop DB role bypasses RLS by design. The web
 portal only touches SECURITY DEFINER RPCs. "Supabase Auth" for the desktop
 role maps to your BCrypt accounts in `public.users` (JDBC has no JWT);
-for token-based web sessions adopt supabase-js auth in v1.1.
+for token-based web sessions adopt supabase-js auth in a future release.

@@ -1,5 +1,7 @@
 package com.femzyk.klc.admin;
 
+import com.femzyk.klc.auth.AuthService;
+
 import com.femzyk.klc.db.DatabaseManager;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -78,8 +80,8 @@ public class BroadsheetController {
                     double score = 0;
                     try(PreparedStatement ps=c.prepareStatement("""
                         SELECT cs.total_score FROM ca_scores cs JOIN subjects s ON s.id=cs.subject_id
-                        WHERE cs.student_id=? AND s.subject_code=? AND cs.term=? AND cs.session='2024/2025'""")){
-                        ps.setObject(1, UUID.fromString(st.id)); ps.setString(2, subCode); ps.setString(3, termBox.getValue());
+                        WHERE cs.student_id=? AND s.subject_code=? AND cs.term=? AND cs.session=?""")){
+                        AuthService.setUuid(ps, 1, st.id, c); ps.setString(2, subCode); ps.setString(3, termBox.getValue()); ps.setString(4, com.femzyk.klc.util.ConfigService.getSession());
                         ResultSet rs=ps.executeQuery(); if(rs.next()) score = rs.getDouble(1);
                     }
                     row.add(score==0?"-":String.format("%.0f",score));
@@ -92,11 +94,9 @@ public class BroadsheetController {
                 rows.add(row);
                 totals.add(new StudentTotal(rows.size()-1, sum));
             }
-            totals.sort((a,b)-> Double.compare(b.total, a.total));
-            int pos=1;
-            for(StudentTotal t: totals){
-                ObservableList<String> row = rows.get(t.rowIdx);
-                row.set(row.size()-1, String.valueOf(pos++));
+            for(var ranked : com.femzyk.klc.util.Ranking.rankDescending(totals, t -> t.total)){
+                ObservableList<String> row = rows.get(ranked.key().rowIdx);
+                row.set(row.size()-1, com.femzyk.klc.util.Ranking.ordinal(ranked.position()));
             }
             table.setItems(rows);
             status.setText("Broadsheet loaded: "+students.size()+" students, "+subjects.size()+" subjects - "+classBox.getValue()+" "+termBox.getValue()+" Term");
@@ -109,7 +109,7 @@ public class BroadsheetController {
             Sheet sh = wb.createSheet(classBox.getValue()+" Broadsheet");
             int r=0;
             Row hr = sh.createRow(r++); hr.createCell(0).setCellValue("KNOWLEDGE LAND COLLEGE");
-            Row hr2 = sh.createRow(r++); hr2.createCell(0).setCellValue(classBox.getValue()+" - "+termBox.getValue()+" Term - 2024/2025 - Class Broadsheet");
+            Row hr2 = sh.createRow(r++); hr2.createCell(0).setCellValue(classBox.getValue()+" - "+termBox.getValue()+" Term - "+com.femzyk.klc.util.ConfigService.getSession()+" - Class Broadsheet");
             r++;
             Row header = sh.createRow(r++);
             for(int c=0;c<table.getColumns().size();c++) header.createCell(c).setCellValue(table.getColumns().get(c).getText());
@@ -133,7 +133,7 @@ public class BroadsheetController {
             Document doc = new Document(pdf);
             doc.setFontSize(8);
             doc.add(new Paragraph("KNOWLEDGE LAND COLLEGE").setBold().setTextAlignment(TextAlignment.CENTER));
-            doc.add(new Paragraph(classBox.getValue()+" - "+termBox.getValue()+" Term 2024/2025 - Class Broadsheet")
+            doc.add(new Paragraph(classBox.getValue()+" - "+termBox.getValue()+" Term "+com.femzyk.klc.util.ConfigService.getSession()+" - Class Broadsheet")
                 .setTextAlignment(TextAlignment.CENTER));
             doc.add(new Paragraph(" "));
             int cols = table.getColumns().size();

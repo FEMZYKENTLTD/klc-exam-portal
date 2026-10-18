@@ -236,6 +236,10 @@ public class StudentDashboardController {
         if (mainTabs != null) mainTabs.getSelectionModel().selectFirst();
     }
 
+    @FXML private void openResultViewer() throws Exception {
+        MainApp.setRoot("result_viewer.fxml", null);
+    }
+
     private void loadProfile() {
         try (Connection c = DatabaseManager.getConnection();
              PreparedStatement ps = c.prepareStatement(
@@ -670,7 +674,9 @@ public class StudentDashboardController {
     private void downloadReport() {
         try {
             String out = ReportCardPdf.generateForStudent(
-                AuthService.Session.userId, null, "1st", "2024/2025");
+                AuthService.Session.userId, null,
+                com.femzyk.klc.util.ConfigService.getTerm(),
+                com.femzyk.klc.util.ConfigService.getSession());
             new Alert(Alert.AlertType.INFORMATION,
                 "Report Card saved:\n" + out).showAndWait();
         } catch (Exception e) {

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="14" styleClass="screen-root" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.femzyk.klc.student.ResultViewerController" style="-fx-padding:24">
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="My Results &amp; Documents" style="-fx-font-size:20px; -fx-font-weight:bold"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label text="Term"/><ComboBox fx:id="termBox" promptText="Term"/>
+        <Button text="Back to Dashboard" onAction="#goToDashboard"/>
+    </HBox>
+    <Label fx:id="summaryLabel" wrapText="true" style="-fx-text-fill:#64748b"/>
+    <TableView fx:id="table" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colSub" text="Subject" prefWidth="160"/>
+            <TableColumn fx:id="colScore" text="Score" prefWidth="100"/>
+            <TableColumn fx:id="colGrade" text="Grade" prefWidth="100"/>
+            <TableColumn fx:id="colDate" text="Date" prefWidth="140"/>
+            <TableColumn fx:id="colPos" text="Position" prefWidth="100"/>
+        </columns>
+    </TableView>
+    <HBox spacing="10">
+        <Button text="Download Report Card" onAction="#downloadReport"/>
+        <Button text="Download Transcript" onAction="#downloadTranscript"/>
+        <Button text="Download Graduation Certificate" onAction="#downloadGraduation"/>
+    </HBox>
+    <Label text="Appeal a result (select the result row first)" style="-fx-font-weight:bold"/>
+    <TextField fx:id="appealSubjectField" promptText="Subject (auto-filled from selected result)"/>
+    <TextArea fx:id="appealText" promptText="Explain why this result should be reviewed..." prefRowCount="3"/>
+    <Button text="Submit Appeal" onAction="#submitAppeal"/>
+</VBox>

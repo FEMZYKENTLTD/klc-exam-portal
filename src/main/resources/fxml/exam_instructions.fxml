@@ -50,6 +50,15 @@
 				</VBox>
 			</HBox>
 
+			<VBox spacing="6">
+				<Label text="Identity check — type your Admission Number exactly as registered (the invigilator can see it on your ID card)"
+                       style="-fx-font-size:12px; -fx-font-weight:bold"/>
+				<HBox spacing="10" alignment="CENTER_LEFT">
+					<TextField fx:id="admissionField" promptText="e.g. KLC/SS2/045" prefWidth="240" onKeyTyped="#onIdentityTyped"/>
+					<Label fx:id="identityStatus" wrapText="true"/>
+				</HBox>
+			</VBox>
+
 			<CheckBox fx:id="acceptCheck"
                       text="I have read and accept all KNOWLEDGE LAND COLLEGE examination rules. I understand that malpractice results in automatic submission and account lockout."
                       onAction="#onAcceptChanged"

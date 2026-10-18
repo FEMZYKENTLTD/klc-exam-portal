@@ -1,4 +1,4 @@
-# KLC CBT Suite v1.1.0 — Interface Verification Report
+# KLC CBT Suite v1.0.0 — Interface Verification Report
 
 **Date:** 2026-10-02 · **Method:** headless pixel-level verification
 **Tool:** `tools/screenshot-harness/KlcShotHarness.java` (new, committed)

@@ -205,8 +205,10 @@ public class RegisterController {
             ResultSet rs = ps.executeQuery();
             rs.next();
             int n = rs.getInt(1) + 1;
-            admissionField.setText(
-                "KLC/" + cls + "/" + String.format("%03d", n));
+            // School-configurable format (admission.format, default KLC/{CLASS}/{SEQ:3})
+            admissionField.setText(com.femzyk.klc.util.AdmissionNumbers.format(
+                com.femzyk.klc.util.AdmissionNumbers.configuredPattern(),
+                cls, armBox == null ? null : armBox.getValue(), null, n));
         } catch (Exception ignored) {}
     }
 

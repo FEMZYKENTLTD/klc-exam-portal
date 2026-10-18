@@ -22,7 +22,7 @@
 				<Label text="KNOWLEDGE LAND COLLEGE"
                        style="-fx-text-fill:white; -fx-font-size:16px; -fx-font-weight:bold"/>
 				<Label fx:id="portalSubtitle"
-                       text="CBT SUITE v1.1 - Admin Portal"
+                       text="CBT SUITE v1.0 - Admin Portal"
                        style="-fx-text-fill:#d4af37; -fx-font-size:11px"/>
 			</VBox>
 			<Region HBox.hgrow="ALWAYS"/>
@@ -89,6 +89,8 @@
                         onAction="#showExams" styleClass="sidebar-btn"/>
 				<Button fx:id="btnCaScores" text="CA Scores"
                         onAction="#showCaScores" styleClass="sidebar-btn"/>
+				<Button text="CA Aggregation"
+                        onAction="#showCaAggregation" styleClass="sidebar-btn"/>
 
 				<!-- RESULTS -->
 				<Label fx:id="secResults" text="RESULTS"
@@ -97,6 +99,10 @@
                         onAction="#showResults" styleClass="sidebar-btn"/>
 				<Button fx:id="btnBroadsheet" text="Broadsheet"
                         onAction="#showBroadsheet" styleClass="sidebar-btn"/>
+				<Button text="Report Cards"
+                        onAction="#showReportCards" styleClass="sidebar-btn"/>
+				<Button fx:id="btnSuperExams" text="Exam Control"
+                        onAction="#showSuperAdminExams" styleClass="sidebar-btn"/>
 				<Button fx:id="btnAppeals" text="Appeals"
                         onAction="#showAppeals" styleClass="sidebar-btn"/>
 

@@ -38,7 +38,7 @@ public class ExamController {
     @FXML private Button audioBtn;
     @FXML private Label progressLabel;
     @FXML private ImageView questionImageView, webcamThumb;
-    // KLC v1.1.0 FIX: exam.fxml's root is a BorderPane - the field used to
+    // KLC v1.0 FIX: exam.fxml's root is a BorderPane - the field used to
     // be declared VBox, which made every exam load throw
     // "Can not set ... examRoot to javafx.scene.layout.BorderPane".
     @FXML private BorderPane examRoot;
@@ -107,6 +107,31 @@ public class ExamController {
                 MainApp.examInProgress = false;
                 return;
             }
+            // Attempt-limit enforcement (exams.attempt_limit, default 1):
+            // count prior SUBMITTED sittings for this student+exam.
+            if (!isPractice) {
+                int limit = 1; long submitted = 0;
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT attempt_limit FROM exams WHERE id = ?")) {
+                    AuthService.setUuid(ps, 1, examId, c);
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) { limit = rs.getInt(1); if (rs.wasNull()) limit = 1; }
+                }
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT COUNT(*) FROM exam_attempts WHERE exam_id = ? AND student_id = ? " +
+                        "AND status IN ('SUBMITTED','MALPRACTICE','MOCK_SUBMITTED')")) {
+                    AuthService.setUuid(ps, 1, examId, c);
+                    AuthService.setUuid(ps, 2, AuthService.Session.userId, c);
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) submitted = rs.getLong(1);
+                }
+                if (!com.femzyk.klc.util.AttemptPolicy.canStart(limit, submitted, false)) {
+                    MainApp.examInProgress = false;
+                    alert(com.femzyk.klc.util.AttemptPolicy.denialMessage(limit, submitted));
+                    AuthService.logAudit("EXAM_ATTEMPT_LIMIT_BLOCK", "exams", examId);
+                    return;
+                }
+            }
             attemptId = createAttempt(c);
             loadExamMeta(c);
             loadQuestions(c);
@@ -132,6 +157,7 @@ public class ExamController {
 
         Stage st = (Stage) timerLabel.getScene().getWindow();
         st.setFullScreen(true);
+        if (!isPractice) com.femzyk.klc.util.KioskMode.arm(st);
 
         // Anti-Malpractice: Only enable 3-strike proctoring for official (non-practice) exams
         if (!isPractice && !isMock) {
@@ -1101,11 +1127,14 @@ public class ExamController {
                 }
 
                 // Insert result
+                String verifyCode = com.femzyk.klc.util.VerifyCodes.forResult(
+                    AuthService.Session.userId, attemptId, pct,
+                    com.femzyk.klc.util.ConfigService.get("results.verify_secret", "KLC-VERIFY-CHANGE-ME"));
                 try (PreparedStatement ps = c.prepareStatement(
                         "INSERT INTO results(" +
                         "id, attempt_id, student_id, exam_id, score, " +
-                        "total_questions, correct_answers, percentage) " +
-                        "VALUES(?,?,?,?,?,?,?,?)")) {
+                        "total_questions, correct_answers, percentage, qr_verify_code) " +
+                        "VALUES(?,?,?,?,?,?,?,?,?)")) {
                     AuthService.setUuid(ps, 1, UUID.randomUUID().toString(), c);
                     AuthService.setUuid(ps, 2, attemptId, c);
                     AuthService.setUuid(ps, 3, AuthService.Session.userId, c);
@@ -1114,6 +1143,8 @@ public class ExamController {
                     ps.setInt   (6, questions.size());
                     ps.setInt   (7, correct);
                     ps.setDouble(8, pct);
+                    try { ps.setString(9, verifyCode); }
+                    catch (Exception noCol) { /* pre-v1.3 H2 cache without the column */ }
                     ps.executeUpdate();
                 }
 
@@ -1160,9 +1191,9 @@ public class ExamController {
             resultSummary = "Exam submitted. Score calculation pending.";
         }
 
-        // Exit fullscreen
+        // Exit fullscreen / release kiosk
         Stage st = (Stage) timerLabel.getScene().getWindow();
-        st.setFullScreen(false);
+        com.femzyk.klc.util.KioskMode.disarm(st);
 
         // FIX: Show result dialog THEN redirect to dashboard when OK clicked
         Alert resultAlert = new Alert(Alert.AlertType.INFORMATION);

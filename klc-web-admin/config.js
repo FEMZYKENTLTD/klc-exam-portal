@@ -1,9 +1,9 @@
-// KLC CBT Suite v1.1 - Web Admin / Parent Checker configuration
+// KLC CBT Suite v1.0 - Web Admin / Parent Checker configuration
 // Replace with YOUR project values (Supabase Dashboard -> Settings -> API).
 // The anon key is safe to expose: data is only reachable through the
 // SECURITY DEFINER RPCs in supabase/klc_supabase_v1_1_security_and_features.sql.
-const KLC_SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
-const KLC_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const KLC_SUPABASE_URL = "https://aqircycpctadgvbqsadf.supabase.co";
+const KLC_ANON_KEY = "sb_publishable_QVdNBsqS1rFmnKw0fVhkgw_z6g64y8-";
 
 async function klcRpc(fn, args) {
   const resp = await fetch(`${KLC_SUPABASE_URL}/rest/v1/rpc/${fn}`, {

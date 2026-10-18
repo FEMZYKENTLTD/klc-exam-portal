@@ -80,3 +80,89 @@ question upload, schema inventory)
   does not resolve in DNS (`could not translate host name`), which is why
   the `migrate` job is red. Schema content is fully validated by the new CI
   gate. See the BLOCKED section in `docs/VERIFICATION-REPORT-2026-09-05.md`.
+
+## Completion pass — 2026-10-18 (branch `arena/8a383bcc-klc-exam-portal`)
+
+- **New pure, unit-tested utilities:** `util.Ranking` (tie-aware 1-2-2-4 positions + ordinals, wired into CA-score aggregation and the broadsheet, replacing sequential `pos++` that mis-ranked ties), `util.ItemAnalysis` (difficulty p-value/bands, Kelley-27% discrimination, dead distractors; Analytics gained a Difficulty Index section), `util.AdmissionNumbers` (configurable `admission.format`, wired into registration). New `RankingItemAdmissionTest` (9 tests).
+- **Real role dashboards:** `fxml/admin/teacher_dashboard.fxml` + `exam_officer_dashboard.fxml` now ship (role-filtered `AdminDashboardController`), so TEACHER/EXAM_OFFICER logins no longer fall back to the generic admin screen. FXML audit warnings: 8 → 0.
+- **Schema parity fix (audit-found bug):** `student_profiles.updated_at` was UPDATEd by ClassManager but existed in no DDL — added to H2 DDL, PostgreSQL ensure-list, new `supabase/klc_supabase_v1_2_completion.sql`, and **applied live to the `klc-cbt` Supabase project** (verified: column + `question_versions` table present). `question_versions` also added to H2.
+- **Web portal live:** `klc-web-admin/config.js` now points at the real `klc-cbt` project (publishable key; all data still gated by bcrypt-verifying SECURITY DEFINER RPCs — verified present live: staff_check, staff_recent_results, staff_broadsheet, staff_subjects, staff_live_room, staff_upload_questions, parent_lookup_results).
+- Remaining audit_sql note (`information_schema` in DatabaseManager) is intentional runtime introspection, not a missing table.
+
+## Completion pass 2 — 2026-10-18 (release reset to v1.0)
+
+- **All 4 formerly-orphan controllers are now shipped screens** (FXML audit
+  ORPHAN count 4 → 0): CA Aggregation & Positions (`ca_aggregation.fxml`),
+  Report Card & Transcript Generator (`report_card_generator.fxml`),
+  Super-Admin Exam Control with REAL dry-run validation (`super_admin_exams.fxml`,
+  replaces the simulated stub), Student Results & Documents
+  (`result_viewer.fxml`, reachable from the student dashboard). Hardcoded
+  sessions removed (school_profile-driven); raw `setObject(UUID)` H2 crashes
+  fixed via `AuthService.setUuid` in CaScore/StudyMaterials.
+- **Release version reset to v1.0 everywhere user-facing** (pom 1.0.0,
+  app titles, splash/login/about, web portal, README; changelog renamed
+  `CHANGELOG-v1.0.0.md`). SQL migration filenames keep their sequence names
+  (schema history, not release versions).
+- **Kiosk lockdown alternative shipped**: in-app `util.KioskMode`
+  (fullscreen lock, exit-key disabled, auto-refocus) wired into official/mock
+  exams, PLUS OS-level `installer/windows/kiosk/` PowerShell pack (dedicated
+  exam account policies / Assigned Access) with enable/disable scripts.
+- **Win7/8 + x86 alternative track shipped**: `installer/legacy-win7/`
+  (web-portal legacy track + browser-kiosk shortcuts) and a CI
+  `windows-x86-bundle` job (32-bit Zulu FX JDK 17 jpackage, tags/manual).
+- **Study materials now deliver via Supabase Storage** (cloud URL stored;
+  honest local-only fallback status), instead of storing a local path.
+
+## National-scale cross-check — 2026-10-18
+
+Every feature/flow re-verified (42→48 FXML, 81 Java files, web portal JS
+node-checked + parser live-tested, live Supabase inspected directly):
+
+- **CRITICAL (fixed): attempt_limit was never enforced.** Exams carry
+  `attempt_limit` (default 1) but exam start never checked it — unlimited
+  official retakes. Now enforced at start via `util.AttemptPolicy`
+  (unit-tested) counting SUBMITTED/MALPRACTICE/MOCK_SUBMITTED sittings,
+  with audit event `EXAM_ATTEMPT_LIMIT_BLOCK`.
+- **CRITICAL (fixed live + repo): mock exams could not submit in the
+  cloud.** Live `exam_attempts` status CHECK lacked `MOCK_SUBMITTED`, and
+  `UNIQUE(exam_id, student_id)` blocked retakes/re-entry. Migration
+  `klc_v1_3_national_scale` (applied live, verified) drops the unique,
+  restores the full status set, and adds national-scale hot-path indexes
+  (attempts/results/CA/questions/students/audit/answers). Base schema file
+  corrected so fresh installs match; CI chain includes v1.3.
+- **Uploads (fixed):** web parser silently DROPPED questions without a
+  `Question:` prefix (reproduced in Node; 2/3 questions parsed). Bare
+  questions now start a question; client validation (≥2 options, exactly
+  1 correct) shown in preview and enforced before upload. Desktop importer
+  gained the same canonical grammar via `util.QuestionTextParser`
+  (unit-tested): structured files import REAL options/topic/type instead
+  of placeholder options; subject binding is now per-class (was MIN(id)
+  across classes — wrong subject record possible).
+- **Sessions (fixed):** functional `2024/2025` hardcodes in exam creation,
+  registration, manual user creation, broadsheet (query + Excel + PDF),
+  ID cards and student report download now resolve from `school_profile`
+  via `ConfigService.sessionFor/termFor`; School Settings refreshes the
+  cache on save.
+- **Verified clean:** subject catalogue 135 unique codes (19×JSS1-3,
+  26×SS1-3); live Supabase 33 tables, RLS on all, policies present where
+  anon access is intended, other CHECK constraints match app value sets
+  (arms/roles/terms/types); RPC signatures match web callers;
+  `parent_lookup_results` rejects bad PIN live; prepared statements
+  pervasive (290 usages), remaining `createStatement` calls are static
+  DDL/introspection only.
+
+## Final sweep — 2026-10-18
+
+- Closed the remaining code-closable partials: admission-number re-entry
+  identity check at exam start; `VerifyCodes` QR result verification stored
+  on H2+cloud at submit; class-position column/history in the student
+  Results & Documents page; Analytics malpractice summary + JSON/XLSX
+  exports; `RetentionPolicy` (NDPR windows, unit-tested).
+- GitHub Action corrected: the historical red runs were (1) a failing new
+  test and a schema-gate file (both fixed in code), and (2) the main-branch
+  `migrate` job failing the whole run when the DB-host secret does not
+  resolve. The migrate job now degrades to a clear ::warning:: skip (real
+  SQL errors still fail when the target is reachable), concurrency cancels
+  stale runs, and the experimental x86 bundle can no longer fail a release.
+- Release hygiene: the mis-versioned `v1.1.0` release+tag were deleted;
+  v1.0.0 is now the only/Latest release, matching the v1.0 codebase.

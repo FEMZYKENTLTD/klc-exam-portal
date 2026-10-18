@@ -40,11 +40,12 @@ function parseQuestions(raw) {
       cur.opts.push({ label: "", text: om[2], correct: /x/i.test(om[1]) });
       continue;
     }
+    // A plain line with no open question STARTS a new question (never
+    // silently dropped) - teachers often paste bare questions.
+    if (!cur) { cur = { q: line, topic: "", source: "", opts: [] }; continue; }
     // continuation line of a question/option
-    if (cur) {
-      if (cur.opts.length) cur.opts[cur.opts.length - 1].text += " " + line;
-      else cur.q += (cur.q ? " " : "") + line;
-    }
+    if (cur.opts.length) cur.opts[cur.opts.length - 1].text += " " + line;
+    else cur.q += (cur.q ? " " : "") + line;
   }
   if (cur && cur.q) push();
   // assign A-E labels, drop empty options, keep at most 5
@@ -56,6 +57,16 @@ function parseQuestions(raw) {
   return out;
 }
 
+function validateQuestions(qs) {
+  const problems = [];
+  qs.forEach((q, i) => {
+    if (q.opts.length < 2) problems.push(`Q${i + 1}: only ${q.opts.length} option(s) - at least 2 required`);
+    const nCorrect = q.opts.filter(o => o.correct).length;
+    if (nCorrect !== 1) problems.push(`Q${i + 1}: ${nCorrect} correct option(s) marked - exactly 1 required ([x])`);
+  });
+  return problems;
+}
+
 function preview() {
   const el = document.getElementById("preview");
   const err = document.getElementById("parseError");
@@ -63,8 +74,10 @@ function preview() {
   try { qs = parseQuestions(document.getElementById("questions").value); }
   catch (e) { err.textContent = "Parse error: " + e.message; err.hidden = false; return; }
   err.hidden = true;
+  const problems = validateQuestions(qs);
   el.textContent = "Parsed " + qs.length + " question(s)\n" + qs.map((q, i) =>
-    `${i + 1}. [${q.type}] ${q.q.slice(0, 110)}`).join("\n");
+    `${i + 1}. [${q.type}] ${q.q.slice(0, 110)}`).join("\n")
+    + (problems.length ? "\n\n⚠ FIX BEFORE UPLOAD:\n" + problems.join("\n") : "\n\n✔ All questions valid (2+ options, exactly 1 correct).");
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -131,6 +144,12 @@ async function upload(e) {
   res.textContent = "";
   if (!qs.length) {
     err.textContent = "No valid questions found. Check the format rules.";
+    err.hidden = false;
+    return;
+  }
+  const problems = validateQuestions(qs);
+  if (problems.length) {
+    err.textContent = "Fix these before upload: " + problems.join(" · ");
     err.hidden = false;
     return;
   }
