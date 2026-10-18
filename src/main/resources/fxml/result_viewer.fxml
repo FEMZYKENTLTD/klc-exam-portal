@@ -18,6 +18,7 @@
             <TableColumn fx:id="colScore" text="Score" prefWidth="100"/>
             <TableColumn fx:id="colGrade" text="Grade" prefWidth="100"/>
             <TableColumn fx:id="colDate" text="Date" prefWidth="140"/>
+            <TableColumn fx:id="colPos" text="Position" prefWidth="100"/>
         </columns>
     </TableView>
     <HBox spacing="10">

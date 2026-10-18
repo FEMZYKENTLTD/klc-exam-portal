@@ -28,17 +28,21 @@ import java.util.UUID;
 public class ResultViewerController {
 
     @FXML private TableView<R> table;
-    @FXML private TableColumn<R, String> colSub, colScore, colGrade, colDate;
+    @FXML private TableColumn<R, String> colSub, colScore, colGrade, colDate, colPos;
     @FXML private Label summaryLabel;
     @FXML private TextArea appealText;
     @FXML private TextField appealSubjectField;
     @FXML private ComboBox<String> termBox;
 
     public static class R {
-        String resultId, subject, score, grade, date;
+        String resultId, subject, score, grade, date, position;
         R(String rid, String s, String sc, String g, String d) {
-            resultId = rid; subject = s; score = sc; grade = g; date = d;
+            this(rid, s, sc, g, d, "-");
         }
+        R(String rid, String s, String sc, String g, String d, String pos) {
+            resultId = rid; subject = s; score = sc; grade = g; date = d; position = pos;
+        }
+        public String getPosition() { return position; }
         public String getSubject() { return subject; }
         public String getScore()   { return score; }
         public String getGrade()   { return grade; }
@@ -57,6 +61,8 @@ public class ResultViewerController {
             new javafx.beans.property.SimpleStringProperty(c.getValue().getGrade()));
         colDate.setCellValueFactory(c ->
             new javafx.beans.property.SimpleStringProperty(c.getValue().getDate()));
+        if (colPos != null) colPos.setCellValueFactory(c ->
+            new javafx.beans.property.SimpleStringProperty(c.getValue().getPosition()));
         table.setItems(data);
 
         table.getSelectionModel().selectedItemProperty().addListener((o, a, b) -> {
@@ -90,7 +96,7 @@ public class ResultViewerController {
         data.clear();
         try (Connection c = DatabaseManager.getConnection();
              PreparedStatement ps = c.prepareStatement(
-                 "SELECT r.id, s.subject_code, r.percentage, r.grade, r.created_at " +
+                 "SELECT r.id, s.subject_code, r.percentage, r.grade, r.created_at, r.position " +
                  "FROM results r " +
                  "JOIN exams e ON e.id = r.exam_id " +
                  "JOIN subjects s ON s.id = e.subject_id " +
@@ -108,7 +114,9 @@ public class ResultViewerController {
                     rs.getString(2),
                     String.format("%.1f%%", pct),
                     rs.getString(4) == null ? "-" : rs.getString(4),
-                    rs.getTimestamp(5).toLocalDateTime().toLocalDate().toString()));
+                    rs.getTimestamp(5).toLocalDateTime().toLocalDate().toString(),
+                    rs.getObject(6) == null ? "-"
+                        : com.femzyk.klc.util.Ranking.ordinal(rs.getInt(6))));
             }
             summaryLabel.setText(cnt == 0
                 ? "No results yet - take an exam!"

@@ -150,3 +150,19 @@ node-checked + parser live-tested, live Supabase inspected directly):
   `parent_lookup_results` rejects bad PIN live; prepared statements
   pervasive (290 usages), remaining `createStatement` calls are static
   DDL/introspection only.
+
+## Final sweep — 2026-10-18
+
+- Closed the remaining code-closable partials: admission-number re-entry
+  identity check at exam start; `VerifyCodes` QR result verification stored
+  on H2+cloud at submit; class-position column/history in the student
+  Results & Documents page; Analytics malpractice summary + JSON/XLSX
+  exports; `RetentionPolicy` (NDPR windows, unit-tested).
+- GitHub Action corrected: the historical red runs were (1) a failing new
+  test and a schema-gate file (both fixed in code), and (2) the main-branch
+  `migrate` job failing the whole run when the DB-host secret does not
+  resolve. The migrate job now degrades to a clear ::warning:: skip (real
+  SQL errors still fail when the target is reachable), concurrency cancels
+  stale runs, and the experimental x86 bundle can no longer fail a release.
+- Release hygiene: the mis-versioned `v1.1.0` release+tag were deleted;
+  v1.0.0 is now the only/Latest release, matching the v1.0 codebase.

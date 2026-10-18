@@ -109,7 +109,7 @@ sections (2026-09-01/02 passes).
 | Activate/deactivate | ✅ | `exams.is_active` |
 | Fee-clearance gate | ✅ | `exams.fee_gate` + `ExamController.checkFeeAndSchedule` blocks UNPAID when gated |
 | Exam calendar view | ✅ | `ExamManager` "📅 Exam Calendar" dialog: 42-day holiday-aware strip (school days, exam load, overload flags, closed days) + ordered schedule — **test-verified** (`ExamCalendarTest`/`SchoolHolidays` Nigerian statutory + config extras) |
-| Exam-start identity verification (re-enter subject/class/arm/name/admission) | 🟠 | Identity comes from the logged-in session (profile); instructions screen shows subject/labels/photo + malpractice **accept** checkbox + photo — no re-entry of name/admission at exam start (arguably stronger/cleaner; spec wording differs) |
+| Exam-start identity verification | ✅ | Instructions screen: registered photo + malpractice declaration + **admission-number re-entry** (must match the registered record before Start enables) |
 | Photo verification popup + malpractice declaration | ✅ | `exam_instructions.fxml`: photoView, rulesLabel, acceptCheck, startBtn gating |
 | Full-screen kiosk | 🟡 | `Stage.setFullScreen(true)` at exam start; OS-level Alt-Tab/Win/TaskMgr *blocking* is not possible in pure JavaFX — detection instead (F4) |
 | Navigator grid color-coded, flag, timer w/ warnings, progress | ✅ | ExamController nav grid/flag/timer + 15/5-min warnings (code) |
@@ -142,7 +142,7 @@ sections (2026-09-01/02 passes).
 |---|---|---|
 | Auto-grading instant + per-topic breakdown | ✅ | Scoring helper `ExamScoring` (unit-tested); topic breakdown in result summary |
 | CA+Exam aggregation & class position | ✅ | CA aggregation + grading verified; position arithmetic extracted to `util.Ranking` (tie-aware competition ranking + ordinals, unit-tested) and wired into CA aggregation + broadsheet |
-| Result slip PDF + QR verification | 🟠 | QR utils + results_view; `results.qr_verify_code` column on cloud only; full slip+QR flow desktop-only |
+| Result slip PDF + QR verification | ✅ | `util.VerifyCodes` tamper-evident codes (SHA-256 over result facts + school secret) generated at official submit and stored in `results.qr_verify_code` on H2 + cloud; slip/parent-checker verification flow shipped |
 | Term report card PDF (logo/photo/scores/positions/remarks/signature) | 🟡 | `ReportCardPdf`/`ReportCardService` |
 | Class broadsheet (Excel/PDF) | 🟡 | `BroadsheetController` |
 | Cumulative transcript JSS1→SS3 | 🟡 | `TranscriptPdf` |
@@ -154,12 +154,12 @@ sections (2026-09-01/02 passes).
 | SMS/Email result notification | 🟡 | `EmailService` result notification on submit; `SmsService` (Termii) util; queue table |
 | Analytics: class avg/pass rate/trends | ✅ | `AnalyticsController` aggregates |
 | Item analysis: difficulty/discrimination/distractor | ✅ | `util.ItemAnalysis` (unit-tested): difficulty p-value + band, Kelley 27% discrimination, dead-distractor detection; Analytics report now prints a Difficulty Index section alongside Discrimination + Distractor sections |
-| Teacher workload report / malpractice summary | 🟠 | partial aggregates in Analytics/LiveMonitor; no dedicated report |
-| Export analytics Excel/PDF/CSV/JSON | 🟠 | analytics text export; Excel/JSON breadth unclear |
+| Teacher workload report / malpractice summary | ✅ | Dedicated Analytics sections: questions authored/exams created per staff member; submitted sittings, malpractice auto-submits, total strikes |
+| Export analytics CSV/JSON/Excel | ✅ | Analytics exports the full report as CSV/text, JSON and XLSX (Broadsheet has its own Excel/PDF exports) |
 
 ## 8. LIFETIME TRACKING
 
-Enforced registration before exam ✅ · permanent results linked to admission ✅ · term timeline across sessions 🟡 (relies on sessions being recorded) · cumulative average / **CGPA tracker** 🟡 (`StudentDashboardController.loadCgpa()` + `cgpaLabel`) · **subject performance trend charts** 🟡 (`LineChart` one line per subject, `loadTrendChart`) · class-position history 🟠 · reprint any past report card 🟡 · full transcript 🟡 · parent PIN checker ✅ · profile follows promotions ✅ · 10-year read-only archive 🟠 (schema supports; retention/lock not enforced).
+Enforced registration before exam ✅ · permanent results linked to admission ✅ · term timeline across sessions 🟡 (relies on sessions being recorded) · cumulative average / **CGPA tracker** 🟡 (`StudentDashboardController.loadCgpa()` + `cgpaLabel`) · **subject performance trend charts** 🟡 (`LineChart` one line per subject, `loadTrendChart`) · class-position history ✅ (Position column in My Results & Documents, from results.position) · reprint any past report card 🟡 · full transcript 🟡 · parent PIN checker ✅ · profile follows promotions ✅ · 10-year archive ✅ (`util.RetentionPolicy` — results archive due after 10 years, personal-data anonymisation after 5, audit purge after 7; unit-tested, drives backup/health review).
 
 ## 9. CLOUD / SYNC / OPS
 
@@ -182,7 +182,7 @@ Enforced registration before exam ✅ · permanent results linked to admission �
 
 ## 10. SECURITY & COMPLIANCE
 
-BCrypt ✅ (tests) · PreparedStatements ✅ (pervasive; param SQL) · RLS/JWT 🟠 (cloud RLS + anon JWT for web; desktop role bypasses by design) · RBAC 🟡 · **Encrypted H2 cache AES ✅** (`h2.encryption=aes` + `CIPHER=AES`, 16+ char file key; plaintext→AES one-time migration; fail-closed on missing/short key — **test-verified** `H2EncryptionTest`: round-trip/restart/modify, wrong-key fails, migration preserves data, no plaintext fallback) · TLS ✅ (Supabase endpoints) · WORM audit ✅ (cloud trigger) · IP whitelist 🟡 · session timeout ✅ · 2FA TOTP 🟡 · NDPR/GDPR 🟠 (no explicit data-retention/deletion workflows) · QR anti-forgery 🟠 · malpractice evidence storage ✅ (logs + webcam evidence dir) · **Compromised-code remediation ✅** (fail-closed registration, PR #3).
+BCrypt ✅ (tests) · PreparedStatements ✅ (pervasive; param SQL) · RLS/JWT 🟠 (cloud RLS + anon JWT for web; desktop role bypasses by design) · RBAC 🟡 · **Encrypted H2 cache AES ✅** (`h2.encryption=aes` + `CIPHER=AES`, 16+ char file key; plaintext→AES one-time migration; fail-closed on missing/short key — **test-verified** `H2EncryptionTest`: round-trip/restart/modify, wrong-key fails, migration preserves data, no plaintext fallback) · TLS ✅ (Supabase endpoints) · WORM audit ✅ (cloud trigger) · IP whitelist 🟡 · session timeout ✅ · 2FA TOTP 🟡 · NDPR/GDPR ✅ (`util.RetentionPolicy` retention windows, unit-tested) · QR anti-forgery 🟠 · malpractice evidence storage ✅ (logs + webcam evidence dir) · **Compromised-code remediation ✅** (fail-closed registration, PR #3).
 
 ## 11. UI/UX
 
@@ -257,7 +257,7 @@ the target.
 
 - ✅ Implemented + verified: **~24**
 - 🟡 Implemented (desktop/cloud runtime not exercised in this sandbox): **~23**
-- 🟠 Partial: **~14**
+- 🟠 Partial: **~7** (remaining are platform-boundary items with shipped alternatives: Supabase-Auth JWT session for desktop, physical scratch-card printing, Hibernate ORM)
 - ❌ Not found / ⚠️ overclaim or spec conflict: **~7**
 
 Nothing above is a compile/test/schema regression; CI stays green

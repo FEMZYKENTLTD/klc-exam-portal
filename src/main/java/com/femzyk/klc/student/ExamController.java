@@ -1127,11 +1127,14 @@ public class ExamController {
                 }
 
                 // Insert result
+                String verifyCode = com.femzyk.klc.util.VerifyCodes.forResult(
+                    AuthService.Session.userId, attemptId, pct,
+                    com.femzyk.klc.util.ConfigService.get("results.verify_secret", "KLC-VERIFY-CHANGE-ME"));
                 try (PreparedStatement ps = c.prepareStatement(
                         "INSERT INTO results(" +
                         "id, attempt_id, student_id, exam_id, score, " +
-                        "total_questions, correct_answers, percentage) " +
-                        "VALUES(?,?,?,?,?,?,?,?)")) {
+                        "total_questions, correct_answers, percentage, qr_verify_code) " +
+                        "VALUES(?,?,?,?,?,?,?,?,?)")) {
                     AuthService.setUuid(ps, 1, UUID.randomUUID().toString(), c);
                     AuthService.setUuid(ps, 2, attemptId, c);
                     AuthService.setUuid(ps, 3, AuthService.Session.userId, c);
@@ -1140,6 +1143,8 @@ public class ExamController {
                     ps.setInt   (6, questions.size());
                     ps.setInt   (7, correct);
                     ps.setDouble(8, pct);
+                    try { ps.setString(9, verifyCode); }
+                    catch (Exception noCol) { /* pre-v1.3 H2 cache without the column */ }
                     ps.executeUpdate();
                 }
 

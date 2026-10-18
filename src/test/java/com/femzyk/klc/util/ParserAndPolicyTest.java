@@ -48,6 +48,26 @@ class ParserAndPolicyTest {
         assertEquals(List.of(), QuestionTextParser.parse(null));
     }
 
+    @Test void verifyCodesAreDeterministicAndTamperEvident() {
+        String a = VerifyCodes.forResult("stu-1", "att-1", 72.5, "secret");
+        assertEquals(a, VerifyCodes.forResult("stu-1", "att-1", 72.5, "secret"));
+        assertTrue(a.startsWith("KLC-"));
+        assertTrue(VerifyCodes.matches(a, "stu-1", "att-1", 72.5, "secret"));
+        assertFalse(VerifyCodes.matches(a, "stu-1", "att-1", 73.0, "secret"));
+        assertFalse(VerifyCodes.matches(a, "stu-1", "att-1", 72.5, "wrong-secret"));
+    }
+
+    @Test void retentionPolicy() {
+        assertEquals(2024, RetentionPolicy.sessionStartYear("2024/2025"));
+        assertEquals(-1, RetentionPolicy.sessionStartYear("junk"));
+        assertTrue(RetentionPolicy.resultsArchiveDue("2010/2011", 2026));
+        assertFalse(RetentionPolicy.resultsArchiveDue("2024/2025", 2026));
+        assertTrue(RetentionPolicy.personalAnonymiseDue(2020, 2026));
+        assertFalse(RetentionPolicy.personalAnonymiseDue(2024, 2026));
+        assertTrue(RetentionPolicy.auditPurgeDue(2018, 2026));
+        assertFalse(RetentionPolicy.auditPurgeDue(2024, 2026));
+    }
+
     @Test void attemptPolicy() {
         assertTrue(AttemptPolicy.canStart(1, 0, false));
         assertFalse(AttemptPolicy.canStart(1, 1, false));

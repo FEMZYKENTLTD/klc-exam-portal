@@ -70,6 +70,8 @@
 				<Button text="Export Report (CSV)"
                         onAction="#exportReport"
                         style="-fx-background-color:#eaf0fb; -fx-border-color:#c8d3e8; -fx-border-radius:8; -fx-background-radius:8; -fx-padding:8 16; -fx-cursor:hand"/>
+                        <Button text="Export JSON" onAction="#exportJson"/>
+                        <Button text="Export Excel" onAction="#exportExcel"/>
 			</HBox>
 			<Label text="Report Preview"
                    style="-fx-font-weight:bold; -fx-font-size:13px"/>
