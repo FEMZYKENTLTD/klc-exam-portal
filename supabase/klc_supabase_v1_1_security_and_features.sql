@@ -215,7 +215,7 @@ CREATE OR REPLACE FUNCTION parent_lookup_results(
 RETURNS TABLE(subject_code VARCHAR, class_level VARCHAR, term VARCHAR,
               session VARCHAR, score NUMERIC, total_questions INT,
               percentage NUMERIC, result_date TIMESTAMP)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions AS $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM student_profiles
@@ -241,7 +241,7 @@ GRANT EXECUTE ON FUNCTION parent_lookup_results(TEXT, TEXT) TO anon;
 -- Staff identity check reused by every staff RPC (bcrypt verify)
 CREATE OR REPLACE FUNCTION staff_check(p_email TEXT, p_password TEXT)
 RETURNS VARCHAR  -- role when valid
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions AS $$
 DECLARE v_role VARCHAR; v_hash TEXT;
 BEGIN
   SELECT role, password_hash INTO v_role, v_hash
@@ -264,7 +264,7 @@ CREATE OR REPLACE FUNCTION staff_recent_results(
 RETURNS TABLE(admission_no VARCHAR, student VARCHAR, subject_code VARCHAR,
               class_level VARCHAR, term VARCHAR, session VARCHAR,
               score NUMERIC, percentage NUMERIC, result_date TIMESTAMP)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions AS $$
 BEGIN
   PERFORM staff_check(p_email, p_password);
   RETURN QUERY
@@ -288,7 +288,7 @@ CREATE OR REPLACE FUNCTION staff_broadsheet(
   p_session TEXT, p_term TEXT)
 RETURNS TABLE(admission_no VARCHAR, student VARCHAR, subject_code VARCHAR,
               ca_total NUMERIC, exam_score NUMERIC, grand_total NUMERIC)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions AS $$
 BEGIN
   PERFORM staff_check(p_email, p_password);
   RETURN QUERY
@@ -323,7 +323,7 @@ CREATE OR REPLACE FUNCTION staff_subjects(
   p_email TEXT, p_password TEXT)
 RETURNS TABLE(subject_code VARCHAR, subject_name VARCHAR,
               class_level VARCHAR, is_active BOOLEAN)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions AS $$
 BEGIN
   PERFORM staff_check(p_email, p_password);
   RETURN QUERY SELECT s.subject_code, s.subject_name,
@@ -493,7 +493,7 @@ RETURNS TABLE(admission_no VARCHAR, student VARCHAR, subject_code VARCHAR,
               class_level VARCHAR, arm VARCHAR, exam_title VARCHAR,
               started_at TIMESTAMP, elapsed_min NUMERIC,
               strike_count INT, status VARCHAR)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions AS $$
 BEGIN
   PERFORM staff_check(p_email, p_password);
   RETURN QUERY
@@ -537,7 +537,7 @@ CREATE OR REPLACE FUNCTION staff_upload_questions(
   p_subject_code TEXT, p_class_level TEXT,
   p_questions JSONB)
 RETURNS INT  -- number of questions inserted
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions AS $$
 DECLARE
   v_role VARCHAR;
   v_user uuid;

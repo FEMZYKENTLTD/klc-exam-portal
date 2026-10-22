@@ -3,26 +3,27 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>STAFF PORTAL — KNOWLEDGE LAND COLLEGE CBT</title>
+<title>KLC STAFF CONSOLE — KNOWLEDGE LAND COLLEGE CBT</title>
+<meta name="description" content="Knowledge Land College CBT Suite web console — students, teachers, questions, exams, CA, results, analytics and settings. Exam sitting is in the desktop app only."/>
 <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 <header class="topbar">
   <div>
     <div class="school">KNOWLEDGE LAND COLLEGE</div>
-    <div class="tag">Staff Portal — Results, Broadsheets &amp; Subjects</div>
+    <div class="tag">Staff Web Console — everything except sitting exams (in-app only)</div>
   </div>
-  <nav><a href="invigilator.html">Live Room</a>
+  <nav><a href="student.html">Student Portal</a>
+    <a href="invigilator.html">Live Room</a>
     <a href="question_upload.html">Question Upload</a>
     <a href="parent.html">Parent Checker</a></nav>
 </header>
 
 <main>
-  <!-- LOGIN -->
   <section class="card" id="loginCard">
     <h1>Staff Login</h1>
-    <p class="muted">Use your KLC CBT desktop account (Teacher / Exam Officer /
-      Principal / Super Admin).</p>
+    <p class="muted">Use your KLC CBT desktop account (Teacher / Exam Officer / Principal / Super Admin).
+      Every action is verified server-side and written to the audit trail.</p>
     <form id="loginForm">
       <label>Email <input id="email" type="email" required/></label>
       <label>Password <input id="password" type="password" required/></label>
@@ -31,60 +32,26 @@
     </form>
   </section>
 
-  <!-- DASHBOARD -->
-  <section id="dash" hidden>
-    <div class="card">
-      <h1 id="who"></h1>
-      <div class="actions">
-        <button class="btn" id="tabResults">Recent Results</button>
-        <button class="btn" id="tabBroadsheet">Broadsheet</button>
-        <button class="btn" id="tabSubjects">Subjects</button>
+  <section id="console" hidden>
+    <div class="layout">
+      <aside class="card sidebar">
+        <h1 id="who"></h1>
+        <p class="muted small" id="schoolLine"></p>
+        <nav class="sidenav" id="sidenav"></nav>
         <button class="btn subtle" id="logout">Logout</button>
+      </aside>
+      <div class="content">
+        <div class="card">
+          <h1 id="modTitle">Dashboard</h1>
+          <div id="modMsg" class="muted"></div>
+          <div id="modBody"></div>
+        </div>
       </div>
-    </div>
-
-    <div class="card" id="paneResults">
-      <h1>Recent Published Results</h1>
-      <div class="actions"><button class="btn" id="csvResults">⬇ Download CSV</button></div>
-      <div class="scrollx"><table id="resultsTable">
-        <thead><tr><th>Date</th><th>Admission</th><th>Student</th><th>Subject</th>
-          <th>Class</th><th>Term</th><th>Session</th><th>Score</th><th>%</th></tr></thead>
-        <tbody></tbody>
-      </table></div>
-    </div>
-
-    <div class="card" id="paneBroadsheet" hidden>
-      <h1>Class Broadsheet (CA + Exam)</h1>
-      <form id="bsForm" class="row">
-        <label>Class <select id="bsClass">
-          <option>JSS1</option><option>JSS2</option><option>JSS3</option>
-          <option>SS1</option><option>SS2</option><option>SS3</option>
-        </select></label>
-        <label>Session <input id="bsSession" value="2024/2025"/></label>
-        <label>Term <select id="bsTerm">
-          <option>1st</option><option>2nd</option><option>3rd</option>
-        </select></label>
-        <button class="btn gold" type="submit">LOAD</button>
-        <button class="btn" type="button" id="csvBroadsheet">⬇ CSV</button>
-      </form>
-      <div class="scrollx"><table id="bsTable">
-        <thead><tr><th>Admission</th><th>Student</th><th>Subject</th>
-          <th>CA</th><th>Exam</th><th>Total</th></tr></thead>
-        <tbody></tbody>
-      </table></div>
-    </div>
-
-    <div class="card" id="paneSubjects" hidden>
-      <h1>Subject Directory</h1>
-      <div class="scrollx"><table id="subjTable">
-        <thead><tr><th>Code</th><th>Subject</th><th>Class</th><th>Active</th></tr></thead>
-        <tbody></tbody>
-      </table></div>
     </div>
   </section>
 </main>
-<footer>KNOWLEDGE LAND COLLEGE CBT Suite v1.0 — Powered by FEMZYK ENTERPRISES LTD</footer>
+<footer>KNOWLEDGE LAND COLLEGE CBT Suite v1.0 — Powered by FEMZYK ENTERPRISES LTD · Exams are sat only in the desktop app (proctored)</footer>
 <script src="config.js"></script>
-<script src="index.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
