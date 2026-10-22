@@ -1,0 +1,14 @@
+# Only klc-web-admin/ is the Vercel site (see "outputDirectory" in vercel.json).
+# Everything below is excluded when the project root is the repository root.
+# If the project's Root Directory is set to klc-web-admin instead, this file
+# is ignored and klc-web-admin/vercel.json governs the deployment.
+src/
+supabase/
+docs/
+.github/
+installer/
+target/
+.git*
+*.md
+!klc-web-admin/README.md
+pom.xml

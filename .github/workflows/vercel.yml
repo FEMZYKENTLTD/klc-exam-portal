@@ -1,0 +1,96 @@
+# Vercel deployment — OPTIONAL token-based path.
+#
+# Recommended setup (no secrets needed): connect this repo in the Vercel
+# dashboard (Add New -> Project -> import FEMZYKENTLTD/klc-exam-portal).
+# Vercel's Git integration then deploys automatically on every push:
+# `main` -> Production, pull requests -> Preview deployments.
+#
+# This workflow is the alternative for teams that prefer deploying from
+# GitHub Actions. It stays completely inert (green, no-op) until these
+# repository secrets exist (Settings -> Secrets and variables -> Actions):
+#   VERCEL_TOKEN       Vercel account/team token (vercel.com -> Settings -> Tokens)
+#   VERCEL_ORG_ID      from `vercel link` output (.vercel/project.json: orgId)
+#   VERCEL_PROJECT_ID  from `vercel link` output (.vercel/project.json: projectId)
+# Once set, every push to `main` deploys to production and every pull
+# request gets a preview deployment — repo updates always reflect live.
+name: Vercel Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "klc-web-admin/**"
+      - "vercel.json"
+      - ".github/workflows/vercel.yml"
+  pull_request:
+    paths:
+      - "klc-web-admin/**"
+      - "vercel.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy web portal to Vercel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check whether Vercel secrets are configured
+        id: gate
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::VERCEL_TOKEN secret is not set - skipping token-based deploy. If the project is connected in the Vercel dashboard, Git integration is already deploying every push automatically."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        if: steps.gate.outputs.ready == 'true'
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel project settings
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then ENV=production; else ENV=preview; fi
+          vercel pull --yes --environment=$ENV --token="$VERCEL_TOKEN"
+
+      - name: Build (static - verifies vercel.json)
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            vercel build --prod --token="$VERCEL_TOKEN"
+          else
+            vercel build --token="$VERCEL_TOKEN"
+          fi
+
+      - name: Deploy to Vercel
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+          else
+            vercel deploy --prebuilt --token="$VERCEL_TOKEN"
+          fi

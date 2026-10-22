@@ -97,3 +97,31 @@ boundaries: desktop-only by nature — the encrypted offline `.klcbackup` file
 (web equivalent: full JSON export above), OS kiosk policy pack, and webcam/
 hardware proctoring. 2FA is enrolled/managed on the web and enforced at
 desktop-app login.
+
+
+---
+
+## Auto-deploy: every repo update goes live (Vercel Git integration)
+
+The project is configured so Vercel deploys it straight from GitHub:
+
+- A root `vercel.json` declares the static site (`outputDirectory:
+  klc-web-admin`, plus the same clean URLs/headers as
+  `klc-web-admin/vercel.json`), and a root `.vercelignore` keeps the deploy
+  bundle to the portal only. So **both** import styles work:
+  - Import the repo as-is (root directory = repository root), **or**
+  - Set **Root Directory = `klc-web-admin`** in the project settings.
+- Once the project is connected in the Vercel dashboard
+  (**Add New → Project → import `FEMZYKENTLTD/klc-exam-portal` → Deploy**),
+  Git integration is automatic:
+  - every push/merge to **`main`** → **Production** deployment;
+  - every **pull request** → a **Preview** deployment with its own URL,
+    posted as a PR comment;
+  - rollbacks: Deployments tab → ⋯ → *Promote to Production* / *Rollback*.
+- No environment variables are needed (`config.js` only carries the public
+  Supabase publishable key).
+
+Token-based alternative: `.github/workflows/vercel.yml` deploys from GitHub
+Actions when `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` repo
+secrets are set (see the header of that file); until then it no-ops with a
+notice. Use **either** Git integration **or** the workflow — not both.
