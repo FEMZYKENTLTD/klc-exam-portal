@@ -125,3 +125,22 @@ Token-based alternative: `.github/workflows/vercel.yml` deploys from GitHub
 Actions when `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` repo
 secrets are set (see the header of that file); until then it no-ops with a
 notice. Use **either** Git integration **or** the workflow — not both.
+
+
+## Vercel project (created 2026-10-22 via Arena Vercel connection)
+
+- Project: **klc-exam-portal** (`prj_9cy3vsIsPEzf6Q1NETKkclzGp5NB`), team **fan-card**
+  (`team_lTbuJQ4JKGXpeHW4wFRxkU5e`), Root Directory = `klc-web-admin`.
+- Remaining step for hands-free auto-deploy (pick ONE):
+  1. **Git integration (recommended):** grant the Vercel GitHub App access to
+     `FEMZYKENTLTD/klc-exam-portal` (GitHub → Settings → Applications → Vercel →
+     Repository access), then link the repo on the project. Pushes to `main`
+     then deploy to Production automatically; PRs get Preview URLs.
+  2. **GitHub Actions workflow:** add repo secrets `VERCEL_TOKEN`,
+     `VERCEL_ORG_ID` (= team id above), `VERCEL_PROJECT_ID` (= project id above);
+     `.github/workflows/vercel.yml` then deploys `main` → production and PRs →
+     preview on every update.
+- ⚠️ The team's default **Deployment Protection (SSO)** covers `*.vercel.app`
+  URLs. For a public school portal, turn it off for this project
+  (Project → Settings → Deployment Protection) or attach a custom domain
+  (custom domains are exempt).

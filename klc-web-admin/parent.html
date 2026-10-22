@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>PARENT RESULT CHECKER — KNOWLEDGE LAND COLLEGE</title>
+<meta name="description" content="Official parent result checker: ward exam results, CA scores and verify codes with admission number + result PIN."/>
 <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
@@ -16,42 +17,26 @@
 </header>
 
 <main>
-  <section class="card" id="lookupCard">
+  <section class="card" id="lookup">
     <h1>Check Your Ward's Results</h1>
     <p class="muted">
       Enter the <b>Admission Number</b> and the <b>Result PIN</b> issued by the school
       (format <code>SURNAME+CLASS</code>, e.g. <code>KERIPESS2</code>).
-      No account needed.
+      No account needed. Unpublished results are hidden until the school releases them.
     </p>
-    <form id="lookupForm">
+    <form id="form">
       <label>Admission Number
-        <input id="adm" placeholder="KLC/SS2/045" required/>
+        <input id="admission" placeholder="KLC/SS2/045" required/>
       </label>
       <label>Result PIN
         <input id="pin" placeholder="KERIPESS2" required/>
       </label>
       <button type="submit" class="btn gold">VIEW RESULTS</button>
-      <div id="lookupError" class="error" hidden></div>
+      <div id="err" class="error" hidden></div>
     </form>
   </section>
 
-  <section class="card" id="resultCard" hidden>
-    <h1 id="wardTitle">Results</h1>
-    <table id="resultTable">
-      <thead>
-        <tr><th>Date</th><th>Subject</th><th>Class</th><th>Term</th>
-            <th>Session</th><th>Score</th><th>%</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div class="actions">
-      <button class="btn" onclick="window.print()">🖨 Print</button>
-      <button class="btn" id="exportCsv">⬇ Download CSV</button>
-      <button class="btn subtle" id="logout">Check another ward</button>
-    </div>
-    <p class="muted small">Verified result data served directly from the school's
-    secure cloud database. Queries: femzykenterprisesltd@gmail.com</p>
-  </section>
+  <div id="out"></div>
 </main>
 <footer>KNOWLEDGE LAND COLLEGE CBT Suite v1.0 — Powered by FEMZYK ENTERPRISES LTD</footer>
 <script src="config.js"></script>
