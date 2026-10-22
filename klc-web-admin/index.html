@@ -28,6 +28,9 @@
       <label>Email <input id="email" type="email" required/></label>
       <label>Password <input id="password" type="password" required/></label>
       <button class="btn gold" type="submit">LOGIN</button>
+      <p class="muted" style="margin-top:12px">🎓 <b>Student looking for an exam?</b> Exams are visible in the
+        <a href="student.html">Student Portal</a>, and are written only in the desktop app.
+        <a href="#" onclick="showExamGate(null); return false;">Why, and how to get the app →</a></p>
       <div id="loginError" class="error" hidden></div>
     </form>
   </section>
@@ -52,6 +55,7 @@
 </main>
 <footer>KNOWLEDGE LAND COLLEGE CBT Suite v1.0 — Powered by FEMZYK ENTERPRISES LTD · Exams are sat only in the desktop app (proctored)</footer>
 <script src="config.js"></script>
+<script src="exam-gate.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

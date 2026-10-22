@@ -135,6 +135,7 @@ sections (2026-09-01/02 passes).
 | Attendance sheet PDF w/ photo/signature column | 🟡 | `AttendanceSheetPdf` util (desktop-only) |
 | Live exam monitor dashboard (force submit/extend) | 🟡 | `LiveMonitorController` forceSubmit/extendTime (Super Admin) — desktop-only |
 | Invigilator mobile monitor web page | ✅ | `klc-web-admin/invigilator.html`+`.js` responsive live room over `staff_live_room` RPC (bcrypt per call): active official attempts, elapsed, strikes; 15 s auto-refresh; practice/mock excluded |
+| Web portal full parity (v1.4+v1.5) | ✅ | Staff console SPA (18 modules) + student portal + parent report over role-guarded RPCs (applied live, smoke-tested); **exams visible on web, sat only in desktop app** — `student_exams` is read-only, every exam click opens the download-the-app gate dialog (`exam-gate.js`); no start/submit web API exists. Includes report card/ID card printing, friends/messages, profile, password change, RFC-6238 TOTP management, CSV bulk import, exam clone, full JSON export |
 
 ## 7. RESULTS / ANALYTICS / REPORTING
 

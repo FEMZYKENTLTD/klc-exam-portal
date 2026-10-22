@@ -20,8 +20,13 @@ window.addEventListener("DOMContentLoaded", () => {
       const caRows = (d.ca || []).map(r =>
         `<tr><td>${esc(r.subject_code)}</td><td>${esc(r.term)}</td><td>${esc(r.session)}</td><td>${esc(r.ca1)}</td><td>${esc(r.ca2)}</td><td>${esc(r.exam_score)}</td>
          <td><b>${esc(r.total)}</b></td><td>${esc(r.grade)}</td><td>${esc(r.position)}</td></tr>`).join("");
+      const s = d.school || {};
       out.innerHTML = `
-        <div class="card">
+        <div class="card reportcard">
+          <div class="rc-head">
+            <h2 style="margin:2px">${esc(s.school_name || "KNOWLEDGE LAND COLLEGE")}</h2>
+            <p class="muted" style="margin:2px">${esc(s.motto || "")} · ${esc(s.session_current || "")} Session · ${esc(s.term_current || "")} Term</p>
+          </div>
           <h2>${esc(w.name)} — ${esc(w.admission_no)}</h2>
           <p class="muted">Class: ${esc(w.class_level)} ${esc(w.arm || "")} · Official results only (unpublished results are hidden)</p>
           <h3>🏆 Exam Results</h3>

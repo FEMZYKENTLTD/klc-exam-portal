@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>KLC STUDENT PORTAL — KNOWLEDGE LAND COLLEGE CBT</title>
-<meta name="description" content="Student portal: results, CA scores, study materials, announcements and appeals. Exams are sat only in the desktop app."/>
+<meta name="description" content="Student portal: your exams, results, report card, ID card, CA scores, study materials, announcements, friends, messages and appeals. Exams are sat only in the desktop app."/>
 <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
@@ -18,8 +18,12 @@
 <main>
   <section class="card" id="loginCard">
     <h1>Student Login</h1>
-    <p class="muted">Use your CBT account email and password. Exams are sat only in the desktop app —
-      here you can view results, CA scores, study materials, announcements and file result appeals.</p>
+    <p class="muted">Use your CBT account email and password — the same account you use in the
+      desktop app. Here you can see your exams, results, report card and ID card, check CA
+      scores, download study materials, message friends and teachers, and file result appeals.</p>
+    <p class="muted">📝 <b>About exams:</b> exams appear here so you can see what is scheduled
+      for you, but they are written only in the desktop app.
+      <a href="#" id="gateTeaser">See why, and how to get the app →</a></p>
     <form id="loginForm">
       <label>Email <input id="email" type="email" required/></label>
       <label>Password <input id="password" type="password" required/></label>
@@ -27,24 +31,96 @@
       <div id="loginError" class="error" hidden></div>
     </form>
   </section>
+
   <section id="portal" hidden>
     <div class="card">
       <h1 id="who"></h1>
       <p class="muted small" id="meta"></p>
       <button class="btn subtle" id="logout">Logout</button>
     </div>
+
+    <div class="card"><h1>📝 My Exams</h1>
+      <p class="muted small">Exams scheduled for your class. Click any exam for how to sit it —
+        exams are written only in the proctored desktop app.</p>
+      <div id="exams" class="examcards"></div>
+    </div>
+
     <div class="card"><h1>📣 Announcements</h1><div id="ann"></div></div>
     <div class="card"><h1>🏆 My Exam Results</h1><div id="results"></div></div>
+
+    <div class="card reportcard"><h1>📋 My Report Card</h1>
+      <div class="row">
+        <label>Term <select id="rcTerm"><option>1st</option><option>2nd</option><option>3rd</option></select></label>
+        <label>Session <input id="rcSession" placeholder="2024/2025"/></label>
+        <button class="btn" id="rcBuild">Build Report Card</button>
+        <button class="btn gold" id="rcPrint">🖨 Print / Save PDF</button>
+      </div>
+      <div id="reportCard"></div>
+    </div>
+
+    <div class="card"><h1>🪪 My Student ID Card</h1>
+      <div id="idCard"></div>
+      <div class="actions"><button class="btn gold" id="idPrint">🖨 Print ID Card</button></div>
+    </div>
+
     <div class="card"><h1>🧮 My CA Scores</h1><div id="ca"></div></div>
     <div class="card"><h1>📖 Study Materials</h1><div id="mats"></div></div>
+
+    <div class="card"><h1>👥 Friends &amp; Messages</h1>
+      <div class="row">
+        <label>Find people <input id="dirSearch" placeholder="Type a name…"/></label>
+        <button class="btn" id="dirGo">Search Directory</button>
+      </div>
+      <div id="directory"></div>
+      <h3>Friend requests</h3><div id="requests"></div>
+      <h3>My friends</h3><div id="friends"></div>
+      <h3>Conversation</h3>
+      <p class="muted small" id="chatWith">Pick a friend (or a conversation below) to chat. Students can message
+        accepted friends and any teacher; teachers can message anyone.</p>
+      <div id="inbox"></div>
+      <div class="chat" id="chatBox"><p class="muted">No conversation open.</p></div>
+      <div class="row">
+        <label style="flex:1">Message <input id="chatInput" placeholder="Write a message…"/></label>
+        <button class="btn gold" id="chatSend">Send</button>
+      </div>
+    </div>
+
     <div class="card"><h1>⚖️ My Appeals</h1>
-      <p class="muted small">Appeals can be filed from the desktop result viewer, or your class teacher can raise one. Status updates appear here.</p>
+      <p class="muted small">Use the <b>Appeal</b> button beside any result above if you believe a score is
+        wrong. The school reviews it and the status updates here.</p>
       <div id="appeals"></div>
+    </div>
+
+    <div class="card"><h1>👤 My Profile &amp; Security</h1>
+      <div class="grid">
+        <label>Full name <input id="pf_name"/></label>
+        <label>Phone <input id="pf_phone"/></label>
+        <label>Date of birth <input id="pf_dob" type="date"/></label>
+        <label>Photo URL <input id="pf_photo" placeholder="https://…"/></label>
+        <label>Address <input id="pf_address"/></label>
+        <label>Bio <input id="pf_bio" placeholder="A line about you"/></label>
+      </div>
+      <div class="actions"><button class="btn gold" id="pfSave">Save Profile</button></div>
+      <h3>Change password</h3>
+      <div class="row">
+        <label>New password <input id="pw_new" type="password" placeholder="At least 8 characters"/></label>
+        <button class="btn" id="pwSave">Change Password</button>
+      </div>
+      <h3>Two-factor authentication (2FA)</h3>
+      <p class="muted small" id="totpState"></p>
+      <div class="row">
+        <button class="btn" id="totpSetup">Set up authenticator app</button>
+        <label>6-digit code <input id="totpCode" size="8" placeholder="123456"/></label>
+        <button class="btn gold" id="totpEnable">Enable 2FA</button>
+        <button class="btn danger" id="totpDisable">Disable 2FA</button>
+      </div>
+      <div id="totpSecret" class="muted small"></div>
     </div>
   </section>
 </main>
 <footer>KNOWLEDGE LAND COLLEGE CBT Suite v1.0 — Powered by FEMZYK ENTERPRISES LTD</footer>
 <script src="config.js"></script>
+<script src="exam-gate.js"></script>
 <script src="student.js"></script>
 </body>
 </html>
