@@ -98,6 +98,7 @@ async function loadStudents() {
       <label>Search <input id="fSearch" placeholder="name or admission no"/></label>
       <button class="btn" id="fGo">Filter</button>
       <button class="btn" id="sCsv">⬇ CSV</button>
+      <label class="btn filebtn">Bulk Import CSV <input id="sImport" type="file" accept=".csv" hidden/></label>
     </div>
     <h3>Student editor</h3>
     ${formGrid([
@@ -134,6 +135,28 @@ async function loadStudents() {
   $("fGo").onclick = render;
   $("sCsv").onclick = () => download("klc-students.csv", toCsv(["Admission","Name","Class","Arm","Fee","Status","PIN"],
     (window._students || []).map(r => [r.admission_no, r.full_name, r.class_level, r.arm, r.fee_status, r.status, r.result_pin])));
+  $("sImport").onchange = async (e) => {
+    const text = await e.target.files[0].text();
+    const [head, ...lines] = text.trim().split(/\r?\n/);
+    const idx = head.split(",").map(h => h.trim().toLowerCase());
+    let ok = 0, fail = 0, out = [];
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const cells = line.split(",").map(c => c.trim());
+      const rec = {}; idx.forEach((h, i) => rec[h] = cells[i] || "");
+      try {
+        const r = await rpc("staff_student_save", { p: {
+          full_name: rec.full_name || rec.name, email: rec.email, password: rec.password || "Student123",
+          admission_no: rec.admission_no, class_level: rec.class_level || "SS1", arm: rec.arm,
+          gender: rec.gender, parent_phone: rec.parent_phone, parent_email: rec.parent_email,
+          fee_status: rec.fee_status || "PAID" } });
+        ok++; out.push(`${rec.admission_no}: PIN ${r.result_pin || ""}`);
+      } catch (err) { fail++; out.push(`${rec.admission_no || line.slice(0, 20)}: FAILED - ${err.message}`); }
+    }
+    msg(`Bulk import done: ${ok} saved, ${fail} failed. Columns: full_name,email,password,admission_no,class_level,arm,gender,parent_phone,parent_email,fee_status (blank password = Student123, tell students to change it).`);
+    $("modBody").insertAdjacentHTML("beforeend", `<pre class="small">${out.map(esc).join("\n")}</pre>`);
+    render();
+  };
   $("sSave").onclick = async () => {
     const out = await rpc("staff_student_save", { p: {
       user_id: val("s_id"), full_name: val("s_name"), email: val("s_email"), password: val("s_pass"),
@@ -256,6 +279,7 @@ async function loadQuestions() {
        <td>${esc(String(r.question_text).slice(0, 90))}…</td><td>${esc(r.question_type)}</td>
        <td>${r.is_approved ? "✅ Approved" : "⏳ Pending"}</td>
        <td><button class="btn small" onclick="editQ('${r.id}')">Edit</button>
+       <button class="btn small" onclick="qHistory('${r.id}')">History</button>
        ${isOfficerPlus() ? `<button class="btn small" onclick="modQ('${r.id}','${r.is_approved ? "unapprove" : "approve"}')">${r.is_approved ? "Unapprove" : "Approve"}</button>
        <button class="btn small danger" onclick="modQ('${r.id}','delete')">Delete</button>` : ""}</td></tr>`);
   };
@@ -265,6 +289,10 @@ async function loadQuestions() {
     $("qe_topic").value = r.topic || ""; $("qe_type").value = r.question_type || "MCQ"; $("qe_text").value = r.question_text;
     $("qe_opts").innerHTML = ""; (r.options || []).forEach(optRow);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  window.qHistory = async (id) => {
+    const vs = await rpc("staff_question_versions", { p_question: id });
+    alert(vs.length ? vs.map(v => `v${v.version} — ${v.editor || "unknown"} · ${dt(v.edited_at)}\n${v.question_text}`).join("\n\n") : "No earlier versions recorded for this question.");
   };
   window.modQ = async (id, action) => {
     if (action === "delete" && !confirm("Delete this question permanently?")) return;
@@ -304,13 +332,36 @@ async function loadExams() {
     ])}
     <label>Instructions <textarea id="e_instr" rows="2"></textarea></label>
     <div class="actions"><button class="btn gold" id="eSave">Save Exam</button>
+      <button class="btn" id="ePreview">👁 Preview what students see</button>
       <button class="btn" id="eAttach">Attach All Approved Questions (subject+class)</button></div>
     ${table(["Title","Subject","Class","Term","Dur","Limit","Questions","Attempts","Mode","Active",""], rows, r =>
       `<tr><td>${esc(r.title || "(untitled)")}</td><td>${esc(r.subject_code)}</td><td>${esc(r.class_level)}</td>
        <td>${esc(r.term)}</td><td>${esc(r.duration_minutes)}m</td><td>${esc(r.attempt_limit)}</td>
        <td>${esc(r.question_count)}</td><td>${esc(r.attempts)}</td>
        <td>${r.is_practice ? "Practice" : r.is_mock ? "Mock" : "Official"}</td><td>${r.is_active ? "✅" : "⛔"}</td>
-       <td><button class="btn small" onclick="editExam('${r.id}')">Edit</button></td></tr>`)}`;
+       <td><button class="btn small" onclick="editExam('${r.id}')">Edit</button>
+       <button class="btn small" onclick="examQuestions('${r.id}')">Questions (${esc(r.question_count)})</button>
+       <button class="btn small" onclick="cloneExam('${r.id}')">Clone</button></td></tr>`)}`;
+  window.examQuestions = async (id) => {
+    const qs = await rpc("staff_exam_questions", { p_exam: id });
+    const body = qs.length ? qs.map(q =>
+      `<p>• <b>${esc(q.subject_code)}</b> ${esc(q.question_text)}…
+       <button class="btn small danger" onclick="detachQ('${id}','${q.question_id}')">Detach</button></p>`).join("")
+      : `<p class="muted">No questions attached yet. Edit the exam and use “Attach All Approved Questions”.</p>`;
+    $("modBody").insertAdjacentHTML("beforeend", `<div class="card" id="eqCard"><h3>Attached questions (${qs.length})</h3>${body}<button class="btn" onclick="document.getElementById('eqCard').remove()">Close</button></div>`);
+    document.getElementById("eqCard").scrollIntoView({ behavior: "smooth" });
+  };
+  window.detachQ = async (exam, q) => { await rpc("staff_exam_detach", { p_exam: exam, p_question: q }); openModule("exams"); };
+  window.cloneExam = async (id) => {
+    const r = window._exams.find(x => x.id === id); if (!r) return;
+    const out = await rpc("staff_exam_save", { p: { subject_code: r.subject_code, class_level: r.class_level,
+      arm: r.arm, term: r.term, session: r.session, title: (r.title || "Exam") + " (Copy)",
+      instructions: r.instructions, duration_minutes: r.duration_minutes, attempt_limit: r.attempt_limit,
+      is_practice: r.is_practice, is_mock: r.is_mock, is_active: false } });
+    const qs = await rpc("staff_exam_questions", { p_exam: id });
+    if (qs.length) await rpc("staff_exam_attach", { p_exam: out.id, p_question_ids: qs.map(q => q.question_id), p_replace: false });
+    msg(`Cloned as a deactivated draft with ${qs.length} question(s). Activate it when ready.`); openModule("exams");
+  };
   window.editExam = (id) => {
     const r = window._exams.find(x => x.id === id); if (!r) return;
     $("e_id").value = r.id; $("e_subj").value = r.subject_code; $("e_class").value = r.class_level;
@@ -321,6 +372,12 @@ async function loadExams() {
     $("e_start").value = r.start_at ? String(r.start_at).slice(0, 16).replace("T", " ") : "";
     $("e_end").value = r.end_at ? String(r.end_at).slice(0, 16).replace("T", " ") : "";
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  $("ePreview").onclick = () => {
+    const r = window._exams.find(x => x.id === val("e_id")) || window._exams[0];
+    showExamGate(r ? { title: r.title || "Exam", subject_code: r.subject_code, subject_name: r.subject_code,
+      duration_minutes: r.duration_minutes, question_count: r.question_count, start_at: r.start_at, end_at: r.end_at,
+      attempt_limit: r.attempt_limit, attempts_used: 0, is_practice: r.is_practice, is_mock: r.is_mock } : null);
   };
   const payload = () => ({ id: val("e_id"), subject_code: val("e_subj"), class_level: val("e_class"),
     arm: val("e_arm"), term: val("e_term"), session: val("e_session"), title: val("e_title"),
@@ -546,7 +603,49 @@ async function loadSettings() {
     <label>Grading scale (JSON: [{"grade":"A1","min":75,"max":100,"remark":"Excellent"}, …], CA weights via "weights":[20,20,60])
       <textarea id="sc_grading" rows="6">${esc(s?.grading_scale ? JSON.stringify(s.grading_scale, null, 1) : "")}</textarea></label>
     <div class="actions"><button class="btn gold" id="scSave">Save School Settings</button></div>
-    <p class="muted small">These settings drive new registrations, broadsheets and report cards on every client (desktop + web).</p>`;
+    <p class="muted small">These settings drive new registrations, broadsheets and report cards on every client (desktop + web).</p>
+    <h3>My account security</h3>
+    <div class="row">
+      <label>New password <input id="my_pw" type="password" placeholder="At least 8 characters"/></label>
+      <button class="btn" id="myPwBtn">Change My Password</button>
+    </div>
+    <div class="row">
+      <button class="btn" id="myTotpSetup">Set up 2FA (authenticator app)</button>
+      <label>6-digit code <input id="my_totp_code" size="8" placeholder="123456"/></label>
+      <button class="btn gold" id="myTotpEnable">Enable 2FA</button>
+      <button class="btn danger" id="myTotpDisable">Disable 2FA</button>
+    </div>
+    <div id="myTotpSecret" class="muted small"></div>
+    <h3>Full data export (web backup)</h3>
+    <p class="muted small">Downloads one JSON file with students, teachers, subjects, questions, exams,
+      results and the audit trail — the web equivalent of the desktop backup, for archives and NDPR records.
+      (The desktop app additionally keeps its encrypted offline .klcbackup.)</p>
+    <div class="actions"><button class="btn gold" id="exportAll">⬇ Export Everything (JSON)</button></div>`;
+  $("myPwBtn").onclick = async () => {
+    try { await rpc("web_change_password", { p_new_password: val("my_pw") });
+      S.password = val("my_pw"); creds.p_password = S.password; sessionStorage.setItem("klc_pass", S.password);
+      $("my_pw").value = ""; msg("Your password has been changed (web + desktop app use the same account).");
+    } catch (e) { msg(e.message, true); }
+  };
+  $("myTotpSetup").onclick = async () => {
+    const out = await rpc("web_totp_setup");
+    $("myTotpSecret").innerHTML = `Add this secret key to your authenticator app (KLC CBT, time-based), then enter the 6-digit code and Enable:<br/><b style="letter-spacing:.08em">${esc(out.secret)}</b>`;
+  };
+  $("myTotpEnable").onclick = async () => { try { await rpc("web_totp_enable", { p_code: val("my_totp_code") }); msg("2FA enabled for your account."); } catch (e) { msg(e.message, true); } };
+  $("myTotpDisable").onclick = async () => { try { await rpc("web_totp_disable", { p_code: val("my_totp_code") }); msg("2FA disabled."); } catch (e) { msg(e.message, true); } };
+  $("exportAll").onclick = async () => {
+    msg("Building export…");
+    const data = { exported_at: new Date().toISOString(), exported_by: S.email,
+      students: await rpc("staff_students", { p_class: null, p_search: null }),
+      teachers: isAdmin() ? await rpc("staff_teachers") : [],
+      subjects: await rpc("staff_subjects"),
+      questions: await rpc("staff_questions", { p_subject_code: null, p_approved: null, p_search: null }),
+      exams: await rpc("staff_exams"),
+      results: await rpc("staff_results", { p_limit: 1000 }),
+      audit: isAdmin() ? await rpc("staff_audit", { p_limit: 1000 }) : [] };
+    download("klc-full-export.json", JSON.stringify(data, null, 2), "application/json");
+    msg("Export downloaded.");
+  };
   $("scSave").onclick = async () => {
     let grading = null;
     const raw = $("sc_grading").value.trim();

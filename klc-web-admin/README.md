@@ -71,3 +71,29 @@ were opened). Already applied to the production project.
 No environment variables are needed: `config.js` contains only the public
 publishable key, which is safe to expose because tables stay RLS-locked and
 every RPC re-verifies credentials + role server-side on each call.
+
+
+## Web completion (v1.5) — every desktop feature, exams gated to the app
+
+- **Exams are visible on the web but never sat on the web.** The student portal
+  lists every exam scheduled for the student's class (mode, window, duration,
+  attempts left). Clicking one opens `exam-gate.js` — a dialog explaining why
+  exams live in the proctored desktop app (kiosk lockdown, 3-strike focus
+  detection, offline autosave), how to download/install it, and how results
+  flow back to this portal. Staff get the same preview from Exam Manager.
+  There is no start-exam or submit-answer web API at all.
+- **Student portal additions:** printable term Report Card, printable Student
+  ID Card, Friends & Messages (directory, requests, threads; students message
+  accepted friends or staff), profile editing, password change, and 2FA
+  (TOTP) setup/enable/disable — TOTP verified server-side against RFC 6238.
+- **Staff console additions:** student CSV bulk import (with per-row PIN
+  report), exam clone, attached-question viewer with detach, question
+  version-history viewer, "My account" password/2FA, and a one-click full
+  JSON data export (students/teachers/subjects/questions/exams/results/audit).
+- Parent report is now school-branded for printing.
+
+Backend: `supabase/klc_supabase_v1_5_web_complete.sql` (applied live). Honest
+boundaries: desktop-only by nature — the encrypted offline `.klcbackup` file
+(web equivalent: full JSON export above), OS kiosk policy pack, and webcam/
+hardware proctoring. 2FA is enrolled/managed on the web and enforced at
+desktop-app login.
