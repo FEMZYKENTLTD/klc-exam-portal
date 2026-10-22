@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>KLC STUDENT PORTAL — KNOWLEDGE LAND COLLEGE CBT</title>
+<meta name="description" content="Student portal: results, CA scores, study materials, announcements and appeals. Exams are sat only in the desktop app."/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="school">KNOWLEDGE LAND COLLEGE</div>
+    <div class="tag">Student Portal</div>
+  </div>
+  <nav><a href="index.html">Staff Console</a><a href="parent.html">Parent Checker</a></nav>
+</header>
+<main>
+  <section class="card" id="loginCard">
+    <h1>Student Login</h1>
+    <p class="muted">Use your CBT account email and password. Exams are sat only in the desktop app —
+      here you can view results, CA scores, study materials, announcements and file result appeals.</p>
+    <form id="loginForm">
+      <label>Email <input id="email" type="email" required/></label>
+      <label>Password <input id="password" type="password" required/></label>
+      <button class="btn gold" type="submit">LOGIN</button>
+      <div id="loginError" class="error" hidden></div>
+    </form>
+  </section>
+  <section id="portal" hidden>
+    <div class="card">
+      <h1 id="who"></h1>
+      <p class="muted small" id="meta"></p>
+      <button class="btn subtle" id="logout">Logout</button>
+    </div>
+    <div class="card"><h1>📣 Announcements</h1><div id="ann"></div></div>
+    <div class="card"><h1>🏆 My Exam Results</h1><div id="results"></div></div>
+    <div class="card"><h1>🧮 My CA Scores</h1><div id="ca"></div></div>
+    <div class="card"><h1>📖 Study Materials</h1><div id="mats"></div></div>
+    <div class="card"><h1>⚖️ My Appeals</h1>
+      <p class="muted small">Appeals can be filed from the desktop result viewer, or your class teacher can raise one. Status updates appear here.</p>
+      <div id="appeals"></div>
+    </div>
+  </section>
+</main>
+<footer>KNOWLEDGE LAND COLLEGE CBT Suite v1.0 — Powered by FEMZYK ENTERPRISES LTD</footer>
+<script src="config.js"></script>
+<script src="student.js"></script>
+</body>
+</html>
