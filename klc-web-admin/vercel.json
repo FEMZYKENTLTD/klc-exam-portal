@@ -23,6 +23,8 @@
     { "source": "/student", "destination": "/student.html" },
     { "source": "/parent", "destination": "/parent.html" },
     { "source": "/live", "destination": "/invigilator.html" },
-    { "source": "/upload", "destination": "/question_upload.html" }
+    { "source": "/upload", "destination": "/question_upload.html" },
+    { "source": "/register", "destination": "/register.html" },
+    { "source": "/forgot-password", "destination": "/forgot-password.html" }
   ]
 }

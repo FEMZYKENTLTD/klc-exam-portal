@@ -575,12 +575,21 @@ jobs:
             --main-jar $jar.Name --java-options "-Xmx1g"
           Compress-Archive -Path dist/KLC-CBT-Suite -DestinationPath KLC-CBT-Suite-win.zip
 
+      - name: Bundle zero-JDK Windows EXE installer (jpackage)
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem "target/knowledge-land-cbt-*.jar" | Select-Object -First 1
+          jpackage --type exe --name KLC-CBT-Suite --input target --dest dist-exe `
+            --main-jar $jar.Name --java-options "-Xmx1g"
+          Get-ChildItem dist-exe | Format-Table -AutoSize
+
       - name: Attach to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             target/knowledge-land-cbt-*.jar
             KLC-CBT-Suite-win.zip
+            dist-exe/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>KLC REGISTER — KNOWLEDGE LAND COLLEGE CBT</title><meta name="description" content="Create a new KLC CBT account — student, teacher/staff, or parent registration."/><link rel="stylesheet" href="style.css"/></head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="school">KNOWLEDGE LAND COLLEGE</div>
+    <div class="tag">Create Account — Student · Teacher/Staff · Parent</div>
+  </div>
+  <nav><a href="index.html">Staff Login</a><a href="student.html">Student Login</a><a href="parent.html">Parent Checker</a><a href="forgot-password.html">Forgot Password</a></nav>
+</header>
+
+<main>
+  <section class="card" id="registerCard">
+    <h1>Create Your KLC CBT Account</h1>
+    <p class="muted">Choose your account type. A <b>registration code</b> is required — get it from your school.</p>
+    <div id="regError" class="error" hidden></div>
+
+    <div class="row" style="margin-bottom:16px">
+      <label class="btn gold" style="width:auto;padding:10px 18px"><input type="radio" name="acctype" value="STUDENT" checked style="margin-right:8px"/> Student</label>
+      <label class="btn subtle" style="width:auto;padding:10px 18px"><input type="radio" name="acctype" value="TEACHER" style="margin-right:8px"/> Teacher / Staff</label>
+      <label class="btn subtle" style="width:auto;padding:10px 18px"><input type="radio" name="acctype" value="PARENT" style="margin-right:8px"/> Parent</label>
+    </div>
+
+    <!-- STUDENT FIELDS -->
+    <form id="formStudent">
+      <label>Registration Code (student/family code)</label><input id="reg_student_code" type="text" placeholder="Ask your school" required/>
+      <label>Full Name</label><input id="reg_student_name" type="text" placeholder="John Adebayo" required/>
+      <label>Email</label><input id="reg_student_email" type="email" placeholder="john@example.com" required/>
+      <label>Password (min 8 chars)</label><input id="reg_student_pass" type="password" required/>
+      <label>Admission Number</label><input id="reg_student_admno" type="text" placeholder="KLC/SS2/045" required/>
+      <label>Class Level</label><select id="reg_student_class"><option>JSS1</option><option>JSS2</option><option>JSS3</option><option>SS1</option><option>SS2</option><option>SS3</option></select>
+      <label>Arm</label><input id="reg_student_arm" type="text" placeholder="A / Science / Art"/>
+      <label>Gender</label><select id="reg_student_gender"><option value="">Select</option><option>Male</option><option>Female</option></select>
+      <label>Date of Birth</label><input id="reg_student_dob" type="date"/>
+      <label>Parent Phone</label><input id="reg_student_parent_phone" type="text" placeholder="Parent's phone"/>
+      <label>Parent Email</label><input id="reg_student_parent_email" type="email" placeholder="Parent's email"/>
+      <label>Address</label><input id="reg_student_address" type="text" placeholder="Home address"/>
+      <label>Session</label><input id="reg_student_session" type="text" placeholder="2024/2025"/>
+      <div class="actions"><button class="btn gold" type="submit">REGISTER STUDENT ACCOUNT</button></div>
+    </form>
+
+    <!-- TEACHER FIELDS -->
+    <form id="formTeacher" hidden>
+      <label>Registration Code (staff/admin code)</label><input id="reg_teacher_code" type="text" placeholder="Ask your school" required/>
+      <label>Full Name</label><input id="reg_teacher_name" type="text" placeholder="Mrs. Adebayo" required/>
+      <label>Email</label><input id="reg_teacher_email" type="email" placeholder="mrs@example.com" required/>
+      <label>Password (min 8 chars)</label><input id="reg_teacher_pass" type="password" required/>
+      <label>Role</label><select id="reg_teacher_role"><option>TEACHER</option><option>EXAM_OFFICER</option><option>PRINCIPAL_ADMIN</option></select>
+      <label>Phone</label><input id="reg_teacher_phone" type="text" placeholder="Phone number"/>
+      <label>Subject Codes (comma separated, e.g. MTH-SS1, ENG-SS1)</label><input id="reg_teacher_subjects" type="text" placeholder="MTH-SS1, ENG-SS1"/>
+      <div class="actions"><button class="btn gold" type="submit">REGISTER STAFF ACCOUNT</button></div>
+    </form>
+
+    <!-- PARENT FIELDS -->
+    <form id="formParent" hidden>
+      <label>Registration Code (family code)</label><input id="reg_parent_code" type="text" placeholder="Ask your school" required/>
+      <label>Full Name</label><input id="reg_parent_name" type="text" placeholder="Mr. Adebayo" required/>
+      <label>Email</label><input id="reg_parent_email" type="email" placeholder="mr@example.com" required/>
+      <label>Password (min 8 chars)</label><input id="reg_parent_pass" type="password" required/>
+      <label>Ward's Admission Number</label><input id="reg_parent_ward" type="text" placeholder="KLC/SS2/045" required/>
+      <label>Relationship to Ward</label><input id="reg_parent_rel" type="text" placeholder="Father / Mother / Guardian"/>
+      <label>Phone</label><input id="reg_parent_phone" type="text" placeholder="Phone number"/>
+      <div class="actions"><button class="btn gold" type="submit">REGISTER PARENT ACCOUNT</button></div>
+    </form>
+
+    <p class="muted" style="margin-top:14px">Already have an account? <a href="index.html">Staff Login</a> · <a href="student.html">Student Login</a></p>
+    <p class="muted" style="margin-top:8px">Forgot your password? <a href="forgot-password.html">Reset it here</a></p>
+  </section>
+</main>
+
+<footer>KNOWLEDGE LAND COLLEGE CBT Suite v1.0 — Powered by FEMZYK ENTERPRISES LTD</footer>
+<script src="config.js"></script>
+<script src="register.js"></script>
+</body>
+</html>
